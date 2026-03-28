@@ -1,0 +1,72 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Public+Sans:wght@300;400;500;600;700&family=Ma+Shan+Zheng&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --color-primary: var(--color-primary);
+  --color-secondary: var(--color-secondary);
+  --color-tertiary: var(--color-tertiary);
+  --color-neutral: var(--color-neutral);
+  --color-background: var(--color-background);
+  --font-headline: "Noto Serif SC", serif;
+  --font-body: "Public Sans", sans-serif;
+  --font-handwritten: "Ma Shan Zheng", cursive;
+}
+
+:root {
+  --color-primary: #3b4d61;
+  --color-secondary: #c07a67;
+  --color-tertiary: #8c9184;
+  --color-neutral: #faf9f6;
+  --color-background: #faf9f6;
+}
+
+.dark {
+  --color-primary: #faf9f6;
+  --color-secondary: #eab308;
+  --color-tertiary: #9ca3af;
+  --color-neutral: #1f2937;
+  --color-background: #111827;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-primary);
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+* {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.waterfall-container {
+  column-count: 2;
+  column-gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .waterfall-container {
+    column-count: 3;
+  }
+}
+
+@media (min-width: 1024px) {
+  .waterfall-container {
+    column-count: 4;
+  }
+}
+
+.postcard-item {
+  break-inside: avoid;
+  margin-bottom: 1rem;
+}
+
+.postcard-texture {
+  background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAQ-0MFSTVl-LGC7i60wj7CXdH6xrNbGNuimhQa7TBfEDxotEhxAhkNX4BwsY7g2TLlXqT21VQgW-VicQ0d-G4XuY0D2bt6xdjcQRtA8Bc0AKjvBt5AvOLhIsEj6LI4R65Q26NnjEXrzEhDR7GBcbd9HTmDi4h4_z99FRSMXHN5F3mnACgUMAmyoPR68zZj2VtqEbmjuRNF6fi5bFJbVU0LJldFlJ7xoNaezcyrNevdQVBFNL_usAqX2ie5BWoHsJehLFCnxB4uAWee");
+  background-size: cover;
+}
