@@ -8,7 +8,7 @@
       </button>
     </header>
 
-    <main class="max-w-md mx-auto pt-8 px-6 space-y-10">
+    <main class="max-w-md mx-auto pt-6 px-6 space-y-10">
       <section class="flex items-center justify-between gap-6">
         <div class="flex items-center gap-6">
           <div class="relative group shrink-0">
@@ -57,9 +57,66 @@
           <h3
             class="font-headline text-lg font-bold text-primary border-l-4 border-secondary pl-3"
           >
-            我的收藏
+            我的喜欢
           </h3>
           <button
+            class="text-xs font-semibold text-secondary hover:underline flex items-center"
+          >
+            查看全部 <ChevronRight class="w-3 h-3 ml-0.5" />
+          </button>
+        </div>
+        <div class="grid grid-cols-4 gap-3">
+          <div
+            class="rounded-sm bg-black/5 dark:bg-white/5 overflow-hidden shadow-inner border border-black/10 dark:border-white/10 flex items-center justify-center p-1 aspect-square"
+          >
+            <img
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMKuwdrzd0kycg5QbGFmMJMDT8RsE6UNc85oboGn-Tofw_7BqW1Fr1AxqgdIPVAOliVNVYW_xxX0D9w4teG8vu716EueLdlhtDZNMzx4AmtF6xpsxUovOnN9vxwxh4HShX2hixpG3URlodGZn0CCfMvapoqBDQoMNPiYZ7qRUDV_u5MqQexSdA1w6diNCYt21t14DqvZwE3JkN7udert8x6WNdDwaS9gdJzPKoMDZmPcvKSVzXPcgpoOY3CCfVKFU3sqia8imIUDUG"
+              alt="Like 1"
+              class="w-full h-full object-cover grayscale-[30%] opacity-90"
+              referrerpolicy="no-referrer"
+            />
+          </div>
+          <div
+            class="rounded-sm bg-black/5 dark:bg-white/5 overflow-hidden shadow-inner border border-black/10 dark:border-white/10 flex items-center justify-center p-1 aspect-square"
+          >
+            <img
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8esTrkcudCbjzxuyIIZl0OCZpj1YT0KrcsHLaFrj43bnf3Yyf1EG7V2yrCFBiQJK_VMmMd5xZhxjcmY85_K-f3XyDDmIxud0i4ZezXKMBuMwEqvSQtj3Siz08fk9w-dqNpBzh7L7aQUeOx5qtP7b7xOX0rbyi563zBqiOlcDN2Q9U5FKt-KltCVOYDRP7g3Ed3QL9fU9JY6-I1HARQriDG_92_H4iVMyiV6Lsnf7cEnK1_Dy0rY0plcdR2YAIPfEZgGmPRYvzw_V5"
+              alt="Like 2"
+              class="w-full h-full object-cover grayscale-[30%] opacity-90"
+              referrerpolicy="no-referrer"
+            />
+          </div>
+          <div
+            class="rounded-sm bg-black/5 dark:bg-white/5 overflow-hidden shadow-inner border border-black/10 dark:border-white/10 flex items-center justify-center p-1 aspect-square"
+          >
+            <img
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0i-x6RyD7D2rgu2L8AzwaNHZzBYtWuJj6TtriMJjqVRxLpFGpCq4NIH2Grin9XOy8Pd3vjY8zFfJ35c0h20F0IrFtD7y28Xd9NfXGoploNukwtK3NgoPGEa7VSOEBh4KD4kyXVIRQ0jWYVLO2kJHCx9n8kcXqOQdi-Nd68yzmGnwkZBGhLGX0_S9Cu8AfSXzjBlGzXqf8l2XI-wAwWqxhTz_RASrcIKtt1Bdh6wqEzNFbMHjXcTtyd41-AhHu91wpD4qb4WLcp1F2"
+              alt="Like 3"
+              class="w-full h-full object-cover grayscale-[30%] opacity-90"
+              referrerpolicy="no-referrer"
+            />
+          </div>
+          <div
+            class="rounded-sm bg-black/5 dark:bg-white/5 overflow-hidden shadow-inner border border-black/10 dark:border-white/10 flex items-center justify-center p-1 aspect-square"
+          >
+            <div
+              class="w-full h-full bg-black/5 dark:bg-white/5 flex items-center justify-center border-2 border-dashed border-black/20 dark:border-white/20 rounded-sm"
+            >
+              <Plus class="text-tertiary w-6 h-6" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="space-y-4">
+        <div class="flex justify-between items-end">
+          <h3
+            class="font-headline text-lg font-bold text-primary border-l-4 border-secondary pl-3"
+          >
+            我的邮票
+          </h3>
+          <button
+            @click="$router.push('/favorites')"
             class="text-xs font-semibold text-secondary hover:underline flex items-center"
           >
             查看全部 <ChevronRight class="w-3 h-3 ml-0.5" />

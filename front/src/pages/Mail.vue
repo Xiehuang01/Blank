@@ -96,7 +96,7 @@
           >
             <div class="w-full h-full relative border border-black/5 dark:border-white/5 overflow-hidden">
               <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuEv-yDSqopqu9Q_KHcz9MFqv8SywAJ1DM0io55zjsL_PRMVgJe7Lgxpw_v3v-7ji9sPW5IwEIc2BEzED9LfdTk9yjY1QCGFL0_WcNKqxYziyjdMsArGFgCS8nuN9GjMFJYzOSyMp-xh0znk8OdZIjv8h_k4WDRr1VwuC0dBy5-x8kWCTrxuneHRIoctaf5t_ck28DnD6MrZRZlgNi2RW96VrjmoJsaausNishEQDZeN-BpZuKe-vbM8roCO1qX01Icvb_0NKwAjl7c"
+                src="https://i.pinimg.com/1200x/86/6f/6e/866f6ed1a6b9cf49fefe3f6bc480d35e.jpg"
                 alt="Misty Mountains"
                 class="w-full h-full object-cover"
                 referrerpolicy="no-referrer"

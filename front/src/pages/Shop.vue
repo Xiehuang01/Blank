@@ -71,7 +71,9 @@
                 </button>
               </div>
               <button
-                class="flex-1 py-1.5 px-2 text-xs sm:text-sm font-bold rounded-md transition-all duration-300 shadow-sm active:scale-95 text-center bg-primary text-white hover:bg-primary/90"
+                @click="purchaseStamp(stamp)"
+                class="flex-1 py-1.5 px-2 text-xs sm:text-sm font-bold rounded-md transition-all duration-300 shadow-sm active:scale-95 text-center bg-primary dark:bg-secondary hover:bg-primary/90 dark:hover:bg-secondary/90"
+                :style="isDark ? { color: '#000' } : { color: '#fff' }"
               >
                 购入
               </button>
@@ -97,44 +99,35 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { Search, Plus, Minus } from "lucide-vue-next";
+import { stamps } from "../data/stamps";
 
 const selectedImage = ref<string | null>(null);
+const isDark = ref(false);
 
-const stamps = [
-  {
-    id: 1,
-    title: "故宫大和殿",
-    desc: "金砖铺地，朱墙焕彩。方寸之间尽显皇城威仪，岁月流转不减大殿雄风。",
-    price: 50,
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBU1OP8SQVdlKIpODIOVZlnUTj7wOaXdkQZucciHoU-YhRr3LdYXfnu_9b2lJ9Y_1zH2XmqDI-G9PiZQ-cAx2ZJNLOgPQPT0ATv8vPHe9hWoxFbcy0t-cAFSWMZOXcLfWOEP3HLioqPm5xs9Jlaf140zxQVzTupbrxklvyms_KVxVKGB_Dgv43ele7rXlVbWV9bYaoO0uhQxwTwYeyFG9h7zG6sOxU9nBCW0BJj1U3Gqr8QZa8nIZWGUd5S7ja5-wBUNbqOEUgzKU2S",
-  },
-  {
-    id: 2,
-    title: "西湖十景 · 断桥",
-    desc: "晴雨皆宜，湖光潋滟。断桥残雪余韵长，在信笺上留一抹江南的温柔。",
-    price: 45,
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuB_pRV3yzYJgmKLrANmpor-F_FMUHLxOaQIg0EupBLMbc2DAnARk9E3bfDkpYCp8ZGMA7TLI1ZV--Q_T8TvmODoxc4UT0aOzfjupFB0H3rvfWSwvf0-wyAoNn_Vhi-UdPDjgKBCnFXOb0dbxvgEaSWpg5yLLs10UO5FLPvZVg5qc87zD8E52KXCd2_OWB6Y5LK5lNeitctuOxuYTmJISsFsHp21Rbge462DY5J_LZUKJrRjFQ0GBc9hUWGq9RELaW3QUhmp1B0p0fCu",
-  },
-  {
-    id: 3,
-    title: "世界遗珍 · 泰姬陵",
-    desc: "永恒之泪，洁白如镜。超越国界的艺术瑰宝，致远方那些未曾诉说的深情。",
-    price: 80,
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuADfXCv5BJRvcBWkkgN_LKRrckuePUIND06wpwie4Y90p2nb2ixhF6hVq9H5X3XZk41bscteNpEGVobb9RXc-j1ikbD7QbTImgNFrrc6ouvElElROC8WTIrmhNWqgc5SGIS1ZP_6DiB3dWg5GkufmC1xMEfWHZ2AAuh5DwX_XUEtE_51h23Qipd3LFFPLI0VbFVuEkYUz7R2TZWM-_Ibdu_4_WTu2B5l-lbUzwPVJvk4-q5A9J0sou-YqPmEA-9lz2-7fj8PSCbpa7A",
-    outline: true,
-  },
-  {
-    id: 4,
-    title: "浪漫之都 · 巴黎",
-    desc: "塞纳河畔，铁塔高耸。将法式的浪漫剪裁成方寸，寄给每一个热爱生活的人。",
-    price: 60,
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBJIiCFlINueVZ3ws_NTCciMSNvZWxYQBXJkUoUootQVEX18PwV92Slzz101Z-lnQvQtnNYNOyhZW2rUFfhHMjK1ygAE7ouwXc1dMYeCuvDJ5vBHThNGJaZjtUa34xzZKDYhNrXKSbt078DIqMIDF2ldI5vVpNULjIR0Mn8n7TWcGkK1OLxPIjBrJIO-lzv-AF3b_RUrYrGTNqcSexoF0gFYn2Tl593vBY4_-KCN6BFiAOusFMkqdpdJUtIFhaEH7AzeTQ7xTl9tcSN",
-  },
-];
+onMounted(() => {
+  const checkDark = () => {
+    isDark.value = document.documentElement.classList.contains('dark');
+  };
+  checkDark();
+  
+  const observer = new MutationObserver(checkDark);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+});
+
+const purchaseStamp = (stamp: any) => {
+  const stored = localStorage.getItem('favorites') || '[]';
+  let favorites = JSON.parse(stored);
+  
+  // 检查是否已经购买过
+  const exists = favorites.some((s: any) => s.id === stamp.id);
+  if (!exists) {
+    favorites.push(stamp);
+    localStorage.setItem('favorites', JSON.stringify(favorites));
+    alert('购入成功！已添加到我的邮票');
+  } else {
+    alert('你已经拥有这张邮票了');
+  }
+};
 </script>

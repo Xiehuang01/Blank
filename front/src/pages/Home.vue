@@ -32,8 +32,9 @@
     <main class="max-w-7xl mx-auto px-4 pt-6">
       <div class="waterfall-container">
         <div v-for="post in postcards" :key="post.id" class="postcard-item">
-          <div
-            class="bg-white p-2 shadow-sm rounded-sm hover:shadow-md transition-shadow duration-300 border border-black/5"
+          <button
+            @click="$router.push(`/post/${post.id}`)"
+            class="bg-white p-2 shadow-sm rounded-sm hover:shadow-md transition-shadow duration-300 border border-black/5 w-full text-left"
           >
             <div :class="[post.aspect, 'overflow-hidden bg-black/5']">
               <img
@@ -57,7 +58,7 @@
                 <span class="text-[10px] font-medium">{{ post.likes }}</span>
               </button>
             </div>
-          </div>
+          </button>
         </div>
       </div>
     </main>

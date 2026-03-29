@@ -1,6 +1,6 @@
 <template>
   <nav
-    class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-2 bg-[#FAF9F6]/70 backdrop-blur-xl border-t border-[#8C9184]/10 shadow-[0_-1px_3px_0_rgba(0,0,0,0.05)]"
+    class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-2 bg-neutral/70 backdrop-blur-xl border-t border-tertiary/10 shadow-[0_-1px_3px_0_rgba(0,0,0,0.05)]"
   >
     <router-link
       v-for="item in navItems"
