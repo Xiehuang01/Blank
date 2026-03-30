@@ -13,12 +13,26 @@
     </header>
 
     <main class="max-w-7xl mx-auto px-4 pt-6">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:items-start">
         <!-- Left Column - Postcard Preview -->
-        <div class="space-y-8">
+        <div class="lg:sticky lg:top-20 lg:self-start">
+        <!-- Stacked Postcard Preview -->
+        <div class="relative w-full" style="aspect-ratio: 3/2;">
+          <div class="relative w-full h-full" ref="postcardCanvasRef">
+
           <!-- Postcard Front (Image) -->
-          <div class="space-y-3">
-            <div class="relative w-full aspect-[3/2] group">
+          <div
+            class="absolute inset-0"
+            :style="{
+              transform: showFront
+                ? 'translate(-6px, -6px) scale(1)'
+                : 'translate(-6px, -6px) scale(0.96) translateY(4px)',
+              zIndex: showFront ? 10 : 5,
+              opacity: showFront ? 1 : 0.6,
+              transition: 'transform 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.45s ease, z-index 0s 0.22s',
+            }"
+          >
+            <div class="relative w-full h-full group">
               <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral p-3 border border-black/10 dark:border-white/10 shadow-lg overflow-hidden">
                 <div 
                   class="w-full h-full relative bg-black/5 flex items-center justify-center rounded-sm cursor-move overflow-hidden"
@@ -71,11 +85,21 @@
           </div>
 
           <!-- Postcard Back (Text side) -->
-          <div class="space-y-3">
-            <div class="relative w-full aspect-[3/2] group">
+          <div
+            class="absolute inset-0"
+            :style="{
+              transform: showFront
+                ? 'translate(6px, 6px) scale(0.96) translateY(4px)'
+                : 'translate(6px, 6px) scale(1)',
+              zIndex: showFront ? 5 : 10,
+              opacity: showFront ? 0.6 : 1,
+              transition: 'transform 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.45s ease, z-index 0s 0.22s',
+            }"
+          >
+            <div class="relative w-full h-full group">
               <div
-                class="absolute inset-0 rounded-none bg-white dark:bg-neutral p-5 flex border border-black/10 dark:border-white/10 shadow-lg"
-                @click="selectedElementIndex = -1"
+                class="absolute inset-0 rounded-none bg-white dark:bg-neutral p-5 flex border border-black/10 dark:border-white/10 shadow-lg overflow-hidden"
+                @click="selectedElementIndex = -1; showStickerPicker = false; showStampSelector = false"
               >
                 <!-- Left Side - Message -->
                 <div class="flex-1 flex flex-col pr-5 border-r border-black/20 dark:border-white/20 relative overflow-hidden">
@@ -101,7 +125,7 @@
                   <div class="flex justify-end relative mb-4">
                     <!-- Stamp -->
                     <button
-                      @click="showStampSelector = !showStampSelector"
+                      @click.stop="showStampSelector = !showStampSelector; showStickerPicker = false; selectedElementIndex = -1;"
                       class="w-20 h-24 border-[2px] border-black/30 dark:border-white/30 flex items-center justify-center relative bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer flex-shrink-0"
                       style="border-style: dashed;"
                       title="点击选择邮票"
@@ -109,7 +133,7 @@
                       <span v-if="!selectedStamp" class="text-xs font-bold text-black/40 dark:text-white/40">邮票</span>
                     </button>
                     <!-- Stamp Image Container -->
-                    <div v-if="selectedStamp" class="absolute -top-4 -right-4 w-32 h-32 flex items-center justify-center cursor-pointer" @click="showStampSelector = !showStampSelector">
+                    <div v-if="selectedStamp" class="absolute -top-4 -right-4 w-32 h-32 flex items-center justify-center cursor-pointer" @click.stop="showStampSelector = !showStampSelector; showStickerPicker = false; selectedElementIndex = -1;">
                       <img
                         :src="selectedStamp.image"
                         :alt="selectedStamp.title"
@@ -141,14 +165,15 @@
                   left: element.x + 'px',
                   top: element.y + 'px',
                   transform: `rotate(${element.rotation}deg) scale(${element.scale || 1})`,
-                  width: element.width + 'px',
-                  height: element.height + 'px',
+                  width: element.type === 'text' ? 'auto' : element.width + 'px',
+                  height: element.type === 'text' ? 'auto' : element.height + 'px',
+                  minWidth: element.type === 'text' ? '50px' : undefined,
                   zIndex: index + 10,
                   transformOrigin: 'top left'
                 }"
                 @mousedown.stop="startElementDrag($event, index)"
                 @touchstart.stop="startElementDrag($event, index)"
-                @click.stop="selectedElementIndex = index"
+                @click.stop="selectedElementIndex = index; showStickerPicker = false; showStampSelector = false"
               >
                 <!-- Content Wrapper -->
                 <div
@@ -158,27 +183,27 @@
                   ]"
                 >
                   <!-- Text Input - Only show when selected -->
-                  <textarea
+                  <div
                     v-if="element.type === 'text' && selectedElementIndex === index"
-                    :value="element.content"
-                    @input="element.content = $event.target.value"
+                    :ref="el => { if (el) textEditRefs[index] = el as HTMLElement }"
+                    contenteditable="true"
+                    @input="element.content = ($event.target as HTMLElement).innerText"
                     @click.stop
                     @mousedown.stop
                     @touchstart.stop
-                    class="w-full h-full bg-transparent border-none p-1 focus:outline-none resize-none min-w-[50px] min-h-[30px]"
-                    placeholder="输入文字"
-                    autofocus
+                    class="bg-transparent border-none p-1 focus:outline-none min-w-[50px] min-h-[24px] whitespace-pre-wrap break-words"
                     :style="{
                       fontFamily: element.fontFamily || 'Arial',
                       fontSize: (element.fontSize || 16) + 'px',
                       fontWeight: element.fontWeight || 'normal',
                       fontStyle: element.fontStyle || 'normal',
                       color: element.color || '#000000',
-                      whiteSpace: 'pre-wrap',
-                      wordWrap: 'break-word',
-                      overflow: 'auto'
+                      textDecoration: element.textDecoration || 'none',
+                      textAlign: element.textAlign || 'left',
+                      lineHeight: '1.4',
+                      display: 'inline-block',
                     }"
-                  />
+                  ></div>
                   <!-- Text Display - Show when not selected -->
                   <div
                     v-else-if="element.type === 'text'"
@@ -189,6 +214,8 @@
                       fontWeight: element.fontWeight || 'normal',
                       fontStyle: element.fontStyle || 'normal',
                       color: element.color || '#000000',
+                      textDecoration: element.textDecoration || 'none',
+                      textAlign: element.textAlign || 'left',
                       whiteSpace: 'pre-wrap',
                       wordWrap: 'break-word',
                       display: 'block'
@@ -254,16 +281,45 @@
               </div>
             </div>
           </div>
+          </div><!-- end stacked wrapper -->
+        </div><!-- end stacked container -->
+
+        <!-- Front/Back Toggle - below postcard -->
+        <div class="flex items-center justify-center gap-4 mt-4">
+          <button
+            @click="showFront = !showFront"
+            class="relative flex items-center gap-1 px-1 py-1 rounded-full border-2 transition-all duration-500 focus:outline-none select-none"
+            :class="showFront ? 'bg-white dark:bg-neutral border-black/15 dark:border-white/15' : 'bg-secondary/10 border-secondary/40'"
+            style="width: 148px;"
+          >
+            <!-- Sliding pill indicator -->
+            <span
+              class="absolute top-1 bottom-1 w-[66px] rounded-full shadow-md transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+              :class="showFront ? 'left-1 bg-primary dark:bg-white' : 'left-[75px] bg-secondary'"
+            ></span>
+            <!-- 正面 label -->
+            <span
+              class="relative z-10 flex-1 text-center text-xs font-bold tracking-wide transition-colors duration-300 py-1"
+              :class="showFront ? 'text-white dark:text-neutral' : 'text-black/40 dark:text-white/40'"
+            >正面</span>
+            <!-- 反面 label -->
+            <span
+              class="relative z-10 flex-1 text-center text-xs font-bold tracking-wide transition-colors duration-300 py-1"
+              :class="!showFront ? 'text-white' : 'text-black/40 dark:text-white/40'"
+            >反面</span>
+          </button>
         </div>
 
+        </div><!-- end sticky left column -->
+
         <!-- Right Column - Stamp Selection & Actions -->
-        <div class="space-y-8">
+        <div class="space-y-6">
           <!-- Add Elements Buttons -->
           <div class="space-y-3">
             <h3 class="font-headline text-lg font-bold text-primary">添加元素</h3>
             <div class="flex gap-2">
               <button
-                @click.prevent="addTextElement"
+                @click.prevent="addTextElement(); showStickerPicker = false; showStampSelector = false;"
                 type="button"
                 class="flex-1 py-2 px-2 bg-primary dark:bg-secondary text-white dark:text-black font-bold rounded-lg hover:opacity-90 transition-opacity text-xs flex items-center justify-center gap-1"
                 title="添加文字"
@@ -272,7 +328,7 @@
                 <span>文字</span>
               </button>
               <button
-                @click.prevent="showStickerPicker = !showStickerPicker"
+                @click.prevent="showStickerPicker = !showStickerPicker; showStampSelector = false; selectedElementIndex = -1;"
                 type="button"
                 class="flex-1 py-2 px-2 bg-primary dark:bg-secondary text-white dark:text-black font-bold rounded-lg hover:opacity-90 transition-opacity text-xs flex items-center justify-center gap-1"
                 title="添加贴纸"
@@ -280,191 +336,304 @@
                 <Smile class="w-4 h-4" />
                 <span>贴纸</span>
               </button>
+              <!-- AI Agent Button - only enabled when a text element is selected -->
+              <button
+                type="button"
+                :disabled="!(selectedElementIndex !== -1 && interactiveElements[selectedElementIndex]?.type === 'text')"
+                @click.prevent="showAiAgent = !showAiAgent; showStickerPicker = false; showStampSelector = false;"
+                class="flex-1 py-2 px-2 font-bold rounded-lg text-xs flex items-center justify-center gap-1 transition-opacity"
+                :class="selectedElementIndex !== -1 && interactiveElements[selectedElementIndex]?.type === 'text'
+                  ? 'bg-primary dark:bg-secondary text-white dark:text-black hover:opacity-90 cursor-pointer'
+                  : 'bg-black/20 dark:bg-white/20 text-black/40 dark:text-white/40 cursor-not-allowed'"
+                title="AI智能体"
+              >
+                <Sparkles class="w-4 h-4" />
+                <span>AI智能体</span>
+              </button>
             </div>
           </div>
 
+          <!-- Sticker Picker Panel -->
+          <div v-if="showStickerPicker" class="rounded-2xl border border-black/10 dark:border-white/10 shadow-sm">
+            <div class="flex items-center justify-between px-4 py-3 bg-primary/5 dark:bg-white/5 border-b border-black/10 dark:border-white/10 rounded-t-2xl">
+              <h3 class="text-sm font-bold text-primary dark:text-white tracking-wide">选择贴纸</h3>
+              <button @click="showStickerPicker = false" class="w-6 h-6 rounded-full flex items-center justify-center text-black/30 dark:text-white/30 hover:text-black dark:hover:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-sm">✕</button>
+            </div>
+            <!-- Series Tabs -->
+            <div class="flex gap-1 px-3 pt-2 pb-1 bg-white dark:bg-neutral border-b border-black/5 dark:border-white/5">
+              <button
+                v-for="series in stickerSeries"
+                :key="series.value"
+                @click="selectedStickerSeries = series.value"
+                class="px-3 py-1 rounded-lg text-xs font-semibold transition-colors"
+                :class="selectedStickerSeries === series.value ? 'bg-secondary text-white' : 'bg-black/5 dark:bg-white/5 text-black/50 dark:text-white/50 hover:bg-black/10 dark:hover:bg-white/10'"
+              >{{ series.label }}</button>
+            </div>
+            <!-- Grid: 3 cols, max 3 rows (9 items visible), rest scrollable -->
+            <div class="p-3 bg-white dark:bg-neutral rounded-b-2xl">
+              <div class="grid grid-cols-3 gap-2 overflow-y-auto" style="max-height: 210px;">
+                <button
+                  v-for="(sticker, idx) in stickerOptions"
+                  :key="idx"
+                  @click.prevent="addStickerElement(sticker); showStickerPicker = false"
+                  type="button"
+                  class="group relative rounded-xl bg-black/5 dark:bg-white/5 hover:bg-secondary/10 border-2 border-transparent hover:border-secondary transition-all duration-200 flex items-center justify-center" style="height: 64px;"
+                >
+                  <img :src="sticker" :alt="`贴纸${idx + 1}`" class="w-full h-full object-contain p-1.5 group-hover:scale-110 transition-transform duration-200" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Agent Panel -->
+          <div v-if="selectedElementIndex !== -1 && interactiveElements[selectedElementIndex]?.type === 'text' && showAiAgent" class="space-y-3 p-4 bg-white dark:bg-neutral rounded-2xl border-2 border-secondary">
+          </div>
+
           <!-- Combined Style & Picker Panel -->
-          <div v-if="selectedElementIndex !== -1" class="space-y-4 p-4 bg-white dark:bg-neutral rounded-2xl border-2 border-secondary">
+          <div v-if="selectedElementIndex !== -1" class="rounded-2xl border border-black/10 dark:border-white/10 shadow-sm">
+            <!-- Panel Header -->
+            <div class="flex items-center justify-between px-4 py-3 bg-primary/5 dark:bg-white/5 border-b border-black/10 dark:border-white/10 rounded-t-2xl">
+              <h3 class="text-sm font-bold text-primary dark:text-white tracking-wide">
+                {{ interactiveElements[selectedElementIndex]?.type === 'text' ? '文字样式' : '贴纸样式' }}
+              </h3>
+              <button @click="selectedElementIndex = -1" class="w-6 h-6 rounded-full flex items-center justify-center text-black/30 dark:text-white/30 hover:text-black dark:hover:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-sm">✕</button>
+            </div>
+            <div class="p-4 bg-white dark:bg-neutral space-y-4">
             <!-- Text Style Editor - Show when text element is selected -->
-            <div v-if="interactiveElements[selectedElementIndex]?.type === 'text'" class="space-y-4">
-              <!-- Top Row - Font & Size Controls -->
-              <div class="flex gap-2 flex-wrap">
-                <!-- Font Family Dropdown -->
-                <div class="relative">
+            <div v-if="interactiveElements[selectedElementIndex]?.type === 'text'" class="space-y-3">
+
+              <!-- Row 1: Toolbar Buttons with tooltips -->
+              <div class="flex items-center gap-0.5 p-1 bg-black/5 dark:bg-white/5 rounded-xl border border-secondary/20">
+                <!-- Bold -->
+                <div class="relative" @mouseenter="toolbarTooltip = 'bold'" @mouseleave="toolbarTooltip = null">
                   <button
-                    @click="showFontDropdown = !showFontDropdown"
-                    class="px-4 py-2 text-sm border-2 border-secondary rounded-xl bg-white dark:bg-neutral text-black dark:text-white font-semibold hover:bg-secondary/5 transition-colors flex items-center gap-2"
+                    @click="interactiveElements[selectedElementIndex].fontWeight = interactiveElements[selectedElementIndex].fontWeight === 'bold' ? 'normal' : 'bold'"
+                    :class="interactiveElements[selectedElementIndex].fontWeight === 'bold' ? 'bg-secondary/20 text-secondary' : 'text-black/60 dark:text-white/60 hover:bg-secondary/10'"
+                    class="w-8 h-8 rounded-md flex items-center justify-center transition-colors font-bold text-sm"
+                  ><Bold class="w-4 h-4" /></button>
+                  <div v-if="toolbarTooltip === 'bold'" class="absolute bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-800 text-white text-xs rounded px-2 py-1 z-50 pointer-events-none">加粗</div>
+                </div>
+
+                <!-- Italic -->
+                <div class="relative" @mouseenter="toolbarTooltip = 'italic'" @mouseleave="toolbarTooltip = null">
+                  <button
+                    @click="interactiveElements[selectedElementIndex].fontStyle = interactiveElements[selectedElementIndex].fontStyle === 'italic' ? 'normal' : 'italic'"
+                    :class="interactiveElements[selectedElementIndex].fontStyle === 'italic' ? 'bg-secondary/20 text-secondary' : 'text-black/60 dark:text-white/60 hover:bg-secondary/10'"
+                    class="w-8 h-8 rounded-md flex items-center justify-center transition-colors italic text-sm"
+                  ><Italic class="w-4 h-4" /></button>
+                  <div v-if="toolbarTooltip === 'italic'" class="absolute bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-800 text-white text-xs rounded px-2 py-1 z-50 pointer-events-none">斜体</div>
+                </div>
+
+                <!-- Underline -->
+                <div class="relative" @mouseenter="toolbarTooltip = 'underline'" @mouseleave="toolbarTooltip = null">
+                  <button
+                    @click="interactiveElements[selectedElementIndex].textDecoration = interactiveElements[selectedElementIndex].textDecoration === 'underline' ? 'none' : 'underline'"
+                    :class="interactiveElements[selectedElementIndex].textDecoration === 'underline' ? 'bg-secondary/20 text-secondary' : 'text-black/60 dark:text-white/60 hover:bg-secondary/10'"
+                    class="w-8 h-8 rounded-md flex items-center justify-center transition-colors"
+                  ><Underline class="w-4 h-4" /></button>
+                  <div v-if="toolbarTooltip === 'underline'" class="absolute bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-800 text-white text-xs rounded px-2 py-1 z-50 pointer-events-none">下划线</div>
+                </div>
+
+                <!-- Strikethrough -->
+                <div class="relative" @mouseenter="toolbarTooltip = 'strike'" @mouseleave="toolbarTooltip = null">
+                  <button
+                    @click="interactiveElements[selectedElementIndex].textDecoration = interactiveElements[selectedElementIndex].textDecoration === 'line-through' ? 'none' : 'line-through'"
+                    :class="interactiveElements[selectedElementIndex].textDecoration === 'line-through' ? 'bg-secondary/20 text-secondary' : 'text-black/60 dark:text-white/60 hover:bg-secondary/10'"
+                    class="w-8 h-8 rounded-md flex items-center justify-center transition-colors"
+                  ><Strikethrough class="w-4 h-4" /></button>
+                  <div v-if="toolbarTooltip === 'strike'" class="absolute bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-800 text-white text-xs rounded px-2 py-1 z-50 pointer-events-none">删除线</div>
+                </div>
+
+                <!-- Divider -->
+                <div class="w-px h-6 bg-black/20 dark:bg-white/20 mx-1"></div>
+
+                <!-- Align Left -->
+                <div class="relative" @mouseenter="toolbarTooltip = 'alignLeft'" @mouseleave="toolbarTooltip = null">
+                  <button
+                    @click="interactiveElements[selectedElementIndex].textAlign = 'left'"
+                    :class="(interactiveElements[selectedElementIndex].textAlign || 'left') === 'left' ? 'bg-secondary/20 text-secondary' : 'text-black/60 dark:text-white/60 hover:bg-secondary/10'"
+                    class="w-8 h-8 rounded-md flex items-center justify-center transition-colors"
+                  ><AlignLeft class="w-4 h-4" /></button>
+                  <div v-if="toolbarTooltip === 'alignLeft'" class="absolute bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-800 text-white text-xs rounded px-2 py-1 z-50 pointer-events-none">左对齐</div>
+                </div>
+
+                <!-- Align Center -->
+                <div class="relative" @mouseenter="toolbarTooltip = 'alignCenter'" @mouseleave="toolbarTooltip = null">
+                  <button
+                    @click="interactiveElements[selectedElementIndex].textAlign = 'center'"
+                    :class="interactiveElements[selectedElementIndex].textAlign === 'center' ? 'bg-secondary/20 text-secondary' : 'text-black/60 dark:text-white/60 hover:bg-secondary/10'"
+                    class="w-8 h-8 rounded-md flex items-center justify-center transition-colors"
+                  ><AlignCenter class="w-4 h-4" /></button>
+                  <div v-if="toolbarTooltip === 'alignCenter'" class="absolute bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-800 text-white text-xs rounded px-2 py-1 z-50 pointer-events-none">居中</div>
+                </div>
+
+                <!-- Align Right -->
+                <div class="relative" @mouseenter="toolbarTooltip = 'alignRight'" @mouseleave="toolbarTooltip = null">
+                  <button
+                    @click="interactiveElements[selectedElementIndex].textAlign = 'right'"
+                    :class="interactiveElements[selectedElementIndex].textAlign === 'right' ? 'bg-secondary/20 text-secondary' : 'text-black/60 dark:text-white/60 hover:bg-secondary/10'"
+                    class="w-8 h-8 rounded-md flex items-center justify-center transition-colors"
+                  ><AlignRight class="w-4 h-4" /></button>
+                  <div v-if="toolbarTooltip === 'alignRight'" class="absolute bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-800 text-white text-xs rounded px-2 py-1 z-50 pointer-events-none">右对齐</div>
+                </div>
+              </div>
+
+              <!-- Row 2: Font Family + Font Size Buttons -->
+              <div class="flex items-center gap-2 flex-wrap">
+                <!-- Font Family Dropdown -->
+                <div id="font-dropdown-wrapper" class="relative flex-1">
+                  <button
+                    @click.stop="showFontDropdown = !showFontDropdown"
+                    class="w-full px-3 py-1.5 text-xs border border-black/15 dark:border-white/15 rounded-lg bg-black/5 dark:bg-white/5 text-black dark:text-white font-medium hover:bg-black/10 dark:hover:bg-white/10 transition-colors flex items-center justify-between gap-1.5"
                   >
                     <span>{{ fontDisplayName }}</span>
-                    <svg :class="showFontDropdown ? 'rotate-180' : ''" class="w-4 h-4 text-secondary transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                    <svg :class="showFontDropdown ? 'rotate-180' : ''" class="w-3 h-3 opacity-50 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                     </svg>
                   </button>
-                  
-                  <!-- Dropdown Menu -->
-                  <div v-if="showFontDropdown" class="absolute left-0 top-full mt-1 w-48 bg-white dark:bg-neutral border-2 border-secondary rounded-xl shadow-lg z-50 max-h-64 overflow-y-auto pointer-events-auto">
-                    <!-- English Fonts -->
-                    <div class="px-3 py-2 border-b border-secondary/20">
-                      <p class="text-xs font-bold text-secondary mb-2">英文字体</p>
-                      <button
-                        v-for="font in englishFonts"
-                        :key="font.value"
-                        @click="interactiveElements[selectedElementIndex].fontFamily = font.value; showFontDropdown = false"
-                        :class="interactiveElements[selectedElementIndex].fontFamily === font.value ? 'bg-secondary text-white' : 'hover:bg-secondary/10'"
-                        class="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors mb-1 pointer-events-auto"
-                        :style="{ fontFamily: font.value }"
-                      >
-                        {{ font.label }}
-                      </button>
-                    </div>
-                    
-                    <!-- Chinese Fonts -->
-                    <div class="px-3 py-2">
+                  <div v-if="showFontDropdown" class="absolute left-0 top-full mt-1 w-48 bg-white dark:bg-neutral border border-black/10 dark:border-white/10 rounded-xl shadow-lg z-50 max-h-64 overflow-y-auto">
+                    <div class="px-3 py-2 border-b border-black/10 dark:border-white/10">
                       <p class="text-xs font-bold text-secondary mb-2">中文字体</p>
-                      <button
-                        v-for="font in chineseFonts"
-                        :key="font.value"
+                      <button v-for="font in chineseFonts" :key="font.value"
                         @click="interactiveElements[selectedElementIndex].fontFamily = font.value; showFontDropdown = false"
                         :class="interactiveElements[selectedElementIndex].fontFamily === font.value ? 'bg-secondary text-white' : 'hover:bg-secondary/10'"
-                        class="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors mb-1 pointer-events-auto"
+                        class="w-full text-left px-3 py-1.5 rounded-lg text-xs transition-colors mb-0.5"
                         :style="{ fontFamily: font.value }"
-                      >
-                        {{ font.label }}
-                      </button>
+                      >{{ font.label }}</button>
+                    </div>
+                    <div class="px-3 py-2">
+                      <p class="text-xs font-bold text-secondary mb-2">英文字体</p>
+                      <button v-for="font in englishFonts" :key="font.value"
+                        @click="interactiveElements[selectedElementIndex].fontFamily = font.value; showFontDropdown = false"
+                        :class="interactiveElements[selectedElementIndex].fontFamily === font.value ? 'bg-secondary text-white' : 'hover:bg-secondary/10'"
+                        class="w-full text-left px-3 py-1.5 rounded-lg text-xs transition-colors mb-0.5"
+                        :style="{ fontFamily: font.value }"
+                      >{{ font.label }}</button>
                     </div>
                   </div>
                 </div>
 
-                <!-- Font Size -->
-                <div class="flex items-center gap-2 px-4 py-2 border-2 border-secondary rounded-xl bg-white dark:bg-neutral">
-                  <span class="text-xs font-semibold text-secondary">大小</span>
-                  <input
-                    type="number"
-                    :value="interactiveElements[selectedElementIndex].fontSize || 16"
-                    @input="interactiveElements[selectedElementIndex].fontSize = parseInt($event.target.value)"
-                    min="8"
-                    max="72"
-                    class="w-12 text-sm font-bold text-center bg-transparent border-none text-black dark:text-white focus:outline-none"
-                  />
+                <!-- Font Size A- / display / A+ -->
+                <div class="flex items-center gap-1">
+                <button
+                    @click="interactiveElements[selectedElementIndex].fontSize = Math.max(8, (interactiveElements[selectedElementIndex].fontSize || 16) - 2)"
+                    class="w-8 h-8 rounded-lg bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-xs font-bold text-black/60 dark:text-white/60"
+                    title="缩小文字"
+                  ><span class="text-xs">A-</span></button>
+                  <span class="text-xs font-semibold text-black/50 dark:text-white/50 w-6 text-center">{{ interactiveElements[selectedElementIndex].fontSize || 16 }}</span>
+                <button
+                    @click="interactiveElements[selectedElementIndex].fontSize = Math.min(72, (interactiveElements[selectedElementIndex].fontSize || 16) + 2)"
+                    class="w-8 h-8 rounded-lg bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-xs font-bold text-black/60 dark:text-white/60"
+                    title="放大文字"
+                  ><span class="text-xs">A+</span></button>
                 </div>
-
-                <!-- Bold -->
-                <button
-                  @click="interactiveElements[selectedElementIndex].fontWeight = interactiveElements[selectedElementIndex].fontWeight === 'bold' ? 'normal' : 'bold'"
-                  :class="interactiveElements[selectedElementIndex].fontWeight === 'bold' ? 'bg-secondary text-white' : 'bg-white dark:bg-neutral text-secondary hover:bg-secondary/10'"
-                  class="w-12 h-10 rounded-xl border-2 border-secondary font-bold transition-all flex items-center justify-center"
-                  title="加粗"
-                >
-                  B
-                </button>
-
-                <!-- Italic -->
-                <button
-                  @click="interactiveElements[selectedElementIndex].fontStyle = interactiveElements[selectedElementIndex].fontStyle === 'italic' ? 'normal' : 'italic'"
-                  :class="interactiveElements[selectedElementIndex].fontStyle === 'italic' ? 'bg-secondary text-white' : 'bg-white dark:bg-neutral text-secondary hover:bg-secondary/10'"
-                  class="w-12 h-10 rounded-xl border-2 border-secondary italic transition-all flex items-center justify-center"
-                  title="斜体"
-                >
-                  I
-                </button>
-
-                <!-- Underline (placeholder for future use) -->
-                <button
-                  class="w-12 h-10 rounded-xl border-2 border-secondary bg-white dark:bg-neutral text-secondary hover:bg-secondary/10 transition-all flex items-center justify-center underline"
-                  title="下划线"
-                >
-                  U
-                </button>
               </div>
 
-              <!-- Color Palette Row -->
-              <div class="space-y-2">
-                <div class="flex items-center gap-2">
+              <!-- Row 3: Color Palette -->
+              <div class="space-y-1.5">
                   <span class="text-xs font-semibold text-secondary">文字颜色</span>
-                </div>
-                <div class="flex gap-2 flex-wrap p-3 border-2 border-dashed border-secondary rounded-xl bg-white dark:bg-neutral">
-                  <!-- Color swatches -->
+                <div class="flex gap-2 flex-wrap p-2 border-2 border-dashed border-secondary/40 rounded-xl bg-white dark:bg-neutral">
                   <button
                     v-for="color in ['#000000', '#FF0000', '#00B050', '#0070C0', '#FFC000', '#7030A0', '#FF6B6B', '#4ECDC4']"
                     :key="color"
                     @click="interactiveElements[selectedElementIndex].color = color"
-                    :class="interactiveElements[selectedElementIndex].color === color ? 'ring-2 ring-offset-2 ring-secondary' : ''"
-                    class="w-8 h-8 rounded-lg border-2 border-secondary transition-all hover:scale-110"
+                    :class="interactiveElements[selectedElementIndex].color === color ? 'ring-2 ring-offset-2 ring-secondary scale-110' : ''"
+                    class="w-7 h-7 rounded-lg border-2 border-white/50 shadow transition-all hover:scale-110"
                     :style="{ backgroundColor: color }"
-                    :title="`选择颜色 ${color}`"
                   ></button>
-                  
-                  <!-- Custom color picker -->
-                  <label class="w-8 h-8 rounded-lg border-2 border-secondary cursor-pointer hover:scale-110 transition-all flex items-center justify-center bg-white dark:bg-neutral">
-                    <input
-                      type="color"
-                      :value="interactiveElements[selectedElementIndex].color || '#000000'"
-                      @input="interactiveElements[selectedElementIndex].color = $event.target.value"
-                      class="hidden"
-                    />
-                    <span class="text-lg">+</span>
-                  </label>
+                  <!-- Custom color picker with floating preview -->
+                  <div class="relative">
+                    <label class="w-7 h-7 rounded-lg border-2 border-secondary cursor-pointer hover:scale-110 transition-all flex items-center justify-center bg-white dark:bg-neutral">
+                      <input
+                        type="color"
+                        :value="interactiveElements[selectedElementIndex].color || '#000000'"
+                        @input="interactiveElements[selectedElementIndex].color = ($event.target as HTMLInputElement).value"
+                        class="absolute opacity-0 w-0 h-0"
+                        @focus="showCustomColorPicker = true"
+                        @blur="showCustomColorPicker = false"
+                        ref="colorPickerInput"
+                      />
+                      <span class="text-base leading-none select-none" @click="($refs.colorPickerInput as HTMLInputElement)?.click()">+</span>
+                    </label>
+                    <!-- Floating color indicator -->
+                    <div
+                      v-if="interactiveElements[selectedElementIndex].color && !['#000000','#FF0000','#00B050','#0070C0','#FFC000','#7030A0','#FF6B6B','#4ECDC4'].includes(interactiveElements[selectedElementIndex].color)"
+                      class="absolute -top-9 left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5 pointer-events-none"
+                    >
+                      <div
+                        class="w-6 h-6 rounded-md shadow-md border-2 border-white"
+                        :style="{ backgroundColor: interactiveElements[selectedElementIndex].color }"
+                      ></div>
+                      <div class="w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-white"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
             <!-- Sticker Picker - Show when sticker element is selected -->
-            <div v-else-if="interactiveElements[selectedElementIndex]?.type === 'sticker'" class="space-y-3">
-              <h3 class="font-headline text-lg font-bold text-primary">选择贴纸</h3>
-              <div class="grid grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+            <div v-else-if="interactiveElements[selectedElementIndex]?.type === 'sticker'" class="space-y-2">
+              <!-- Series Tabs -->
+              <div class="flex gap-1">
+                <button
+                  v-for="series in stickerSeries"
+                  :key="series.value"
+                  @click="selectedStickerSeries = series.value"
+                  class="px-3 py-1 rounded-lg text-xs font-semibold transition-colors"
+                  :class="selectedStickerSeries === series.value ? 'bg-secondary text-white' : 'bg-black/5 dark:bg-white/5 text-black/50 dark:text-white/50 hover:bg-black/10 dark:hover:bg-white/10'"
+                >{{ series.label }}</button>
+              </div>
+              <div class="grid grid-cols-3 gap-2 overflow-y-auto" style="max-height: 210px;">
                 <button
                   v-for="(sticker, index) in stickerOptions"
                   :key="index"
                   @click="interactiveElements[selectedElementIndex].content = sticker"
-                  class="relative rounded-lg overflow-hidden border-2 transition-all hover:scale-105"
-                  :class="interactiveElements[selectedElementIndex].content === sticker ? 'border-secondary' : 'border-black/10 dark:border-white/10'"
+                  class="group relative rounded-xl bg-black/5 dark:bg-white/5 border-2 transition-all duration-200 flex items-center justify-center" style="height: 64px;"
+                  :class="interactiveElements[selectedElementIndex].content === sticker ? 'border-secondary bg-secondary/10' : 'border-transparent hover:border-secondary/50'"
                 >
-                  <img
-                    :src="sticker"
-                    :alt="`Sticker ${index + 1}`"
-                    class="w-full h-24 object-cover"
-                  />
-                  <div v-if="interactiveElements[selectedElementIndex].content === sticker" class="absolute inset-0 bg-secondary/20 flex items-center justify-center">
-                    <Check class="w-6 h-6 text-white" />
+                  <img :src="sticker" :alt="`Sticker ${index + 1}`" class="w-full h-full object-contain p-1.5 group-hover:scale-110 transition-transform duration-200" />
+                  <div v-if="interactiveElements[selectedElementIndex].content === sticker" class="absolute top-1 right-1 w-4 h-4 bg-secondary rounded-full flex items-center justify-center">
+                    <Check class="w-2.5 h-2.5 text-white" />
                   </div>
                 </button>
+              </div>
               </div>
             </div>
           </div>
 
           <!-- Stamp Selector -->
-          <div v-if="showStampSelector" class="space-y-3">
-            <h3 class="font-headline text-lg font-bold text-primary">选择邮票</h3>
-            <div class="grid grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+          <div v-if="showStampSelector" class="rounded-2xl border border-black/10 dark:border-white/10 shadow-sm">
+            <div class="flex items-center justify-between px-4 py-3 bg-primary/5 dark:bg-white/5 border-b border-black/10 dark:border-white/10 rounded-t-2xl">
+              <h3 class="text-sm font-bold text-primary dark:text-white tracking-wide">选择邮票</h3>
+              <button @click="showStampSelector = false" class="w-6 h-6 rounded-full flex items-center justify-center text-black/30 dark:text-white/30 hover:text-black dark:hover:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-sm">✕</button>
+            </div>
+            <div class="p-3 bg-white dark:bg-neutral">
+              <p v-if="myStamps.length === 0" class="text-xs text-black/40 dark:text-white/40 text-center py-8">还没有购入邮票，请先去商店购买</p>
+              <div v-else class="grid grid-cols-2 gap-2 max-h-72 overflow-y-auto">
               <button
                 v-for="stamp in myStamps"
                 :key="stamp.id"
                 @click="selectStamp(stamp)"
-                class="relative rounded-lg overflow-hidden border-4 transition-all hover:scale-105"
-                :class="selectedStamp?.id === stamp.id ? 'border-secondary' : 'border-black/10 dark:border-white/10'"
+                class="group relative rounded-xl border-2 transition-all duration-200 flex items-center justify-center bg-black/5 dark:bg-white/5" style="height: 72px;"
+                :class="selectedStamp?.id === stamp.id ? 'border-secondary shadow-md' : 'border-transparent hover:border-secondary/50'"
               >
-                <img
-                  :src="stamp.image"
-                  :alt="stamp.title"
-                  class="w-full h-24 object-cover"
-                />
-                <div v-if="selectedStamp?.id === stamp.id" class="absolute inset-0 bg-secondary/20 flex items-center justify-center">
-                  <Check class="w-6 h-6 text-white" />
+                <img :src="stamp.image" :alt="stamp.title" class="w-full h-full object-contain p-1.5 group-hover:scale-105 transition-transform duration-200" />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-xl"></div>
+                <div class="absolute bottom-0 left-0 right-0 px-2 py-1">
+                  <p class="text-white text-xs font-semibold truncate">{{ stamp.title }}</p>
                 </div>
-                <div class="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 truncate">
-                  {{ stamp.title }}
+                <div v-if="selectedStamp?.id === stamp.id" class="absolute top-1.5 right-1.5 w-5 h-5 bg-secondary rounded-full flex items-center justify-center shadow">
+                  <Check class="w-3 h-3 text-white" />
                 </div>
               </button>
             </div>
-            <p v-if="myStamps.length === 0" class="text-sm text-tertiary text-center py-8">
-              还没有购入邮票，请先去商店购买
-            </p>
+            </div>
           </div>
 
           <!-- Action Buttons -->
           <div class="flex flex-col gap-3">
             <button
-              @click="resetUpload"
+              @click="showResetDialog = true"
               class="w-full py-3 px-4 bg-black/5 dark:bg-white/5 text-primary font-bold rounded-xl hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
             >
               清空
@@ -480,6 +649,128 @@
         </div>
       </div>
     </main>
+
+    <!-- Reset Confirm Dialog -->
+    <transition name="fade">
+      <div v-if="showResetDialog" class="fixed inset-0 z-[100] flex items-center justify-center p-4" @click.self="showResetDialog = false">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <!-- Dialog -->
+        <div class="relative bg-white dark:bg-neutral rounded-2xl shadow-2xl p-6 w-full max-w-xs mx-auto">
+          <div class="flex flex-col items-center gap-3 mb-5">
+            <div class="w-12 h-12 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+              <Trash2 class="w-6 h-6 text-red-500" />
+            </div>
+            <h3 class="text-base font-bold text-primary dark:text-white">确认清空？</h3>
+            <p class="text-xs text-black/50 dark:text-white/50 text-center">所有内容将被清除，包括图片、文字和贴纸，此操作不可撤销。</p>
+          </div>
+          <div class="flex gap-3">
+            <button
+              @click="showResetDialog = false"
+              class="flex-1 py-2.5 rounded-xl border-2 border-black/10 dark:border-white/10 text-sm font-semibold text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            >取消</button>
+            <button
+              @click="resetUpload(); showResetDialog = false"
+              class="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold transition-colors"
+            >确认清空</button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Publish Preview Dialog -->
+    <transition name="fade">
+      <div v-if="showPublishDialog" class="fixed inset-0 z-[100] flex items-center justify-center p-4" @click.self="showPublishDialog = false">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+        <div class="relative bg-white dark:bg-neutral rounded-2xl shadow-2xl w-full max-w-lg mx-auto overflow-hidden">
+          <!-- Header -->
+          <div class="flex items-center justify-between px-6 py-4 border-b border-black/10 dark:border-white/10">
+            <h3 class="font-headline text-lg font-bold text-primary dark:text-white">预览明信片</h3>
+            <button @click="showPublishDialog = false" class="w-8 h-8 rounded-full flex items-center justify-center text-black/30 dark:text-white/30 hover:bg-black/10 dark:hover:bg-white/10 transition-colors">✕</button>
+          </div>
+
+          <!-- Postcard Preview -->
+          <div class="px-6 py-6">
+            <div class="relative w-full aspect-[3/2] cursor-pointer" @click="publishFlipped = !publishFlipped">
+              <!-- Back (text side) -->
+              <div
+                :class="[
+                  'absolute inset-0 bg-white dark:bg-neutral p-4 flex border border-black/10 dark:border-white/10 transition-all duration-500 shadow-inner',
+                  publishFlipped ? 'translate-x-3 translate-y-3 rotate-1 shadow-md z-0' : '-translate-x-3 -translate-y-3 -rotate-1 shadow-xl z-10'
+                ]"
+              >
+                <div class="flex-1 flex flex-col pr-4 border-r border-black/20 dark:border-white/20 overflow-hidden">
+                  <h4 class="font-headline text-sm tracking-widest text-black/60 dark:text-white/60 mb-1">POSTCARD</h4>
+                  <div class="flex-1 flex flex-col justify-between py-1">
+                    <div class="w-full h-[1px] bg-black/10"></div>
+                    <div class="w-full h-[1px] bg-black/10"></div>
+                    <div class="w-full h-[1px] bg-black/10"></div>
+                    <div class="w-full h-[1px] bg-black/10"></div>
+                  </div>
+                </div>
+                <div class="flex-1 flex flex-col pl-4">
+                  <div class="flex justify-end">
+                    <div v-if="selectedStamp" class="w-12 h-14 flex items-center justify-center">
+                      <img :src="selectedStamp.image" class="w-full h-full object-contain" />
+                    </div>
+                    <div v-else class="w-12 h-14 border border-dashed border-black/30 flex items-center justify-center">
+                      <span class="text-xs text-black/30">邮票</span>
+                    </div>
+                  </div>
+                  <div class="flex-1 flex flex-col justify-end gap-2 pb-1">
+                    <div class="flex items-end gap-2"><span class="text-xs text-black/40">to:</span><div class="flex-1 h-[1px] bg-black/20"></div></div>
+                    <div class="w-full h-[1px] bg-black/20"></div>
+                    <div class="flex items-end gap-2"><span class="text-xs text-black/40">from:</span><div class="flex-1 h-[1px] bg-black/20"></div></div>
+                    <div class="w-full h-[1px] bg-black/20"></div>
+                  </div>
+                </div>
+              </div>
+              <!-- Front (image side) -->
+              <div
+                :class="[
+                  'absolute inset-0 bg-white dark:bg-neutral p-2 transition-all duration-500',
+                  publishFlipped ? '-translate-x-3 -translate-y-3 -rotate-1 shadow-xl z-10' : 'translate-x-3 translate-y-3 rotate-1 shadow-md z-0'
+                ]"
+              >
+                <div class="w-full h-full relative overflow-hidden border border-black/5">
+                  <img v-if="selectedImage" :src="selectedImage" class="w-full h-full object-cover" />
+                  <!-- Interactive elements overlay -->
+                  <div
+                    v-for="(el, idx) in interactiveElements"
+                    :key="idx"
+                    class="absolute pointer-events-none"
+                    :style="{
+                      left: el.x + 'px', top: el.y + 'px',
+                      transform: `rotate(${el.rotation}deg) scale(${el.scale || 1})`,
+                      transformOrigin: 'top left',
+                      width: el.type === 'text' ? 'auto' : el.width + 'px',
+                      height: el.type === 'text' ? 'auto' : el.height + 'px',
+                      zIndex: idx + 1
+                    }"
+                  >
+                    <span v-if="el.type === 'text'" :style="{ fontFamily: el.fontFamily, fontSize: el.fontSize + 'px', color: el.color, fontWeight: el.fontWeight, fontStyle: el.fontStyle }">{{ el.content }}</span>
+                    <img v-else-if="el.type === 'sticker'" :src="el.content" class="w-full h-full object-contain" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p class="text-center text-xs text-black/40 dark:text-white/40 mt-3">点击明信片可翻转查看</p>
+          </div>
+
+          <!-- Actions -->
+          <div class="px-6 pb-6 flex gap-3">
+            <button
+              @click="showPublishDialog = false"
+              class="flex-1 py-3 rounded-xl border-2 border-black/10 dark:border-white/10 text-sm font-semibold text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            >再改改</button>
+            <button
+              @click="confirmPublish"
+              class="flex-1 py-3 rounded-xl bg-primary dark:bg-secondary text-white dark:text-black text-sm font-bold hover:opacity-90 transition-opacity"
+            >确认发布</button>
+          </div>
+        </div>
+      </div>
+    </transition>
 
     <!-- Hidden file inputs -->
     <input
@@ -501,14 +792,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
-import { ChevronLeft, Camera, Image, Check, Type, Smile, Bold, Italic, Palette, Trash2, ArrowUp, ArrowDown, RotateCw } from "lucide-vue-next";
+import { ref, onMounted, computed, watch, nextTick } from "vue";
+import { useRouter } from "vue-router";
+import { ChevronLeft, Camera, Image, Check, Type, Smile, Bold, Italic, Palette, Trash2, ArrowUp, ArrowDown, RotateCw, Sparkles, Underline, Strikethrough, AlignLeft, AlignCenter, AlignRight } from "lucide-vue-next";
 
 const showUploadOptions = ref(false);
+const postcardCanvasRef = ref<HTMLElement | null>(null);
 const showStampSelector = ref(false);
 const showStickerPicker = ref(false);
+const showAiAgent = ref(false);
+const showResetDialog = ref(false);
+const showPublishDialog = ref(false);
+const publishFlipped = ref(false);
+const router = useRouter();
 const showColorPicker = ref(false);
 const showFontDropdown = ref(false);
+const toolbarTooltip = ref<string | null>(null);
+const showFront = ref(true); // true=正面, false=反面
+const textEditRefs = ref<Record<number, HTMLElement>>({});
 const selectedImage = ref<string | null>(null);
 const cameraInput = ref<HTMLInputElement>();
 const galleryInput = ref<HTMLInputElement>();
@@ -519,11 +820,35 @@ const selectedStamp = ref<any>(null);
 const myStamps = ref<any[]>([]);
 const interactiveElements = ref<any[]>([]);
 const selectedElementIndex = ref(-1);
-const stickerOptions = [
-  "/postcard_back/1.png",
-  "/postcard_back/2.png",
-  "/postcard_back/3.png",
+const selectedStickerSeries = ref('arrow');
+const stickerSeries = [
+  { label: '箭头', value: 'arrow' },
 ];
+const stickerSeriesOptions: Record<string, string[]> = {
+  arrow: [
+    '/stickers/arrow/BgSub_1.png',
+    '/stickers/arrow/BgSub_2.png',
+    '/stickers/arrow/BgSub_3.png',
+    '/stickers/arrow/BgSub_4.png',
+    '/stickers/arrow/BgSub_5.png',
+    '/stickers/arrow/BgSub_6 (1).png',
+    '/stickers/arrow/BgSub_6 (2).png',
+    '/stickers/arrow/BgSub_6 (3).png',
+    '/stickers/arrow/BgSub_6 (4).png',
+    '/stickers/arrow/BgSub_6 (5).png',
+    '/stickers/arrow/BgSub_6 (6).png',
+    '/stickers/arrow/BgSub_6 (7).png',
+    '/stickers/arrow/BgSub_6 (8).png',
+    '/stickers/arrow/BgSub_6 (9).png',
+    '/stickers/arrow/BgSub_6 (10).png',
+    '/stickers/arrow/BgSub_6 (11).png',
+    '/stickers/arrow/BgSub_6 (12).png',
+    '/stickers/arrow/BgSub_6 (13).png',
+    '/stickers/arrow/BgSub_6 (14).png',
+    '/stickers/arrow/BgSub_6 (15).png',
+  ],
+};
+const stickerOptions = computed(() => stickerSeriesOptions[selectedStickerSeries.value] || []);
 
 // Font options
 const englishFonts = [
@@ -542,6 +867,19 @@ const chineseFonts = [
   { label: '宋体', value: 'SimSun' },
   { label: '微软雅黑', value: 'Microsoft YaHei' },
   { label: '楷体', value: 'KaiTi' },
+  // 自定义字体
+  { label: '三极速线简体', value: 'SanJiSuXianJianTi' },
+  { label: '沐瑶软笔手写体', value: 'MuyaoSoftbrush' },
+  { label: '思源黑体CN', value: 'SourceHanSansCN' },
+  { label: '得意黑', value: 'SmileySans' },
+  { label: '钉铃珠海字体', value: 'DingliZhuhaiFont' },
+  { label: '黄楷华律师字体', value: 'HuangkaihuaLawyer' },
+  { label: 'Yomogi', value: 'Yomogi' },
+  { label: '今年也要加油鸭', value: 'JinNianYeYaoJiaYouYa' },
+  { label: '博塔', value: 'BoTa' },
+  { label: '铅图笔锋手写体', value: 'QianTuBiFengShouXieTi' },
+  { label: '晴松手写体', value: 'QingSongShouXieTi' },
+  { label: '仓迹高德国妙黑', value: 'CangJiGaoDeGuoMiaoHei' },
 ];
 
 const fontDisplayName = computed(() => {
@@ -555,13 +893,38 @@ let currentElementIndex = -1;
 let resizeStartData = { width: 0, height: 0, startX: 0, startY: 0, x: 0, y: 0 };
 let rotateStartData = { rotation: 0, startX: 0, startY: 0 };
 
+// 监听选中元素变化，初始化文字内容和光标
+watch(selectedElementIndex, async (newIndex) => {
+  if (newIndex === -1) return;
+  const el = interactiveElements.value[newIndex];
+  if (!el || el.type !== 'text') return;
+  await nextTick();
+  const div = textEditRefs.value[newIndex];
+  if (!div) return;
+  // 只在内容不同时设置，避免打断正在输入
+  if (div.innerText !== el.content) {
+    div.innerText = el.content || '';
+  }
+  div.focus();
+  // 光标移到末尾
+  const range = document.createRange();
+  const sel = window.getSelection();
+  if (div.childNodes.length > 0) {
+    range.selectNodeContents(div);
+    range.collapse(false);
+    sel?.removeAllRanges();
+    sel?.addRange(range);
+  }
+});
+
 onMounted(() => {
   loadMyStamps();
   
   // Close font dropdown when clicking outside
   document.addEventListener('click', (e) => {
-    const fontDropdown = document.querySelector('.relative');
-    if (fontDropdown && !fontDropdown.contains(e.target as Node)) {
+    const target = e.target as Node;
+    const fontDropdownEl = document.getElementById('font-dropdown-wrapper');
+    if (fontDropdownEl && !fontDropdownEl.contains(target)) {
       showFontDropdown.value = false;
     }
   });
@@ -634,15 +997,26 @@ const startDrag = (e: MouseEvent | TouchEvent) => {
     document.removeEventListener('touchmove', handleMove);
     document.removeEventListener('mouseup', handleEnd);
     document.removeEventListener('touchend', handleEnd);
+    document.removeEventListener('mouseleave', handleEnd);
+    window.removeEventListener('blur', handleEnd);
   };
   
   document.addEventListener('mousemove', handleMove);
   document.addEventListener('touchmove', handleMove, { passive: false });
   document.addEventListener('mouseup', handleEnd);
   document.addEventListener('touchend', handleEnd);
+  document.addEventListener('mouseleave', handleEnd);
+  window.addEventListener('blur', handleEnd);
 };
 
 const addTextElement = () => {
+  showFront.value = false;
+  // 先取消当前选中，blur 旧文本框
+  if (selectedElementIndex.value !== -1 && textEditRefs.value[selectedElementIndex.value]) {
+    textEditRefs.value[selectedElementIndex.value].blur();
+  }
+  selectedElementIndex.value = -1;
+  const newIndex = interactiveElements.value.length;
   interactiveElements.value.push({
     type: 'text',
     content: '输入文字',
@@ -658,9 +1032,26 @@ const addTextElement = () => {
     fontStyle: 'normal',
     color: '#000000'
   });
+  nextTick(() => {
+    selectedElementIndex.value = newIndex;
+    const el = textEditRefs.value[newIndex];
+    if (el) {
+      el.innerText = '输入文字';
+      el.focus();
+      // 将光标移到末尾
+      const range = document.createRange();
+      const sel = window.getSelection();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+    }
+  });
 };
 
 const addStickerElement = (stickerUrl: string) => {
+  showFront.value = false;
+  const newIndex = interactiveElements.value.length;
   interactiveElements.value.push({
     type: 'sticker',
     content: stickerUrl,
@@ -670,6 +1061,9 @@ const addStickerElement = (stickerUrl: string) => {
     height: 100,
     rotation: 0,
     scale: 1
+  });
+  nextTick(() => {
+    selectedElementIndex.value = newIndex;
   });
 };
 
@@ -846,6 +1240,10 @@ const resetUpload = () => {
   imageOffset.value = { x: 0, y: 0 };
   selectedStamp.value = null;
   interactiveElements.value = [];
+  showStickerPicker.value = false;
+  showAiAgent.value = false;
+  showStampSelector.value = false;
+  selectedElementIndex.value = -1;
 };
 
 const publishPostcard = () => {
@@ -853,8 +1251,31 @@ const publishPostcard = () => {
     alert("请先选择图片");
     return;
   }
-  alert("明信片已发布！");
+  showPublishDialog.value = true;
+  publishFlipped.value = false;
+};
+
+const confirmPublish = () => {
+  // 保存到 localStorage
+  const stored = localStorage.getItem('userPostcards');
+  const existing = stored ? JSON.parse(stored) : [];
+  const canvasEl = postcardCanvasRef.value;
+  const canvasWidth = canvasEl ? canvasEl.offsetWidth : 600;
+  const canvasHeight = canvasEl ? canvasEl.offsetHeight : 400;
+  const newCard = {
+    id: Date.now(),
+    image: selectedImage.value,
+    elements: interactiveElements.value.map(el => ({ ...el })),
+    stamp: selectedStamp.value,
+    createdAt: new Date().toISOString(),
+    canvasWidth,
+    canvasHeight,
+  };
+  existing.unshift(newCard);
+  localStorage.setItem('userPostcards', JSON.stringify(existing));
+  showPublishDialog.value = false;
   resetUpload();
+  router.push('/mail');
 };
 </script>
 

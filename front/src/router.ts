@@ -7,9 +7,11 @@ import Favorites from "./pages/Favorites.vue";
 import PostDetail from "./pages/PostDetail.vue";
 import Create from "./pages/Create.vue";
 import Login from "./pages/Login.vue";
+import Register from "./pages/Register.vue";
 
 const routes = [
   { path: "/login", component: Login },
+  { path: "/register", component: Register },
   { path: "/", component: Home },
   { path: "/mail", component: Mail },
   { path: "/shop", component: Shop },

@@ -177,14 +177,7 @@
                 :disabled="isLoading || !agreeTerms"
                 class="w-full py-3 px-4 bg-secondary text-white dark:text-black font-bold rounded hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                <span v-if="!isLoading">下一张</span>
-                <span v-else class="flex items-center gap-2">
-                  <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  处理中...
-                </span>
+                注册
               </button>
             </div>
           </div>
@@ -207,10 +200,134 @@
       </div>
     </div>
   </div>
+
+  <!-- Envelope Animation Container -->
+  <Transition name="overlay">
+    <div
+      v-if="showEnvelope"
+      class="fixed inset-0 z-50 flex items-center justify-center"
+      :style="{
+        background: envelopePhase === 'done' ? 'transparent' : 'rgba(0,0,0,0.5)',
+        backdropFilter: envelopePhase === 'done' ? 'none' : 'blur(4px)',
+        transition: 'background 0.5s, backdrop-filter 0.5s'
+      }"
+    >
+      <!-- Envelope wrapper: slides in from left -->
+      <div
+        class="relative"
+        :style="{
+          width: '340px',
+          height: '240px',
+          transform: envelopePhase === 'entering' ? 'translateX(-120vw)' : 'translateX(0)',
+          transition: 'transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+        }"
+      >
+        <!-- The Postcard: slides up from inside envelope then back in -->
+        <div
+          :style="{
+            position: 'absolute',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '290px',
+            height: '190px',
+            background: 'white',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            zIndex: 15,
+            top: envelopePhase === 'sliding' ? '-150px' : '25px',
+            opacity: envelopePhase === 'entering' ? 0 : 1,
+            transition: 'top 0.9s ease-in-out, opacity 0.4s'
+          }"
+        >
+          <div style="width:100%;height:100%;border:1px solid rgba(0,0,0,0.1);display:flex;flex-direction:column;padding:10px;box-sizing:border-box;">
+            <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+              <div style="width:32px;height:32px;border:1px dashed rgba(0,0,0,0.3);background:rgba(0,0,0,0.05);"></div>
+            </div>
+            <div style="margin-top:auto;display:flex;flex-direction:column;gap:6px;">
+              <div style="height:4px;background:rgba(0,0,0,0.1);width:75%;border-radius:2px;"></div>
+              <div style="height:4px;background:rgba(0,0,0,0.1);width:50%;border-radius:2px;"></div>
+              <div style="height:4px;background:rgba(0,0,0,0.07);width:60%;border-radius:2px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Envelope body -->
+        <div
+          style="position:absolute;inset:0;background:#f4eadd;border:1px solid rgba(0,0,0,0.05);z-index:10;"
+        ></div>
+
+        <!-- Envelope left/right/bottom flaps (z-index 20, above body) -->
+        <div style="position:absolute;inset:0;z-index:20;overflow:hidden;pointer-events:none;">
+          <!-- left -->
+          <div style="position:absolute;top:0;left:0;width:0;height:0;border-top:120px solid transparent;border-bottom:120px solid transparent;border-left:170px solid #e8dbc8;"></div>
+          <!-- right -->
+          <div style="position:absolute;top:0;right:0;width:0;height:0;border-top:120px solid transparent;border-bottom:120px solid transparent;border-right:170px solid #e8dbc8;"></div>
+          <!-- bottom -->
+          <div style="position:absolute;bottom:0;left:0;width:0;height:0;border-left:170px solid transparent;border-right:170px solid transparent;border-bottom:100px solid #ddc9b0;"></div>
+        </div>
+
+        <!-- Envelope flap (top, folds down to close) -->
+        <div
+          :style="{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: 0,
+            borderLeft: '170px solid transparent',
+            borderRight: '170px solid transparent',
+            borderTop: '120px solid #e0d0bb',
+            transformOrigin: 'top center',
+            transform: (envelopePhase === 'closing' || envelopePhase === 'verifying') ? 'rotateX(0deg)' : 'rotateX(180deg)',
+            transition: 'transform 0.7s ease-in-out',
+            zIndex: 30,
+            perspective: '600px'
+          }"
+        ></div>
+
+        <!-- Verification Form -->
+        <div
+          :style="{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 40,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            opacity: envelopePhase === 'verifying' ? 1 : 0,
+            pointerEvents: envelopePhase === 'verifying' ? 'auto' : 'none',
+            transition: 'opacity 0.5s 0.3s'
+          }"
+        >
+          <div style="background:rgba(255,255,255,0.95);backdrop-filter:blur(4px);padding:16px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.15);width:100%;text-align:center;">
+            <h4 style="font-weight:700;margin-bottom:6px;font-size:14px;">填写邮编（验证码）</h4>
+            <p style="font-size:11px;color:#888;margin-bottom:12px;">验证邮件已发送至 {{ email }}</p>
+            <input
+              v-model="verificationCode"
+              type="text"
+              placeholder="输入 6 位验证码"
+              maxlength="6"
+              style="width:100%;padding:8px 12px;border:1px solid rgba(0,0,0,0.15);border-radius:4px;text-align:center;letter-spacing:0.2em;font-family:monospace;margin-bottom:10px;outline:none;box-sizing:border-box;font-size:16px;"
+            />
+            <button
+              @click="verifyAndComplete"
+              :disabled="verificationCode.length !== 6 || isVerifying"
+              style="width:100%;padding:8px;background:#b07d5e;color:white;font-weight:700;border:none;border-radius:4px;cursor:pointer;font-size:13px;"
+              :style="{ opacity: (verificationCode.length !== 6 || isVerifying) ? 0.5 : 1 }"
+            >
+              <span v-if="!isVerifying">盖戳寄出</span>
+              <span v-else>验证中...</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </Transition>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import { Eye, EyeOff } from "lucide-vue-next";
 
@@ -227,8 +344,32 @@ const showConfirmPassword = ref(false);
 const agreeTerms = ref(false);
 const isLoading = ref(false);
 
+// Envelope animation state
+const showEnvelope = ref(false);
+const envelopePhase = ref<'entering' | 'sliding' | 'closing' | 'verifying' | 'done'>('entering');
+const verificationCode = ref('');
+const isVerifying = ref(false);
+
 const bringToFront = (cardNum: number) => {
   activeCard.value = cardNum;
+};
+
+const triggerEnvelopeAnimation = async () => {
+  showEnvelope.value = true;
+  envelopePhase.value = 'entering';  // 信封在左侧屏幕外
+
+  // 等 DOM 挂载完成后再触发过渡
+  await nextTick();
+  await new Promise(resolve => setTimeout(resolve, 50));
+  envelopePhase.value = 'sliding';   // 信封滑入中心，明信片从信封弹出
+
+  // 等信封滑入 + 明信片弹出动画完成
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  envelopePhase.value = 'closing';   // 明信片收回信封，封口合上
+
+  // 等合口动画完成
+  await new Promise(resolve => setTimeout(resolve, 900));
+  envelopePhase.value = 'verifying'; // 显示验证码表单
 };
 
 const handleRegister = async () => {
@@ -247,7 +388,15 @@ const handleRegister = async () => {
     return;
   }
 
-  isLoading.value = true;
+  if (!agreeTerms.value) return;
+
+  triggerEnvelopeAnimation();
+};
+
+const verifyAndComplete = async () => {
+  if (verificationCode.value.length !== 6) return;
+
+  isVerifying.value = true;
 
   try {
     await new Promise(resolve => setTimeout(resolve, 1500));
@@ -257,12 +406,14 @@ const handleRegister = async () => {
       email: email.value,
     }));
 
-    alert("注册成功！");
+    envelopePhase.value = 'done';
+    await new Promise(resolve => setTimeout(resolve, 600));
+    showEnvelope.value = false;
     router.push("/");
   } catch (error) {
-    alert("注册失败，请重试");
+    alert("验证失败，请重试");
   } finally {
-    isLoading.value = false;
+    isVerifying.value = false;
   }
 };
 </script>
