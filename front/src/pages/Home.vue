@@ -41,6 +41,7 @@
                 :src="post.image"
                 :alt="post.title"
                 class="w-full h-full object-cover"
+                :style="post.imageOffset ? { transform: `translate(${post.imageOffset.x}px, ${post.imageOffset.y}px) scale(${post.imageScale || 1}) rotate(${post.imageRotation || 0}deg)` } : {}"
                 referrerpolicy="no-referrer"
               />
             </div>
@@ -66,12 +67,38 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { Search, Heart } from "lucide-vue-next";
 
 const activeTab = ref("发现");
+const userPublicCards = ref<any[]>([]);
 
-const postcards = [
+onMounted(() => {
+  const stored = localStorage.getItem('userPostcards');
+  if (stored) {
+    const all = JSON.parse(stored);
+    userPublicCards.value = all
+      .filter((c: any) => c.isPublic)
+      .map((c: any) => ({
+        id: c.id,
+        title: c.title || '无标题明信片',
+        location: new Date(c.createdAt).toLocaleDateString('zh-CN'),
+        image: c.image,
+        imageOffset: c.imageOffset,
+        imageScale: c.imageScale,
+        imageRotation: c.imageRotation,
+        aspect: 'aspect-[3/2]',
+        likes: 0,
+      }));
+  }
+});
+
+const postcards = computed(() => [
+  ...userPublicCards.value,
+  ...sampleCards,
+]);
+
+const sampleCards = [
   {
     id: 1,
     title: "Silent Hallway",

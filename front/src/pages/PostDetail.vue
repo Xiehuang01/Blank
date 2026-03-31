@@ -33,11 +33,12 @@
         <!-- Postcard Front (Image) -->
         <div class="relative w-full" :style="{ aspectRatio: imageAspectRatio }">
           <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral p-3 border border-black/10 dark:border-white/10 shadow-lg overflow-hidden">
-            <div class="w-full h-full relative bg-black/5 flex items-center justify-center rounded-sm">
+            <div class="w-full h-full relative bg-black/5 flex items-center justify-center rounded-sm overflow-hidden">
               <img
                 :src="post.image"
                 :alt="post.title"
                 class="w-full h-full object-cover"
+                :style="post.imageOffset ? { transform: `translate(${post.imageOffset.x}px, ${post.imageOffset.y}px) scale(${post.imageScale || 1}) rotate(${post.imageRotation || 0}deg)` } : {}"
                 referrerpolicy="no-referrer"
               />
             </div>
@@ -46,7 +47,7 @@
 
         <!-- Postcard Back (Text side) -->
         <div class="relative w-full" :style="{ aspectRatio: imageAspectRatio }">
-          <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral p-5 flex border border-black/10 dark:border-white/10 shadow-lg">
+          <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral p-5 flex border border-black/10 dark:border-white/10 shadow-lg overflow-hidden">
             <!-- Left Side - Message -->
             <div class="flex-1 flex flex-col pr-5 border-r border-black/20 dark:border-white/20 relative overflow-hidden">
               <h4 class="font-headline text-xl tracking-widest text-black/60 dark:text-white/60 mb-2">POSTCARD</h4>
@@ -69,9 +70,11 @@
             <!-- Right Side - Address & Stamp -->
             <div class="flex-1 flex flex-col pl-5 relative">
               <div class="flex justify-end relative mb-4">
-                <!-- Stamp placeholder -->
                 <div class="w-20 h-24 border-[2px] border-black/30 dark:border-white/30 flex items-center justify-center relative bg-black/5 dark:bg-white/5 flex-shrink-0" style="border-style: dashed;">
-                  <span class="text-xs font-bold text-black/40 dark:text-white/40">邮票</span>
+                  <span v-if="!post.stamp" class="text-xs font-bold text-black/40 dark:text-white/40">邮票</span>
+                </div>
+                <div v-if="post.stamp" class="absolute -top-4 -right-4 w-32 h-32 flex items-center justify-center pointer-events-none">
+                  <img :src="post.stamp.image" :alt="post.stamp.title" class="w-full h-full object-cover" />
                 </div>
               </div>
               <div class="flex-1 flex flex-col justify-end gap-4 pb-2">
@@ -86,6 +89,27 @@
                 </div>
                 <div class="w-full h-[1px] bg-black/20 dark:bg-white/20"></div>
               </div>
+            </div>
+
+            <!-- Interactive Elements -->
+            <div
+              v-for="(el, idx) in (post.elements || [])"
+              :key="idx"
+              class="absolute pointer-events-none"
+              :style="{
+                left: el.x + 'px', top: el.y + 'px',
+                transform: `rotate(${el.rotation}deg) scale(${el.scale || 1})`,
+                transformOrigin: 'top left',
+                width: el.type === 'text' ? 'auto' : el.width + 'px',
+                height: el.type === 'text' ? 'auto' : el.height + 'px',
+                zIndex: (idx as number) + 10
+              }"
+            >
+              <span
+                v-if="el.type === 'text'"
+                :style="{ fontFamily: el.fontFamily, fontSize: el.fontSize + 'px', color: el.color, fontWeight: el.fontWeight, fontStyle: el.fontStyle, textDecoration: el.textDecoration, whiteSpace: 'pre-wrap' }"
+              >{{ el.content }}</span>
+              <img v-else-if="el.type === 'sticker'" :src="el.content" class="w-full h-full object-contain" />
             </div>
           </div>
         </div>
@@ -173,11 +197,12 @@
           <!-- Postcard Front (Image) -->
           <div class="relative w-full" :style="{ aspectRatio: imageAspectRatio }">
             <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral p-6 border border-black/10 dark:border-white/10 shadow-lg overflow-hidden">
-              <div class="w-full h-full relative bg-black/5 flex items-center justify-center rounded-sm">
+              <div class="w-full h-full relative bg-black/5 flex items-center justify-center rounded-sm overflow-hidden">
                 <img
                   :src="post.image"
                   :alt="post.title"
                   class="w-full h-full object-cover"
+                  :style="post.imageOffset ? { transform: `translate(${post.imageOffset.x}px, ${post.imageOffset.y}px) scale(${post.imageScale || 1}) rotate(${post.imageRotation || 0}deg)` } : {}"
                   referrerpolicy="no-referrer"
                 />
               </div>
@@ -186,7 +211,7 @@
 
           <!-- Postcard Back (Text side) -->
           <div class="relative w-full" :style="{ aspectRatio: imageAspectRatio }">
-            <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral p-5 flex border border-black/10 dark:border-white/10 shadow-lg">
+            <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral p-5 flex border border-black/10 dark:border-white/10 shadow-lg overflow-hidden">
               <!-- Left Side - Message -->
               <div class="flex-1 flex flex-col pr-5 border-r border-black/20 dark:border-white/20 relative overflow-hidden">
                 <h4 class="font-headline text-xl tracking-widest text-black/60 dark:text-white/60 mb-2">POSTCARD</h4>
@@ -209,9 +234,11 @@
               <!-- Right Side - Address & Stamp -->
               <div class="flex-1 flex flex-col pl-5 relative">
                 <div class="flex justify-end relative mb-4">
-                  <!-- Stamp placeholder -->
                   <div class="w-20 h-24 border-[2px] border-black/30 dark:border-white/30 flex items-center justify-center relative bg-black/5 dark:bg-white/5 flex-shrink-0" style="border-style: dashed;">
-                    <span class="text-xs font-bold text-black/40 dark:text-white/40">邮票</span>
+                    <span v-if="!post.stamp" class="text-xs font-bold text-black/40 dark:text-white/40">邮票</span>
+                  </div>
+                  <div v-if="post.stamp" class="absolute -top-4 -right-4 w-32 h-32 flex items-center justify-center pointer-events-none">
+                    <img :src="post.stamp.image" :alt="post.stamp.title" class="w-full h-full object-cover" />
                   </div>
                 </div>
                 <div class="flex-1 flex flex-col justify-end gap-4 pb-2">
@@ -226,6 +253,27 @@
                   </div>
                   <div class="w-full h-[1px] bg-black/20 dark:bg-white/20"></div>
                 </div>
+              </div>
+
+              <!-- Interactive Elements -->
+              <div
+                v-for="(el, idx) in (post.elements || [])"
+                :key="idx"
+                class="absolute pointer-events-none"
+                :style="{
+                  left: el.x + 'px', top: el.y + 'px',
+                  transform: `rotate(${el.rotation}deg) scale(${el.scale || 1})`,
+                  transformOrigin: 'top left',
+                  width: el.type === 'text' ? 'auto' : el.width + 'px',
+                  height: el.type === 'text' ? 'auto' : el.height + 'px',
+                  zIndex: (idx as number) + 10
+                }"
+              >
+                <span
+                  v-if="el.type === 'text'"
+                  :style="{ fontFamily: el.fontFamily, fontSize: el.fontSize + 'px', color: el.color, fontWeight: el.fontWeight, fontStyle: el.fontStyle, textDecoration: el.textDecoration, whiteSpace: 'pre-wrap' }"
+                >{{ el.content }}</span>
+                <img v-else-if="el.type === 'sticker'" :src="el.content" class="w-full h-full object-contain" />
               </div>
             </div>
           </div>
@@ -318,7 +366,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { ChevronLeft, Heart, MessageCircle, X, Send } from "lucide-vue-next";
+import { ChevronLeft, Heart, MessageCircle, Send } from "lucide-vue-next";
 
 const route = useRoute();
 const post = ref<any>(null);
@@ -346,6 +394,24 @@ onMounted(() => {
 });
 
 const loadPost = (id: any) => {
+  // 先查 localStorage 用户明信片
+  const stored = localStorage.getItem('userPostcards');
+  if (stored) {
+    const userCards = JSON.parse(stored);
+    const userCard = userCards.find((c: any) => String(c.id) === String(id));
+    if (userCard) {
+      post.value = {
+        ...userCard,
+        location: new Date(userCard.createdAt).toLocaleDateString('zh-CN'),
+        likes: 0,
+        comments: 0,
+      };
+      likeCount.value = 0;
+      imageAspectRatio.value = '3/2';
+      return;
+    }
+  }
+
   const posts = [
     {
       id: 1,

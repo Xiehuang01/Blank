@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-background pb-24">
+  <div class="min-h-screen bg-background pb-24" @click="selectedElementIndex = -1">
     <header
       class="sticky top-0 z-40 flex items-center gap-4 w-full px-4 h-16 bg-background/90 backdrop-blur-sm border-b border-primary/10"
     >
@@ -144,10 +144,9 @@
               transition: 'transform 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.45s ease, z-index 0s 0.22s',
             }"
           >
-            <div class="relative w-full h-full group overflow-hidden">
+            <div class="relative w-full h-full group overflow-hidden" @click="selectedElementIndex = -1; showStickerPicker = false; showStampSelector = false">
               <div
                 class="absolute inset-0 rounded-none bg-white dark:bg-neutral p-5 flex border border-black/10 dark:border-white/10 shadow-lg overflow-hidden"
-                @click="selectedElementIndex = -1; showStickerPicker = false; showStampSelector = false"
               >
                 <!-- Left Side - Message -->
                 <div class="flex-1 flex flex-col pr-5 border-r border-black/20 dark:border-white/20 relative overflow-hidden">
@@ -361,7 +360,7 @@
         </div><!-- end sticky left column -->
 
         <!-- Right Column - Stamp Selection & Actions -->
-        <div class="space-y-6">
+        <div class="space-y-6" @click.stop>
           <!-- Add Elements Buttons -->
           <div class="space-y-3">
             <h3 class="font-headline text-lg font-bold text-primary">添加元素</h3>
@@ -1561,6 +1560,10 @@ const publishPostcard = () => {
     alert("请先选择图片");
     return;
   }
+  if (!selectedStamp.value) {
+    alert("请先选择邮票");
+    return;
+  }
   showPublishDialog.value = true;
   publishFlipped.value = false;
 };
@@ -1574,6 +1577,9 @@ const confirmPublish = () => {
   const canvasHeight = canvasEl ? canvasEl.offsetHeight : 400;
   const newCard = {
     id: Date.now(),
+    title: postcardTitle.value || '无标题明信片',
+    recipient: recipientInput.value,
+    isPublic: isPublicToSquare.value,
     image: selectedImage.value,
     imageOffset: { ...imageOffset.value },
     imageScale: imageScale.value,
