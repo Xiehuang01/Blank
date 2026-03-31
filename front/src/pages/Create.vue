@@ -35,27 +35,38 @@
             <div class="relative w-full h-full group">
               <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral p-3 border border-black/10 dark:border-white/10 shadow-lg overflow-hidden">
                 <div 
-                  class="w-full h-full relative bg-black/5 flex items-center justify-center rounded-sm cursor-move overflow-hidden"
+                  class="w-full h-full relative bg-black/5 flex items-center justify-center rounded-sm cursor-move overflow-hidden group/imgarea"
                   @mousedown="startDrag"
                   @touchstart.passive="startDrag"
+                  @mouseenter="showImageControls = true"
+                  @mouseleave="showImageControls = false"
                   @click.self="selectedImage && (showUploadOptions = !showUploadOptions)"
                 >
                   <img
                     v-if="selectedImage"
                     :src="selectedImage"
                     alt="Preview"
-                    class="w-full h-full object-cover"
-                    :style="{ transform: `translate(${imageOffset.x}px, ${imageOffset.y}px)` }"
+                    draggable="false"
+                    @dragstart.prevent
+                    class="w-full h-full object-cover select-none"
+                    :style="{ transform: `translate(${imageOffset.x}px, ${imageOffset.y}px) scale(${imageScale}) rotate(${imageRotation}deg)` }"
                   />
                   <div v-else class="text-tertiary text-center">
                     <p class="text-sm">点击+号添加图片</p>
                   </div>
 
-                  <!-- Upload Button - Only show when no image or when clicked -->
+                  <!-- Upload Button - Show when no image, hovered, or showUploadOptions -->
                   <button
                     v-if="!selectedImage || showUploadOptions"
                     @click.stop="showUploadOptions = !showUploadOptions"
                     class="absolute bottom-4 right-4 w-14 h-14 rounded-full bg-secondary text-white dark:text-black font-bold shadow-lg hover:scale-110 transition-transform flex items-center justify-center text-2xl z-10 pointer-events-auto"
+                  >
+                    +
+                  </button>
+                  <button
+                    v-else-if="selectedImage"
+                    @click.stop="showUploadOptions = !showUploadOptions"
+                    class="absolute bottom-4 right-4 w-14 h-14 rounded-full bg-secondary text-white dark:text-black font-bold shadow-lg hover:scale-110 transition-transform flex items-center justify-center text-2xl z-10 pointer-events-auto opacity-0 group-hover/imgarea:opacity-100 transition-opacity duration-200"
                   >
                     +
                   </button>
@@ -79,6 +90,43 @@
                       </button>
                     </div>
                   </transition>
+
+                  <!-- Image Controls: 竖立在明信片内部左侧 -->
+                  <transition name="fade">
+                    <div
+                      v-if="selectedImage && showImageControls"
+                      class="absolute top-1/2 -translate-y-1/2 left-2 z-20 flex flex-col items-center gap-3 py-3 px-2 rounded-2xl bg-white/90 dark:bg-neutral/90 backdrop-blur-sm border border-black/10 dark:border-white/10 shadow-lg"
+                      @mouseenter="showImageControls = true"
+                      @mouseleave="showImageControls = false"
+                      @mousedown.stop
+                    >
+                      <div class="flex flex-col items-center gap-1">
+                        <span class="text-primary/60 dark:text-white/60"><svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35M11 8v6M8 11h6"/></svg></span>
+                        <div class="relative w-4 cursor-pointer select-none" style="height: 80px;" @mousedown.stop="startScaleDragV">
+                          <div class="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-1 rounded-full bg-black/15 dark:bg-white/15">
+                            <div class="absolute bottom-0 left-0 right-0 rounded-full bg-primary dark:bg-secondary transition-none" :style="{ height: ((imageScale - 0.5) / 2.5 * 100) + '%' }"></div>
+                            <div class="absolute left-1/2 -translate-x-1/2 w-2.5 h-0.5 bg-primary/40 dark:bg-white/40 rounded-full" :style="{ bottom: ((1 - 0.5) / 2.5 * 100) + '%' }"></div>
+                          </div>
+                          <div class="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-white shadow-md border border-black/10 transition-none" :style="{ top: (100 - (imageScale - 0.5) / 2.5 * 100) + '%' }"></div>
+                        </div>
+                        <span class="text-primary/50 dark:text-white/50 text-[9px] tabular-nums">{{ Math.round(imageScale * 100) }}%</span>
+                      </div>
+                      <div class="w-5 h-px bg-black/10 dark:bg-white/10"></div>
+                      <div class="flex flex-col items-center gap-1">
+                        <span class="text-primary/60 dark:text-white/60"><svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38"/></svg></span>
+                        <div class="relative w-4 cursor-pointer select-none" style="height: 80px;" @mousedown.stop="startRotateDragV">
+                          <div class="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-1 rounded-full bg-black/15 dark:bg-white/15">
+                            <div class="absolute left-0 right-0 rounded-full bg-primary dark:bg-secondary transition-none" :style="imageRotation >= 0 ? { top: '50%', height: (imageRotation / 180 * 50) + '%' } : { bottom: '50%', height: (-imageRotation / 180 * 50) + '%' }"></div>
+                            <div class="absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-2.5 h-0.5 bg-primary/60 dark:bg-white/60 rounded-full"></div>
+                            <div class="absolute top-1/4 left-1/2 -translate-x-1/2 w-2 h-px bg-black/20 dark:bg-white/20"></div>
+                            <div class="absolute top-3/4 left-1/2 -translate-x-1/2 w-2 h-px bg-black/20 dark:bg-white/20"></div>
+                          </div>
+                          <div class="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-white shadow-md border border-black/10 transition-none" :style="{ top: (50 + imageRotation / 180 * 50) + '%' }"></div>
+                        </div>
+                        <span class="text-primary/50 dark:text-white/50 text-[9px] tabular-nums">{{ imageRotation > 0 ? '+' : '' }}{{ Math.round(imageRotation) }}°</span>
+                      </div>
+                    </div>
+                  </transition>
                 </div>
               </div>
             </div>
@@ -96,7 +144,7 @@
               transition: 'transform 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.45s ease, z-index 0s 0.22s',
             }"
           >
-            <div class="relative w-full h-full group">
+            <div class="relative w-full h-full group overflow-hidden">
               <div
                 class="absolute inset-0 rounded-none bg-white dark:bg-neutral p-5 flex border border-black/10 dark:border-white/10 shadow-lg overflow-hidden"
                 @click="selectedElementIndex = -1; showStickerPicker = false; showStampSelector = false"
@@ -337,7 +385,7 @@
                 <span>贴纸</span>
               </button>
               <!-- AI Agent Button - only enabled when a text element is selected -->
-              <button
+                  <button
                 type="button"
                 :disabled="!(selectedElementIndex !== -1 && interactiveElements[selectedElementIndex]?.type === 'text')"
                 @click.prevent="showAiAgent = !showAiAgent; showStickerPicker = false; showStampSelector = false;"
@@ -349,7 +397,7 @@
               >
                 <Sparkles class="w-4 h-4" />
                 <span>AI智能体</span>
-              </button>
+                  </button>
             </div>
           </div>
 
@@ -361,18 +409,18 @@
             </div>
             <!-- Series Tabs -->
             <div class="flex gap-1 px-3 pt-2 pb-1 bg-white dark:bg-neutral border-b border-black/5 dark:border-white/5">
-              <button
+                      <button
                 v-for="series in stickerSeries"
                 :key="series.value"
                 @click="selectedStickerSeries = series.value"
                 class="px-3 py-1 rounded-lg text-xs font-semibold transition-colors"
                 :class="selectedStickerSeries === series.value ? 'bg-secondary text-white' : 'bg-black/5 dark:bg-white/5 text-black/50 dark:text-white/50 hover:bg-black/10 dark:hover:bg-white/10'"
               >{{ series.label }}</button>
-            </div>
+                    </div>
             <!-- Grid: 3 cols, max 3 rows (9 items visible), rest scrollable -->
             <div class="p-3 bg-white dark:bg-neutral rounded-b-2xl">
               <div class="grid grid-cols-3 gap-2 overflow-y-auto" style="max-height: 210px;">
-                <button
+                      <button
                   v-for="(sticker, idx) in stickerOptions"
                   :key="idx"
                   @click.prevent="addStickerElement(sticker); showStickerPicker = false"
@@ -380,14 +428,14 @@
                   class="group relative rounded-xl bg-black/5 dark:bg-white/5 hover:bg-secondary/10 border-2 border-transparent hover:border-secondary transition-all duration-200 flex items-center justify-center" style="height: 64px;"
                 >
                   <img :src="sticker" :alt="`贴纸${idx + 1}`" class="w-full h-full object-contain p-1.5 group-hover:scale-110 transition-transform duration-200" />
-                </button>
-              </div>
-            </div>
-          </div>
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
           <!-- AI Agent Panel -->
           <div v-if="selectedElementIndex !== -1 && interactiveElements[selectedElementIndex]?.type === 'text' && showAiAgent" class="space-y-3 p-4 bg-white dark:bg-neutral rounded-2xl border-2 border-secondary">
-          </div>
+                </div>
 
           <!-- Combined Style & Picker Panel -->
           <div v-if="selectedElementIndex !== -1" class="rounded-2xl border border-black/10 dark:border-white/10 shadow-sm">
@@ -406,8 +454,8 @@
               <div class="flex items-center gap-0.5 p-1 bg-black/5 dark:bg-white/5 rounded-xl border border-secondary/20">
                 <!-- Bold -->
                 <div class="relative" @mouseenter="toolbarTooltip = 'bold'" @mouseleave="toolbarTooltip = null">
-                  <button
-                    @click="interactiveElements[selectedElementIndex].fontWeight = interactiveElements[selectedElementIndex].fontWeight === 'bold' ? 'normal' : 'bold'"
+                <button
+                  @click="interactiveElements[selectedElementIndex].fontWeight = interactiveElements[selectedElementIndex].fontWeight === 'bold' ? 'normal' : 'bold'"
                     :class="interactiveElements[selectedElementIndex].fontWeight === 'bold' ? 'bg-secondary/20 text-secondary' : 'text-black/60 dark:text-white/60 hover:bg-secondary/10'"
                     class="w-8 h-8 rounded-md flex items-center justify-center transition-colors font-bold text-sm"
                   ><Bold class="w-4 h-4" /></button>
@@ -416,8 +464,8 @@
 
                 <!-- Italic -->
                 <div class="relative" @mouseenter="toolbarTooltip = 'italic'" @mouseleave="toolbarTooltip = null">
-                  <button
-                    @click="interactiveElements[selectedElementIndex].fontStyle = interactiveElements[selectedElementIndex].fontStyle === 'italic' ? 'normal' : 'italic'"
+                <button
+                  @click="interactiveElements[selectedElementIndex].fontStyle = interactiveElements[selectedElementIndex].fontStyle === 'italic' ? 'normal' : 'italic'"
                     :class="interactiveElements[selectedElementIndex].fontStyle === 'italic' ? 'bg-secondary/20 text-secondary' : 'text-black/60 dark:text-white/60 hover:bg-secondary/10'"
                     class="w-8 h-8 rounded-md flex items-center justify-center transition-colors italic text-sm"
                   ><Italic class="w-4 h-4" /></button>
@@ -426,7 +474,7 @@
 
                 <!-- Underline -->
                 <div class="relative" @mouseenter="toolbarTooltip = 'underline'" @mouseleave="toolbarTooltip = null">
-                  <button
+                <button
                     @click="interactiveElements[selectedElementIndex].textDecoration = interactiveElements[selectedElementIndex].textDecoration === 'underline' ? 'none' : 'underline'"
                     :class="interactiveElements[selectedElementIndex].textDecoration === 'underline' ? 'bg-secondary/20 text-secondary' : 'text-black/60 dark:text-white/60 hover:bg-secondary/10'"
                     class="w-8 h-8 rounded-md flex items-center justify-center transition-colors"
@@ -490,7 +538,7 @@
                     <svg :class="showFontDropdown ? 'rotate-180' : ''" class="w-3 h-3 opacity-50 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                     </svg>
-                  </button>
+                </button>
                   <div v-if="showFontDropdown" class="absolute left-0 top-full mt-1 w-48 bg-white dark:bg-neutral border border-black/10 dark:border-white/10 rounded-xl shadow-lg z-50 max-h-64 overflow-y-auto">
                     <div class="px-3 py-2 border-b border-black/10 dark:border-white/10">
                       <p class="text-xs font-bold text-secondary mb-2">中文字体</p>
@@ -511,7 +559,7 @@
                       >{{ font.label }}</button>
                     </div>
                   </div>
-                </div>
+              </div>
 
                 <!-- Font Size A- / display / A+ -->
                 <div class="flex items-center gap-1">
@@ -544,9 +592,9 @@
                   <!-- Custom color picker with floating preview -->
                   <div class="relative">
                     <label class="w-7 h-7 rounded-lg border-2 border-secondary cursor-pointer hover:scale-110 transition-all flex items-center justify-center bg-white dark:bg-neutral">
-                      <input
-                        type="color"
-                        :value="interactiveElements[selectedElementIndex].color || '#000000'"
+                    <input
+                      type="color"
+                      :value="interactiveElements[selectedElementIndex].color || '#000000'"
                         @input="interactiveElements[selectedElementIndex].color = ($event.target as HTMLInputElement).value"
                         class="absolute opacity-0 w-0 h-0"
                         @focus="showCustomColorPicker = true"
@@ -554,7 +602,7 @@
                         ref="colorPickerInput"
                       />
                       <span class="text-base leading-none select-none" @click="($refs.colorPickerInput as HTMLInputElement)?.click()">+</span>
-                    </label>
+                  </label>
                     <!-- Floating color indicator -->
                     <div
                       v-if="interactiveElements[selectedElementIndex].color && !['#000000','#FF0000','#00B050','#0070C0','#FFC000','#7030A0','#FF6B6B','#4ECDC4'].includes(interactiveElements[selectedElementIndex].color)"
@@ -695,33 +743,72 @@
               <!-- Back (text side) -->
               <div
                 :class="[
-                  'absolute inset-0 bg-white dark:bg-neutral p-4 flex border border-black/10 dark:border-white/10 transition-all duration-500 shadow-inner',
+                  'absolute inset-0 bg-white dark:bg-neutral border border-black/10 dark:border-white/10 transition-all duration-500 shadow-inner overflow-hidden',
                   publishFlipped ? 'translate-x-3 translate-y-3 rotate-1 shadow-md z-0' : '-translate-x-3 -translate-y-3 -rotate-1 shadow-xl z-10'
                 ]"
+                ref="publishBackRef"
               >
-                <div class="flex-1 flex flex-col pr-4 border-r border-black/20 dark:border-white/20 overflow-hidden">
-                  <h4 class="font-headline text-sm tracking-widest text-black/60 dark:text-white/60 mb-1">POSTCARD</h4>
-                  <div class="flex-1 flex flex-col justify-between py-1">
-                    <div class="w-full h-[1px] bg-black/10"></div>
-                    <div class="w-full h-[1px] bg-black/10"></div>
-                    <div class="w-full h-[1px] bg-black/10"></div>
-                    <div class="w-full h-[1px] bg-black/10"></div>
-                  </div>
-                </div>
-                <div class="flex-1 flex flex-col pl-4">
-                  <div class="flex justify-end">
-                    <div v-if="selectedStamp" class="w-12 h-14 flex items-center justify-center">
-                      <img :src="selectedStamp.image" class="w-full h-full object-contain" />
+                <!-- Scale wrapper -->
+                <div
+                  class="absolute top-0 left-0 origin-top-left"
+                  :style="getPublishBackScaleStyle()"
+                >
+                  <div
+                    class="flex p-5 bg-white dark:bg-neutral"
+                    :style="{ width: (postcardCanvasRef ? postcardCanvasRef.offsetWidth : 600) + 'px', height: (postcardCanvasRef ? postcardCanvasRef.offsetHeight : 400) + 'px' }"
+                  >
+                    <!-- Left Side -->
+                    <div class="flex-1 flex flex-col pr-5 border-r border-black/20 dark:border-white/20 overflow-hidden relative">
+                      <h4 class="font-headline text-xl tracking-widest text-black/60 dark:text-white/60 mb-2">POSTCARD</h4>
+                      <div class="relative flex-1">
+                        <div class="flex flex-col gap-8 h-full pt-6 pb-2">
+                          <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                          <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                          <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                          <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                          <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                          <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                          <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                          <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                          <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                          <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                        </div>
+                      </div>
                     </div>
-                    <div v-else class="w-12 h-14 border border-dashed border-black/30 flex items-center justify-center">
-                      <span class="text-xs text-black/30">邮票</span>
+                    <!-- Right Side -->
+                    <div class="flex-1 flex flex-col pl-5 relative">
+                      <div class="flex justify-end relative mb-4">
+                        <div v-if="selectedStamp" class="absolute -top-4 -right-4 w-32 h-32 flex items-center justify-center">
+                          <img :src="selectedStamp.image" class="w-full h-full object-cover" />
+                        </div>
+                        <div v-else class="w-20 h-24 border-[2px] border-dashed border-black/30 dark:border-white/30 flex items-center justify-center bg-black/5">
+                          <span class="text-xs font-bold text-black/40">邮票</span>
+                        </div>
+                      </div>
+                      <div class="flex-1 flex flex-col justify-end gap-4 pb-2">
+                        <div class="flex items-end gap-3"><span class="text-xs text-black/60 font-body">to:</span><div class="flex-1 h-[1px] bg-black/20"></div></div>
+                        <div class="w-full h-[1px] bg-black/20 mt-3"></div>
+                        <div class="flex items-end gap-3"><span class="text-xs text-black/60 font-body">from:</span><div class="flex-1 h-[1px] bg-black/20"></div></div>
+                        <div class="w-full h-[1px] bg-black/20"></div>
+                      </div>
                     </div>
-                  </div>
-                  <div class="flex-1 flex flex-col justify-end gap-2 pb-1">
-                    <div class="flex items-end gap-2"><span class="text-xs text-black/40">to:</span><div class="flex-1 h-[1px] bg-black/20"></div></div>
-                    <div class="w-full h-[1px] bg-black/20"></div>
-                    <div class="flex items-end gap-2"><span class="text-xs text-black/40">from:</span><div class="flex-1 h-[1px] bg-black/20"></div></div>
-                    <div class="w-full h-[1px] bg-black/20"></div>
+                    <!-- Interactive elements -->
+                    <div
+                      v-for="(el, idx) in interactiveElements"
+                      :key="idx"
+                      class="absolute pointer-events-none"
+                      :style="{
+                        left: el.x + 'px', top: el.y + 'px',
+                        transform: `rotate(${el.rotation}deg) scale(${el.scale || 1})`,
+                        transformOrigin: 'top left',
+                        width: el.type === 'text' ? 'auto' : el.width + 'px',
+                        height: el.type === 'text' ? 'auto' : el.height + 'px',
+                        zIndex: idx + 10
+                      }"
+                    >
+                      <span v-if="el.type === 'text'" :style="{ fontFamily: el.fontFamily, fontSize: el.fontSize + 'px', color: el.color, fontWeight: el.fontWeight, fontStyle: el.fontStyle }">{{ el.content }}</span>
+                      <img v-else-if="el.type === 'sticker'" :src="el.content" class="w-full h-full object-contain" />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -733,24 +820,9 @@
                 ]"
               >
                 <div class="w-full h-full relative overflow-hidden border border-black/5">
-                  <img v-if="selectedImage" :src="selectedImage" class="w-full h-full object-cover" />
-                  <!-- Interactive elements overlay -->
-                  <div
-                    v-for="(el, idx) in interactiveElements"
-                    :key="idx"
-                    class="absolute pointer-events-none"
-                    :style="{
-                      left: el.x + 'px', top: el.y + 'px',
-                      transform: `rotate(${el.rotation}deg) scale(${el.scale || 1})`,
-                      transformOrigin: 'top left',
-                      width: el.type === 'text' ? 'auto' : el.width + 'px',
-                      height: el.type === 'text' ? 'auto' : el.height + 'px',
-                      zIndex: idx + 1
-                    }"
-                  >
-                    <span v-if="el.type === 'text'" :style="{ fontFamily: el.fontFamily, fontSize: el.fontSize + 'px', color: el.color, fontWeight: el.fontWeight, fontStyle: el.fontStyle }">{{ el.content }}</span>
-                    <img v-else-if="el.type === 'sticker'" :src="el.content" class="w-full h-full object-contain" />
-                  </div>
+                  <img v-if="selectedImage" :src="selectedImage" class="w-full h-full object-cover"
+                    :style="{ transform: `translate(${imageOffset.x}px, ${imageOffset.y}px) scale(${imageScale}) rotate(${imageRotation}deg)` }"
+                  />
                 </div>
               </div>
             </div>
@@ -798,6 +870,23 @@ import { ChevronLeft, Camera, Image, Check, Type, Smile, Bold, Italic, Palette, 
 
 const showUploadOptions = ref(false);
 const postcardCanvasRef = ref<HTMLElement | null>(null);
+const publishBackRef = ref<HTMLElement | null>(null);
+
+const getPublishBackScaleStyle = () => {
+  const src = postcardCanvasRef.value;
+  const dst = publishBackRef.value;
+  const srcW = src ? src.offsetWidth : 600;
+  const srcH = src ? src.offsetHeight : 400;
+  const dstW = dst ? dst.offsetWidth : srcW;
+  const dstH = dst ? dst.offsetHeight : srcH;
+  const scale = Math.min(dstW / srcW, dstH / srcH);
+  return {
+    width: srcW + 'px',
+    height: srcH + 'px',
+    transform: `scale(${scale})`,
+    transformOrigin: 'top left',
+  };
+};
 const showStampSelector = ref(false);
 const showStickerPicker = ref(false);
 const showAiAgent = ref(false);
@@ -814,6 +903,9 @@ const selectedImage = ref<string | null>(null);
 const cameraInput = ref<HTMLInputElement>();
 const galleryInput = ref<HTMLInputElement>();
 const imageOffset = ref({ x: 0, y: 0 });
+const imageScale = ref(1);
+const imageRotation = ref(0);
+const showImageControls = ref(false);
 const isDragging = ref(false);
 const dragStart = ref({ x: 0, y: 0 });
 const selectedStamp = ref<any>(null);
@@ -1206,6 +1298,114 @@ const selectStamp = (stamp: any) => {
   showStampSelector.value = false;
 };
 
+// Vertical scale slider drag
+const startScaleDragV = (e: MouseEvent) => {
+  e.preventDefault();
+  const track = e.currentTarget as HTMLElement;
+  const rect = track.getBoundingClientRect();
+  const SNAP_ZONE = 0.04;
+
+  const update = (clientY: number) => {
+    // top = max (3x), bottom = min (0.5x)
+    const ratio = 1 - Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+    let val = 0.5 + ratio * 2.5;
+    if (Math.abs(val - 1) < SNAP_ZONE) val = 1;
+    imageScale.value = Math.round(val * 1000) / 1000;
+  };
+
+  update(e.clientY);
+  const onMove = (me: MouseEvent) => update(me.clientY);
+  const onUp = () => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  };
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+};
+
+// Vertical rotation slider drag (-180 ~ 180, snap at 0°/±90°/±180°)
+const startRotateDragV = (e: MouseEvent) => {
+  e.preventDefault();
+  const track = e.currentTarget as HTMLElement;
+  const rect = track.getBoundingClientRect();
+  const SNAP_ZONE = 5;
+  const SNAP_ANGLES = [-180, -90, 0, 90, 180];
+
+  const update = (clientY: number) => {
+    // top = -180°, center = 0°, bottom = +180°
+    const ratio = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+    let val = (ratio - 0.5) * 360;
+    val = Math.max(-180, Math.min(180, val));
+    for (const snap of SNAP_ANGLES) {
+      if (Math.abs(val - snap) < SNAP_ZONE) { val = snap; break; }
+    }
+    imageRotation.value = Math.round(val * 10) / 10;
+  };
+
+  update(e.clientY);
+  const onMove = (me: MouseEvent) => update(me.clientY);
+  const onUp = () => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  };
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+};
+
+// Image scale slider drag (0.5x ~ 3x, snap at 1x)
+const startScaleDrag = (e: MouseEvent) => {
+  e.preventDefault();
+  const track = (e.currentTarget as HTMLElement);
+  const rect = track.getBoundingClientRect();
+  const SNAP_ZONE = 0.04;
+
+  const updateScale = (clientX: number) => {
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    let val = 0.5 + ratio * 2.5;
+    if (Math.abs(val - 1) < SNAP_ZONE) val = 1;
+    imageScale.value = Math.round(val * 1000) / 1000;
+  };
+
+  updateScale(e.clientX);
+
+  const onMove = (me: MouseEvent) => updateScale(me.clientX);
+  const onUp = () => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  };
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+};
+
+// Image rotation slider drag (-180 ~ 180, snap at 0°, ±90°, ±180°)
+const startRotateDrag = (e: MouseEvent) => {
+  e.preventDefault();
+  const track = (e.currentTarget as HTMLElement);
+  const rect = track.getBoundingClientRect();
+  const SNAP_ZONE = 5;
+  const SNAP_ANGLES = [-180, -90, 0, 90, 180];
+
+  const updateRotation = (clientX: number) => {
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    let val = (ratio - 0.5) * 360;
+    val = Math.max(-180, Math.min(180, val));
+    for (const snap of SNAP_ANGLES) {
+      if (Math.abs(val - snap) < SNAP_ZONE) { val = snap; break; }
+    }
+    imageRotation.value = Math.round(val * 10) / 10;
+  };
+
+  updateRotation(e.clientX);
+
+  const onMove = (me: MouseEvent) => updateRotation(me.clientX);
+  const onUp = () => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  };
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+};
+
 const deleteElement = () => {
   if (selectedElementIndex.value !== -1) {
     interactiveElements.value.splice(selectedElementIndex.value, 1);
@@ -1238,6 +1438,9 @@ const moveElementDown = () => {
 const resetUpload = () => {
   selectedImage.value = null;
   imageOffset.value = { x: 0, y: 0 };
+  imageScale.value = 1;
+  imageRotation.value = 0;
+  showImageControls.value = false;
   selectedStamp.value = null;
   interactiveElements.value = [];
   showStickerPicker.value = false;
@@ -1265,6 +1468,9 @@ const confirmPublish = () => {
   const newCard = {
     id: Date.now(),
     image: selectedImage.value,
+    imageOffset: { ...imageOffset.value },
+    imageScale: imageScale.value,
+    imageRotation: imageRotation.value,
     elements: interactiveElements.value.map(el => ({ ...el })),
     stamp: selectedStamp.value,
     createdAt: new Date().toISOString(),
@@ -1281,6 +1487,67 @@ const confirmPublish = () => {
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Noto+Serif+SC:wght@400;700&display=swap');
+
+/* 自定义字体声明 */
+@font-face {
+  font-family: 'SanJiSuXianJianTi';
+  src: url('/font/SanJiSuXianJianTi-2.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'MuyaoSoftbrush';
+  src: url('/font/Muyao-Softbrush-2.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'SourceHanSansCN';
+  src: url('/font/SourceHanSansCN-VF-2.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'SmileySans';
+  src: url('/font/SmileySans-Oblique-3.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'DingliZhuhaiFont';
+  src: url('/font/dingliezhuhaifont-20240831GengXinBan)-2.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'HuangkaihuaLawyer';
+  src: url('/font/huangkaihuaLawyerfont-2.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Yomogi';
+  src: url('/font/Yomogi-Regular-2.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'JinNianYeYaoJiaYouYa';
+  src: url('/font/JinNianYeYaoJiaYouYa-2.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'BoTa';
+  src: url('/font/BoTa-2.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'QianTuBiFengShouXieTi';
+  src: url('/font/QianTuBiFengShouXieTi-2.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'QingSongShouXieTi';
+  src: url('/font/QingSongShouXieTi2-2.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'CangJiGaoDeGuoMiaoHei';
+  src: url('/font/【MianFei】CangJiGaoDeGuoMiaoHei-CJgaodeguomh-2.ttf') format('truetype');
+}
 
 .fade-enter-active,
 .fade-leave-active {

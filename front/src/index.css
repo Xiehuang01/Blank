@@ -4,51 +4,51 @@
 /* Custom fonts from res/font */
 @font-face {
   font-family: 'SanJiSuXianJianTi';
-  src: url('/fonts/SanJiSuXianJianTi-2.ttf') format('truetype');
+  src: url('/font/SanJiSuXianJianTi-2.ttf') format('truetype');
 }
 @font-face {
   font-family: 'MuyaoSoftbrush';
-  src: url('/fonts/Muyao-Softbrush-2.ttf') format('truetype');
+  src: url('/font/Muyao-Softbrush-2.ttf') format('truetype');
 }
 @font-face {
   font-family: 'SourceHanSansCN';
-  src: url('/fonts/SourceHanSansCN-VF-2.otf') format('opentype');
+  src: url('/font/SourceHanSansCN-VF-2.otf') format('opentype');
 }
 @font-face {
   font-family: 'SmileySans';
-  src: url('/fonts/SmileySans-Oblique-2.ttf') format('truetype');
+  src: url('/font/SmileySans-Oblique-3.otf') format('opentype');
 }
 @font-face {
   font-family: 'DingliZhuhaiFont';
-  src: url('/fonts/dingliezhuhaifont-20240831GengXinBan)-2.ttf') format('truetype');
+  src: url('/font/dingliezhuhaifont-20240831GengXinBan)-2.ttf') format('truetype');
 }
 @font-face {
   font-family: 'HuangkaihuaLawyer';
-  src: url('/fonts/huangkaihuaLawyerfont-2.ttf') format('truetype');
+  src: url('/font/huangkaihuaLawyerfont-2.ttf') format('truetype');
 }
 @font-face {
   font-family: 'Yomogi';
-  src: url('/fonts/Yomogi-Regular-2.ttf') format('truetype');
+  src: url('/font/Yomogi-Regular-2.ttf') format('truetype');
 }
 @font-face {
   font-family: 'JinNianYeYaoJiaYouYa';
-  src: url('/fonts/JinNianYeYaoJiaYouYa-2.ttf') format('truetype');
+  src: url('/font/JinNianYeYaoJiaYouYa-2.ttf') format('truetype');
 }
 @font-face {
   font-family: 'BoTa';
-  src: url('/fonts/BoTa-2.otf') format('opentype');
+  src: url('/font/BoTa-2.otf') format('opentype');
 }
 @font-face {
   font-family: 'QianTuBiFengShouXieTi';
-  src: url('/fonts/QianTuBiFengShouXieTi-2.ttf') format('truetype');
+  src: url('/font/QianTuBiFengShouXieTi-2.ttf') format('truetype');
 }
 @font-face {
   font-family: 'QingSongShouXieTi';
-  src: url('/fonts/QingSongShouXieTi2-2.ttf') format('truetype');
+  src: url('/font/QingSongShouXieTi2-2.ttf') format('truetype');
 }
 @font-face {
   font-family: 'CangJiGaoDeGuoMiaoHei';
-  src: url('/fonts/【MianFei】CangJiGaoDeGuoMiaoHei-CJgaodeguomh-2.ttf') format('truetype');
+  src: url('/font/【MianFei】CangJiGaoDeGuoMiaoHei-CJgaodeguomh-2.ttf') format('truetype');
 }
 
 @theme {

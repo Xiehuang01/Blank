@@ -47,52 +47,73 @@
           <!-- Back (text side) - 未翻转时在后面(z-0)，翻转后在前面(z-10) -->
           <div
             :class="[
-              'absolute inset-0 rounded-none bg-white dark:bg-neutral p-5 flex border border-black/10 dark:border-white/10 transition-all duration-500 shadow-inner',
+              'absolute inset-0 rounded-none bg-white dark:bg-neutral border border-black/10 dark:border-white/10 transition-all duration-500 shadow-inner overflow-hidden',
               flipped[index] ? '-translate-x-4 -translate-y-4 -rotate-1 shadow-2xl z-10 group-hover:rotate-0' : 'translate-x-4 translate-y-4 rotate-2 shadow-lg z-0 group-hover:rotate-1'
             ]"
             :ref="el => { if (el) cardCanvasRefs[index] = el as HTMLElement }"
           >
-            <!-- Elements overlay on back side -->
+            <!-- Scale wrapper: 以编辑时的固定尺寸为基准整体缩放 -->
             <div
-              v-for="(el, ei) in card.elements"
-              :key="ei"
-              class="absolute pointer-events-none"
-              :style="getElementStyle(el, card, index, ei)"
+              class="absolute top-0 left-0 origin-top-left"
+              :style="getBackScaleStyle(card, index)"
             >
-              <span
-                v-if="el.type === 'text'"
-                :style="getTextStyle(el, card, index)"
-              >{{ el.content }}</span>
-              <img v-else-if="el.type === 'sticker'" :src="el.content" class="w-full h-full object-contain" />
-            </div>
-            <div class="flex-1 flex flex-col pr-5 border-r border-black/20 dark:border-white/20 overflow-hidden relative">
-              <h3 class="font-headline text-xl tracking-widest text-black/60 dark:text-white/60 mb-2">POSTCARD</h3>
-              <div class="flex flex-col justify-between h-full pt-2 pb-2">
-                <div class="w-full h-[1px] bg-black/10"></div>
-                <div class="w-full h-[1px] bg-black/10"></div>
-                <div class="w-full h-[1px] bg-black/10"></div>
-                <div class="w-full h-[1px] bg-black/10"></div>
-                <div class="w-full h-[1px] bg-black/10"></div>
-              </div>
-            </div>
-            <div class="flex-1 flex flex-col pl-5">
-              <div class="flex justify-end relative">
-                <div v-if="card.stamp" class="w-14 h-16 flex items-center justify-center">
-                  <img :src="card.stamp.image" class="w-full h-full object-contain" />
-                </div>
-                <div v-else class="w-14 h-14 rounded-full border-[1.5px] border-black/30 dark:border-white/30 flex items-center justify-center bg-black/5" style="border-style: dashed;">
-                  <div class="absolute -left-10 top-1/2 -translate-y-1/2 flex flex-col gap-1.5 opacity-40">
-                    <svg width="32" height="4" viewBox="0 0 40 4" fill="none"><path d="M0 2C5 2 5 0 10 0C15 0 15 4 20 4C25 4 25 0 30 0C35 0 35 4 40 4" stroke="black" stroke-width="1"/></svg>
-                    <svg width="32" height="4" viewBox="0 0 40 4" fill="none"><path d="M0 2C5 2 5 0 10 0C15 0 15 4 20 4C25 4 25 0 30 0C35 0 35 4 40 4" stroke="black" stroke-width="1"/></svg>
-                    <svg width="32" height="4" viewBox="0 0 40 4" fill="none"><path d="M0 2C5 2 5 0 10 0C15 0 15 4 20 4C25 4 25 0 30 0C35 0 35 4 40 4" stroke="black" stroke-width="1"/></svg>
+              <!-- 固定尺寸内容区，与 Create.vue 编辑时一致 -->
+              <div
+                class="flex p-5 bg-white dark:bg-neutral"
+                :style="{ width: (card.canvasWidth || 600) + 'px', height: (card.canvasHeight || 400) + 'px' }"
+              >
+                <!-- Left Side - Message -->
+                <div class="flex-1 flex flex-col pr-5 border-r border-black/20 dark:border-white/20 overflow-hidden relative">
+                  <h3 class="font-headline text-xl tracking-widest text-black/60 dark:text-white/60 mb-2">POSTCARD</h3>
+                  <div class="relative flex-1">
+                    <div class="flex flex-col gap-8 h-full pt-6 pb-2">
+                      <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                      <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                      <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                      <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                      <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                      <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                      <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                      <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                      <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                      <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div class="flex-1 flex flex-col justify-end gap-3 pb-2">
-                <div class="flex items-end gap-2"><span class="text-xs text-black/60 font-body">to:</span><div class="flex-1 h-[1px] bg-black/20"></div></div>
-                <div class="w-full h-[1px] bg-black/20"></div>
-                <div class="flex items-end gap-2"><span class="text-xs text-black/60 font-body">from:</span><div class="flex-1 h-[1px] bg-black/20"></div></div>
-                <div class="w-full h-[1px] bg-black/20"></div>
+                <!-- Right Side -->
+                <div class="flex-1 flex flex-col pl-5 relative">
+                  <div class="flex justify-end relative mb-4">
+                    <div v-if="card.stamp" class="absolute -top-4 -right-4 w-32 h-32 flex items-center justify-center">
+                      <img :src="card.stamp.image" class="w-full h-full object-cover" />
+                    </div>
+                    <div v-else class="w-20 h-24 border-[2px] border-dashed border-black/30 dark:border-white/30 flex items-center justify-center bg-black/5">
+                      <span class="text-xs font-bold text-black/40">邮票</span>
+                    </div>
+                  </div>
+                  <div class="flex-1 flex flex-col justify-end gap-4 pb-2">
+                    <div class="flex items-end gap-3"><span class="text-xs text-black/60 font-body">to:</span><div class="flex-1 h-[1px] bg-black/20"></div></div>
+                    <div class="w-full h-[1px] bg-black/20 mt-3"></div>
+                    <div class="flex items-end gap-3"><span class="text-xs text-black/60 font-body">from:</span><div class="flex-1 h-[1px] bg-black/20"></div></div>
+                    <div class="w-full h-[1px] bg-black/20"></div>
+                  </div>
+                </div>
+                <!-- Interactive elements -->
+                <div
+                  v-for="(el, ei) in card.elements"
+                  :key="ei"
+                  class="absolute pointer-events-none"
+                  :style="{
+                    left: el.x + 'px', top: el.y + 'px',
+                    transform: `rotate(${el.rotation}deg) scale(${el.scale || 1})`,
+                    transformOrigin: 'top left',
+                    width: el.type === 'text' ? 'auto' : el.width + 'px',
+                    height: el.type === 'text' ? 'auto' : el.height + 'px',
+                    zIndex: String(ei + 10),
+                  }"
+                >
+                  <span v-if="el.type === 'text'" :style="{ fontFamily: el.fontFamily, fontSize: el.fontSize + 'px', color: el.color, fontWeight: el.fontWeight, fontStyle: el.fontStyle, textDecoration: el.textDecoration }">{{ el.content }}</span>
+                  <img v-else-if="el.type === 'sticker'" :src="el.content" class="w-full h-full object-contain" />
+                </div>
               </div>
             </div>
           </div>
@@ -104,7 +125,9 @@
             ]"
           >
             <div class="w-full h-full relative border border-black/5 dark:border-white/5 overflow-hidden">
-              <img :src="card.image" class="w-full h-full object-cover" />
+              <img :src="card.image" class="w-full h-full object-cover"
+                :style="{ transform: `translate(${(card.imageOffset?.x||0)}px, ${(card.imageOffset?.y||0)}px) scale(${card.imageScale||1}) rotate(${card.imageRotation||0}deg)` }"
+              />
             </div>
           </div>
         </div>
@@ -283,37 +306,18 @@ const flipped = ref<boolean[]>([]);
 const allPostcards = ref<any[]>([]);
 const cardCanvasRefs: Record<number, HTMLElement> = {};
 
-const getScaleRatio = (card: any, index: number) => {
+const getBackScaleStyle = (card: any, index: number) => {
   const el = cardCanvasRefs[index];
   const srcW = card.canvasWidth || 600;
   const srcH = card.canvasHeight || 400;
   const dstW = el ? el.offsetWidth : srcW;
   const dstH = el ? el.offsetHeight : srcH;
-  return { rx: dstW / srcW, ry: dstH / srcH };
-};
-
-const getElementStyle = (el: any, card: any, cardIndex: number, elIndex: number) => {
-  const { rx, ry } = getScaleRatio(card, cardIndex);
+  const scale = Math.min(dstW / srcW, dstH / srcH);
   return {
-    left: el.x * rx + 'px',
-    top: el.y * ry + 'px',
-    transform: `rotate(${el.rotation}deg) scale(${el.scale || 1})`,
+    width: srcW + 'px',
+    height: srcH + 'px',
+    transform: `scale(${scale})`,
     transformOrigin: 'top left',
-    width: el.type === 'text' ? 'auto' : el.width * rx + 'px',
-    height: el.type === 'text' ? 'auto' : el.height * ry + 'px',
-    zIndex: String(elIndex + 10),
-  };
-};
-
-const getTextStyle = (el: any, card: any, cardIndex: number) => {
-  const { rx } = getScaleRatio(card, cardIndex);
-  return {
-    fontFamily: el.fontFamily,
-    fontSize: el.fontSize * rx + 'px',
-    color: el.color,
-    fontWeight: el.fontWeight,
-    fontStyle: el.fontStyle,
-    textDecoration: el.textDecoration,
   };
 };
 
