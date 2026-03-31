@@ -1,15 +1,23 @@
 <template>
   <div class="min-h-screen bg-background pb-24" @click="selectedElementIndex = -1">
     <header
-      class="sticky top-0 z-40 flex items-center gap-4 w-full px-4 h-16 bg-background/90 backdrop-blur-sm border-b border-primary/10"
+      class="sticky top-0 z-40 flex items-center justify-between w-full px-4 h-16 bg-background/90 backdrop-blur-sm border-b border-primary/10"
     >
+      <div class="flex items-center gap-4">
+        <button
+          @click="$router.back()"
+          class="text-primary hover:text-secondary transition-colors"
+        >
+          <ChevronLeft class="w-6 h-6" />
+        </button>
+        <h1 class="font-headline text-xl font-bold text-primary">创建明信片</h1>
+      </div>
       <button
-        @click="$router.back()"
-        class="text-primary hover:text-secondary transition-colors"
+        @click="goToOutbox"
+        class="text-sm font-bold text-primary hover:text-secondary transition-colors"
       >
-        <ChevronLeft class="w-6 h-6" />
+        审核
       </button>
-      <h1 class="font-headline text-xl font-bold text-primary">创建明信片</h1>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 pt-6">
@@ -1553,6 +1561,9 @@ const resetUpload = () => {
   showAiAgent.value = false;
   showStampSelector.value = false;
   selectedElementIndex.value = -1;
+  postcardTitle.value = '';
+  recipientInput.value = '';
+  isPublicToSquare.value = false;
 };
 
 const publishPostcard = () => {
@@ -1566,6 +1577,10 @@ const publishPostcard = () => {
   }
   showPublishDialog.value = true;
   publishFlipped.value = false;
+};
+
+const goToOutbox = () => {
+  router.push('/outbox');
 };
 
 const confirmPublish = () => {
@@ -1586,6 +1601,8 @@ const confirmPublish = () => {
     imageRotation: imageRotation.value,
     elements: interactiveElements.value.map(el => ({ ...el })),
     stamp: selectedStamp.value,
+    aiReviewStatus: '通过',
+    manualReviewStatus: '待审核',
     createdAt: new Date().toISOString(),
     canvasWidth,
     canvasHeight,

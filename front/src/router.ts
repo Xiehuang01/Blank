@@ -6,6 +6,7 @@ import Profile from "./pages/Profile.vue";
 import Favorites from "./pages/Favorites.vue";
 import PostDetail from "./pages/PostDetail.vue";
 import Create from "./pages/Create.vue";
+import Outbox from "./pages/Outbox.vue";
 import Login from "./pages/Login.vue";
 import Register from "./pages/Register.vue";
 
@@ -19,6 +20,7 @@ const routes = [
   { path: "/favorites", component: Favorites },
   { path: "/post/:id", component: PostDetail },
   { path: "/create", component: Create },
+  { path: "/outbox", component: Outbox },
 ];
 
 const router = createRouter({

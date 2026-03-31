@@ -30,7 +30,7 @@
       </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-6 py-8">
+    <main class="max-w-7xl mx-auto px-6 py-8" @click="clearSelectedCard">
       <div v-if="allPostcards.length === 0" class="flex flex-col items-center justify-center py-24 gap-4">
         <div class="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
           <MailIcon class="w-8 h-8 text-black/30 dark:text-white/30" />
@@ -42,7 +42,7 @@
           v-for="(card, index) in allPostcards"
           :key="card.id"
           class="relative w-full aspect-[3/2] group cursor-pointer"
-          @click="toggleFlip(index)"
+          @click.stop="toggleFlip(index)"
         >
           <!-- Back (text side) - 未翻转时在后面(z-0)，翻转后在前面(z-10) -->
           <div
@@ -319,6 +319,10 @@ const getBackScaleStyle = (card: any, index: number) => {
     transform: `scale(${scale})`,
     transformOrigin: 'top left',
   };
+};
+
+const clearSelectedCard = () => {
+  flipped.value = allPostcards.value.map(() => true);
 };
 
 const toggleFlip = (index: number) => {

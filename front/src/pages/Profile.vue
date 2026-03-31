@@ -170,6 +170,7 @@
       >
         <div class="divide-y divide-black/5 dark:divide-white/5">
           <button
+            @click="$router.push('/outbox')"
             class="w-full flex items-center justify-between p-4 hover:bg-black/5 dark:hover:bg-white/5 transition-colors group"
           >
             <div class="flex items-center gap-4">
