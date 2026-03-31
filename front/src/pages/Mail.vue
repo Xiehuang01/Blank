@@ -304,10 +304,10 @@ import {
 
 const flipped = ref<boolean[]>([]);
 const allPostcards = ref<any[]>([]);
-const cardCanvasRefs: Record<number, HTMLElement> = {};
+const cardCanvasRefs = ref<Record<number, HTMLElement>>({});
 
 const getBackScaleStyle = (card: any, index: number) => {
-  const el = cardCanvasRefs[index];
+  const el = cardCanvasRefs.value[index];
   const srcW = card.canvasWidth || 600;
   const srcH = card.canvasHeight || 400;
   const dstW = el ? el.offsetWidth : srcW;
@@ -328,7 +328,7 @@ const toggleFlip = (index: number) => {
 onMounted(() => {
   const stored = localStorage.getItem('userPostcards');
   allPostcards.value = stored ? JSON.parse(stored) : [];
-  flipped.value = allPostcards.value.map(() => false);
+  flipped.value = allPostcards.value.map(() => true);
 });
 const mailSearchQuery = ref("");
 const showFriendsList = ref(false);

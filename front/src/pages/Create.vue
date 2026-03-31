@@ -678,20 +678,68 @@
             </div>
           </div>
 
+          <!-- Postcard Info Section -->
+          <div class="space-y-4 p-4 bg-white dark:bg-neutral rounded-2xl border border-black/10 dark:border-white/10">
+            <!-- Title Input -->
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-primary dark:text-white">邮件标题：</label>
+              <input
+                v-model="postcardTitle"
+                type="text"
+                placeholder="输入明信片标题"
+                class="w-full px-3 py-2 border border-black/10 dark:border-white/10 rounded-lg bg-black/5 dark:bg-white/5 text-black dark:text-white placeholder-black/40 dark:placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-secondary"
+              />
+            </div>
+
+            <!-- Recipient Input -->
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-primary dark:text-white">收件人：</label>
+              <div class="flex gap-2">
+                <input
+                  v-model="recipientInput"
+                  type="text"
+                  placeholder="输入uid/邮箱"
+                  class="flex-1 px-3 py-2 border border-black/10 dark:border-white/10 rounded-lg bg-black/5 dark:bg-white/5 text-black dark:text-white placeholder-black/40 dark:placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-secondary"
+                />
+                <button
+                  @click="showFriendSelector = !showFriendSelector"
+                  class="px-3 py-2 bg-primary dark:bg-secondary text-white dark:text-black font-bold rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center"
+                  title="快速选择好友"
+                >
+                  <Users class="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            <!-- Public to Square Checkbox -->
+            <div class="flex items-center gap-2">
+              
+              <label for="publicCheckbox" class="text-sm font-medium text-black/70 dark:text-white/70 cursor-pointer">
+                公开到广场
+              </label>
+              <input
+                v-model="isPublicToSquare"
+                type="checkbox"
+                id="publicCheckbox"
+                class="w-4 h-4 rounded border-2 border-primary dark:border-secondary cursor-pointer accent-primary dark:accent-secondary"
+              />
+            </div>
+          </div>
+
           <!-- Action Buttons -->
-          <div class="flex flex-col gap-3">
+          <div class="flex gap-3">
             <button
               @click="showResetDialog = true"
-              class="w-full py-3 px-4 bg-black/5 dark:bg-white/5 text-primary font-bold rounded-xl hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+              class="flex-1 py-3 px-4 bg-black/5 dark:bg-white/5 text-primary font-bold rounded-xl hover:bg-black/10 dark:hover:bg-white/10 transition-colors border-2 border-primary"
             >
-              清空
+              删除
             </button>
             <button
               @click="publishPostcard"
               :disabled="!selectedImage"
-              class="w-full py-3 px-4 bg-primary dark:bg-secondary text-white dark:text-black font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              class="flex-1 py-3 px-4 bg-primary dark:bg-secondary text-white dark:text-black font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              发布明信片
+              确认发送
             </button>
           </div>
         </div>
@@ -866,11 +914,15 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch, nextTick } from "vue";
 import { useRouter } from "vue-router";
-import { ChevronLeft, Camera, Image, Check, Type, Smile, Bold, Italic, Palette, Trash2, ArrowUp, ArrowDown, RotateCw, Sparkles, Underline, Strikethrough, AlignLeft, AlignCenter, AlignRight } from "lucide-vue-next";
+import { ChevronLeft, Camera, Image, Check, Type, Smile, Bold, Italic, Palette, Trash2, ArrowUp, ArrowDown, RotateCw, Sparkles, Underline, Strikethrough, AlignLeft, AlignCenter, AlignRight, Users } from "lucide-vue-next";
 
 const showUploadOptions = ref(false);
 const postcardCanvasRef = ref<HTMLElement | null>(null);
 const publishBackRef = ref<HTMLElement | null>(null);
+const postcardTitle = ref('');
+const recipientInput = ref('');
+const isPublicToSquare = ref(false);
+const showFriendSelector = ref(false);
 
 const getPublishBackScaleStyle = () => {
   const src = postcardCanvasRef.value;
@@ -915,6 +967,9 @@ const selectedElementIndex = ref(-1);
 const selectedStickerSeries = ref('arrow');
 const stickerSeries = [
   { label: '箭头', value: 'arrow' },
+  { label: '动物', value: 'animal' },
+  { label: '狗狗剪影', value: 'dog_silhouette' },
+  { label: '涂鸦', value: 'graffiti' },
 ];
 const stickerSeriesOptions: Record<string, string[]> = {
   arrow: [
@@ -938,6 +993,58 @@ const stickerSeriesOptions: Record<string, string[]> = {
     '/stickers/arrow/BgSub_6 (13).png',
     '/stickers/arrow/BgSub_6 (14).png',
     '/stickers/arrow/BgSub_6 (15).png',
+  ],
+  animal: [
+    new URL('../../../res/sticker/animal/企鹅.png', import.meta.url).href,
+    new URL('../../../res/sticker/animal/刺猬.png', import.meta.url).href,
+    new URL('../../../res/sticker/animal/小兔.png', import.meta.url).href,
+    new URL('../../../res/sticker/animal/小熊.png', import.meta.url).href,
+    new URL('../../../res/sticker/animal/小牛.png', import.meta.url).href,
+    new URL('../../../res/sticker/animal/小狗.png', import.meta.url).href,
+    new URL('../../../res/sticker/animal/小猪.png', import.meta.url).href,
+    new URL('../../../res/sticker/animal/小猫.png', import.meta.url).href,
+    new URL('../../../res/sticker/animal/小猴.png', import.meta.url).href,
+    new URL('../../../res/sticker/animal/小羊.png', import.meta.url).href,
+    new URL('../../../res/sticker/animal/小虎.png', import.meta.url).href,
+    new URL('../../../res/sticker/animal/小蛇.png', import.meta.url).href,
+    new URL('../../../res/sticker/animal/小马.png', import.meta.url).href,
+    new URL('../../../res/sticker/animal/小鸡.png', import.meta.url).href,
+    new URL('../../../res/sticker/animal/小鹿.png', import.meta.url).href,
+    new URL('../../../res/sticker/animal/小鼠.png', import.meta.url).href,
+    new URL('../../../res/sticker/animal/小龙.png', import.meta.url).href,
+    new URL('../../../res/sticker/animal/松鼠.png', import.meta.url).href,
+    new URL('../../../res/sticker/animal/树懒.png', import.meta.url).href,
+    new URL('../../../res/sticker/animal/狐狸.png', import.meta.url).href,
+    new URL('../../../res/sticker/animal/独角兽.png', import.meta.url).href,
+    new URL('../../../res/sticker/animal/考拉.png', import.meta.url).href,
+    new URL('../../../res/sticker/animal/鹦鹉.png', import.meta.url).href,
+    new URL('../../../res/sticker/animal/小象.png', import.meta.url).href,
+  ],
+  dog_silhouette: [
+    new URL('../../../res/sticker/dog_silhouette/1.png', import.meta.url).href,
+    new URL('../../../res/sticker/dog_silhouette/2.png', import.meta.url).href,
+    new URL('../../../res/sticker/dog_silhouette/3.png', import.meta.url).href,
+    new URL('../../../res/sticker/dog_silhouette/4.png', import.meta.url).href,
+    new URL('../../../res/sticker/dog_silhouette/5.png', import.meta.url).href,
+    new URL('../../../res/sticker/dog_silhouette/6.png', import.meta.url).href,
+    new URL('../../../res/sticker/dog_silhouette/7.png', import.meta.url).href,
+    new URL('../../../res/sticker/dog_silhouette/8.png', import.meta.url).href,
+    new URL('../../../res/sticker/dog_silhouette/9.png', import.meta.url).href,
+  ],
+  graffiti: [
+    new URL('../../../res/sticker/graffiti/涂鸦1.png', import.meta.url).href,
+    new URL('../../../res/sticker/graffiti/涂鸦2.png', import.meta.url).href,
+    new URL('../../../res/sticker/graffiti/涂鸦3.png', import.meta.url).href,
+    new URL('../../../res/sticker/graffiti/涂鸦4.png', import.meta.url).href,
+    new URL('../../../res/sticker/graffiti/涂鸦5.png', import.meta.url).href,
+    new URL('../../../res/sticker/graffiti/涂鸦6.png', import.meta.url).href,
+    new URL('../../../res/sticker/graffiti/涂鸦7.png', import.meta.url).href,
+    new URL('../../../res/sticker/graffiti/涂鸦8.png', import.meta.url).href,
+    new URL('../../../res/sticker/graffiti/涂鸦9.png', import.meta.url).href,
+    new URL('../../../res/sticker/graffiti/涂鸦10.png', import.meta.url).href,
+    new URL('../../../res/sticker/graffiti/涂鸦11.png', import.meta.url).href,
+    new URL('../../../res/sticker/graffiti/涂鸦12.png', import.meta.url).href,
+    new URL('../../../res/sticker/graffiti/涂鸦13.png', import.meta.url).href,
   ],
 };
 const stickerOptions = computed(() => stickerSeriesOptions[selectedStickerSeries.value] || []);
