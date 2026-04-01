@@ -188,7 +188,7 @@
                       <span v-if="!selectedStamp" class="text-xs font-bold text-black/40 dark:text-white/40">邮票</span>
                     </button>
                     <!-- Stamp Image Container -->
-                    <div v-if="selectedStamp" class="absolute -top-4 -right-4 w-32 h-32 flex items-center justify-center cursor-pointer" @click.stop="showStampSelector = !showStampSelector; showStickerPicker = false; selectedElementIndex = -1;">
+                    <div v-if="selectedStamp" class="absolute -top-1 -right-1 w-32 h-32 flex items-center justify-center cursor-pointer" @click.stop="showStampSelector = !showStampSelector; showStickerPicker = false; selectedElementIndex = -1;">
                       <img
                         :src="selectedStamp.image"
                         :alt="selectedStamp.title"

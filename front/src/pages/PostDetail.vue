@@ -191,12 +191,12 @@
 
     <!-- Desktop Layout -->
     <main class="hidden md:block max-w-7xl mx-auto px-4 pt-6 pb-12">
-      <div v-if="post" class="grid grid-cols-3 gap-8">
+      <div v-if="post" class="grid grid-cols-2 gap-12">
         <!-- Left Column - Postcards -->
         <div class="col-span-1 space-y-6">
           <!-- Postcard Front (Image) -->
           <div class="relative w-full" :style="{ aspectRatio: imageAspectRatio }">
-            <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral p-6 border border-black/10 dark:border-white/10 shadow-lg overflow-hidden">
+            <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral p-3 border border-black/10 dark:border-white/10 shadow-lg overflow-hidden">
               <div class="w-full h-full relative bg-black/5 flex items-center justify-center rounded-sm overflow-hidden">
                 <img
                   :src="post.image"
@@ -211,10 +211,10 @@
 
           <!-- Postcard Back (Text side) -->
           <div class="relative w-full" :style="{ aspectRatio: imageAspectRatio }">
-            <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral p-5 flex border border-black/10 dark:border-white/10 shadow-lg overflow-hidden">
+            <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral p-3 flex border border-black/10 dark:border-white/10 shadow-lg overflow-hidden">
               <!-- Left Side - Message -->
-              <div class="flex-1 flex flex-col pr-5 border-r border-black/20 dark:border-white/20 relative overflow-hidden">
-                <h4 class="font-headline text-xl tracking-widest text-black/60 dark:text-white/60 mb-2">POSTCARD</h4>
+              <div class="flex-1 flex flex-col pr-3 border-r border-black/20 dark:border-white/20 relative overflow-hidden">
+                <h4 class="font-headline text-sm tracking-widest text-black/60 dark:text-white/60 mb-1">POSTCARD</h4>
                 <div class="relative flex-1">
                   <div class="flex flex-col gap-8 h-full pt-6 pb-2">
                     <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
@@ -232,12 +232,12 @@
               </div>
 
               <!-- Right Side - Address & Stamp -->
-              <div class="flex-1 flex flex-col pl-5 relative">
-                <div class="flex justify-end relative mb-4">
-                  <div class="w-20 h-24 border-[2px] border-black/30 dark:border-white/30 flex items-center justify-center relative bg-black/5 dark:bg-white/5 flex-shrink-0" style="border-style: dashed;">
+              <div class="flex-1 flex flex-col pl-3 relative">
+                <div class="flex justify-end relative mb-2">
+                  <div class="w-16 h-20 border-[2px] border-black/30 dark:border-white/30 flex items-center justify-center relative bg-black/5 dark:bg-white/5 flex-shrink-0" style="border-style: dashed;">
                     <span v-if="!post.stamp" class="text-xs font-bold text-black/40 dark:text-white/40">邮票</span>
                   </div>
-                  <div v-if="post.stamp" class="absolute -top-4 -right-4 w-32 h-32 flex items-center justify-center pointer-events-none">
+                  <div v-if="post.stamp" class="absolute -top-1 -right-1 w-32 h-32 flex items-center justify-center pointer-events-none">
                     <img :src="post.stamp.image" :alt="post.stamp.title" class="w-full h-full object-cover" />
                   </div>
                 </div>
@@ -280,7 +280,7 @@
         </div>
 
         <!-- Right Column - Info & Comments -->
-        <div class="col-span-2 space-y-6">
+        <div class="col-span-1 space-y-6">
           <!-- Post Title -->
           <div>
             <h2 class="font-headline text-2xl font-bold text-primary mb-2">
