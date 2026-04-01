@@ -406,8 +406,17 @@ const loadPost = (id: any) => {
         likes: 0,
         comments: 0,
       };
-      likeCount.value = 0;
       imageAspectRatio.value = '3/2';
+
+      // 检查是否已点赞并计算点赞数
+      const likedStored = localStorage.getItem('likedPostcards');
+      if (likedStored) {
+        const liked = JSON.parse(likedStored);
+        isLiked.value = liked.some((p: any) => String(p.id) === String(userCard.id));
+        likeCount.value = liked.filter((p: any) => String(p.id) === String(userCard.id)).length;
+      } else {
+        likeCount.value = 0;
+      }
       return;
     }
   }
@@ -490,8 +499,17 @@ const loadPost = (id: any) => {
   const found = posts.find((p) => p.id === parseInt(id as string));
   if (found) {
     post.value = found;
-    likeCount.value = found.likes;
-    
+
+    // 检查是否已点赞并计算点赞数
+    const likedStored = localStorage.getItem('likedPostcards');
+    if (likedStored) {
+      const liked = JSON.parse(likedStored);
+      isLiked.value = liked.some((p: any) => String(p.id) === String(found.id));
+      likeCount.value = found.likes + liked.filter((p: any) => String(p.id) === String(found.id)).length;
+    } else {
+      likeCount.value = found.likes;
+    }
+
     // 检测图片宽高比
     const img = new Image();
     img.onload = () => {
@@ -512,8 +530,31 @@ const loadPost = (id: any) => {
 };
 
 const toggleLike = () => {
-  isLiked.value = !isLiked.value;
-  likeCount.value += isLiked.value ? 1 : -1;
+  const stored = localStorage.getItem('likedPostcards');
+  let liked: any[] = stored ? JSON.parse(stored) : [];
+
+  if (liked.some((p: any) => String(p.id) === String(post.value.id))) {
+    // 已点赞，取消点赞
+    liked = liked.filter((p: any) => String(p.id) !== String(post.value.id));
+    isLiked.value = false;
+  } else {
+    // 未点赞，添加点赞
+    liked.push({
+      id: post.value.id,
+      title: post.value.title,
+      image: post.value.image,
+      imageOffset: post.value.imageOffset,
+      imageScale: post.value.imageScale,
+      imageRotation: post.value.imageRotation,
+      location: post.value.location,
+      aspect: 'aspect-[3/2]',
+    });
+    isLiked.value = true;
+  }
+
+  localStorage.setItem('likedPostcards', JSON.stringify(liked));
+  // 重新计算点赞数
+  likeCount.value = post.value.likes + liked.filter((p: any) => String(p.id) === String(post.value.id)).length;
 };
 
 const addComment = () => {

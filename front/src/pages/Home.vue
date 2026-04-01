@@ -54,9 +54,13 @@
                   {{ post.location }}
                 </p>
               </div>
-              <button class="flex items-center gap-1 text-tertiary hover:text-secondary transition-colors">
-                <Heart class="w-3.5 h-3.5" />
-                <span class="text-[10px] font-medium">{{ post.likes }}</span>
+              <button
+                @click.stop="toggleLike(post)"
+                class="flex items-center gap-1 transition-colors"
+                :class="isLiked(post.id) ? 'text-red-500' : 'text-tertiary hover:text-secondary'"
+              >
+                <Heart class="w-3.5 h-3.5" :fill="isLiked(post.id) ? 'currentColor' : 'none'" />
+                <span class="text-[10px] font-medium">{{ getLikeCount(post.id) }}</span>
               </button>
             </div>
           </button>
@@ -97,6 +101,77 @@ const postcards = computed(() => [
   ...userPublicCards.value,
   ...sampleCards,
 ]);
+
+const likedIds = ref<Set<number | string>>(new Set());
+const likedCountMap = ref<Map<number | string, number>>(new Map());
+
+onMounted(() => {
+  const stored = localStorage.getItem('userPostcards');
+  if (stored) {
+    const all = JSON.parse(stored);
+    userPublicCards.value = all
+      .filter((c: any) => c.isPublic)
+      .map((c: any) => ({
+        id: c.id,
+        title: c.title || '无标题明信片',
+        location: new Date(c.createdAt).toLocaleDateString('zh-CN'),
+        image: c.image,
+        imageOffset: c.imageOffset,
+        imageScale: c.imageScale,
+        imageRotation: c.imageRotation,
+        aspect: 'aspect-[3/2]',
+        likes: 0,
+      }));
+  }
+
+  const storedLikes = localStorage.getItem('likedPostcards');
+  if (storedLikes) {
+    const liked = JSON.parse(storedLikes);
+    likedIds.value = new Set(liked.map((p: any) => p.id));
+    // 计算每个帖子的点赞数（基础点赞 + 用户点赞数）
+    sampleCards.forEach(card => {
+      const userLikes = liked.filter((p: any) => p.id === card.id).length;
+      likedCountMap.value.set(card.id, card.likes + userLikes);
+    });
+    userPublicCards.value.forEach(card => {
+      const userLikes = liked.filter((p: any) => p.id === card.id).length;
+      likedCountMap.value.set(card.id, 0 + userLikes);
+    });
+  } else {
+    sampleCards.forEach(card => {
+      likedCountMap.value.set(card.id, card.likes);
+    });
+  }
+});
+
+const isLiked = (id: number | string) => likedIds.value.has(id);
+
+const getLikeCount = (id: number | string): number => {
+  return likedCountMap.value.get(id) || 0;
+};
+
+const toggleLike = (post: any) => {
+  if (likedIds.value.has(post.id)) {
+    likedIds.value.delete(post.id);
+    const storedLikes = localStorage.getItem('likedPostcards');
+    if (storedLikes) {
+      const liked = JSON.parse(storedLikes).filter((p: any) => p.id !== post.id);
+      localStorage.setItem('likedPostcards', JSON.stringify(liked));
+    }
+    // 更新计数
+    const current = likedCountMap.value.get(post.id) || 0;
+    likedCountMap.value.set(post.id, current - 1);
+  } else {
+    likedIds.value.add(post.id);
+    const storedLikes = localStorage.getItem('likedPostcards');
+    const liked = storedLikes ? JSON.parse(storedLikes) : [];
+    liked.push(post);
+    localStorage.setItem('likedPostcards', JSON.stringify(liked));
+    // 更新计数
+    const current = likedCountMap.value.get(post.id) || 0;
+    likedCountMap.value.set(post.id, current + 1);
+  }
+};
 
 const sampleCards = [
   {

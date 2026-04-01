@@ -64,6 +64,7 @@
             我的喜欢
           </h3>
           <button
+            @click="$router.push('/favorites')"
             class="text-xs font-semibold text-secondary hover:underline flex items-center"
           >
             查看全部 <ChevronRight class="w-3 h-3 ml-0.5" />
@@ -367,7 +368,7 @@
           <section class="bg-neutral rounded-2xl p-6 shadow-sm border border-black/5 dark:border-white/5">
             <div class="flex justify-between items-center mb-6">
               <h3 class="font-headline text-xl font-bold text-primary">我的喜欢</h3>
-              <button class="text-sm font-semibold text-secondary hover:underline flex items-center">
+              <button @click="$router.push('/favorites')" class="text-sm font-semibold text-secondary hover:underline flex items-center">
                 查看全部 <ChevronRight class="w-4 h-4 ml-1" />
               </button>
             </div>
