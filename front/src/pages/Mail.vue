@@ -30,8 +30,8 @@
       </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-6 py-8" @click="clearSelectedCard">
-      <div v-if="allPostcards.length === 0" class="flex flex-col items-center justify-center py-24 gap-4">
+    <main class="max-w-7xl mx-auto px-6 py-8 min-h-[calc(100vh-120px)] flex items-center justify-center" @click="clearSelectedCard">
+      <div v-if="allPostcards.length === 0" class="flex flex-col items-center justify-center gap-4">
         <div class="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
           <MailIcon class="w-8 h-8 text-black/30 dark:text-white/30" />
         </div>
