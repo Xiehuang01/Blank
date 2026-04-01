@@ -10,6 +10,7 @@ import Create from "./pages/Create.vue";
 import Outbox from "./pages/Outbox.vue";
 import Login from "./pages/Login.vue";
 import Register from "./pages/Register.vue";
+import Settings from "./pages/Settings.vue";
 
 const routes = [
   { path: "/login", component: Login },
@@ -23,6 +24,7 @@ const routes = [
   { path: "/post/:id", component: PostDetail },
   { path: "/create", component: Create },
   { path: "/outbox", component: Outbox },
+  { path: "/settings", component: Settings },
 ];
 
 const router = createRouter({

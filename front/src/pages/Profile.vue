@@ -223,6 +223,7 @@
             />
           </button>
           <button
+            @click="router.push('/settings')"
             class="w-full flex items-center justify-between p-4 hover:bg-black/5 dark:hover:bg-white/5 transition-colors group"
           >
             <div class="flex items-center gap-4">
@@ -488,6 +489,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
+import { useRouter } from "vue-router";
 import {
   Moon,
   Sun,
@@ -502,6 +504,8 @@ import {
   PenLine,
   LogOut,
 } from "lucide-vue-next";
+
+const router = useRouter();
 
 const isDarkMode = ref(document.documentElement.classList.contains("dark"));
 

@@ -130,33 +130,68 @@
 
           <div class="flex items-center gap-2 text-tertiary">
             <MessageCircle class="w-5 h-5" />
-            <span class="font-bold text-sm">{{ post.comments || 0 }}</span>
+            <span class="font-bold text-sm">{{ comments.length }}</span>
           </div>
         </div>
 
         <!-- Comment Section -->
         <div class="space-y-4 pt-4">
           <h3 class="font-headline text-lg font-bold text-primary">评论</h3>
-          
+
           <!-- Comments List -->
-          <div class="space-y-3">
+          <TransitionGroup tag="div" class="space-y-3" name="comment">
             <div
-              v-for="(comment, index) in comments"
-              :key="index"
-              class="p-3 bg-black/5 dark:bg-white/5 rounded-lg"
+              v-for="comment in sortedComments"
+              :key="comment.id"
+              class="p-3 rounded-lg transition-all duration-300"
+              :class="comment.pinned && isOwner ? 'bg-primary/10 dark:bg-primary/20' : 'bg-black/5 dark:bg-white/5'"
             >
-              <div class="flex items-center gap-2 mb-2">
-                <div class="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center">
-                  <span class="text-xs font-bold text-secondary">{{ comment.author[0] }}</span>
+              <div class="flex items-start justify-between">
+                <div class="flex items-center gap-2 mb-2 flex-1">
+                  <div class="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center">
+                    <span class="text-xs font-bold text-secondary">{{ comment.author[0] }}</span>
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <p class="text-sm font-bold text-primary">{{ comment.author }}</p>
+                      <Transition name="pin">
+                        <span v-if="comment.pinned" class="text-[10px] px-1.5 py-0.5 bg-primary text-white rounded-full">置顶</span>
+                      </Transition>
+                    </div>
+                    <p class="text-xs text-tertiary">{{ comment.time }}</p>
+                  </div>
                 </div>
-                <div>
-                  <p class="text-sm font-bold text-primary">{{ comment.author }}</p>
-                  <p class="text-xs text-tertiary">{{ comment.time }}</p>
+                <!-- Owner Actions -->
+                <div v-if="isOwner" class="flex items-center gap-1 ml-2">
+                  <button
+                    @click="togglePin(comment)"
+                    class="p-1 text-tertiary hover:text-primary transition-all duration-300"
+                    title="置顶"
+                  >
+                    <Pin class="w-4 h-4 transition-all duration-300" :class="{ 'fill-current text-primary': comment.pinned }" />
+                  </button>
+                  <button
+                    @click="deleteComment(comment.id)"
+                    class="p-1 text-tertiary hover:text-red-500 transition-all duration-300"
+                    title="删除"
+                  >
+                    <Trash2 class="w-4 h-4 transition-all duration-300" />
+                  </button>
                 </div>
               </div>
               <p class="text-sm text-primary">{{ comment.text }}</p>
+              <!-- Like Button for Comment -->
+              <div class="flex items-center gap-1 mt-2">
+                <button
+                  @click="likeComment(comment.id)"
+                  class="flex items-center gap-1 text-xs text-tertiary hover:text-primary transition-all duration-300"
+                >
+                  <ThumbsUp class="w-3.5 h-3.5 transition-all duration-300" :class="[comment.liked ? 'text-red-500 fill-current' : 'text-tertiary']" />
+                  <span>{{ comment.likes || 0 }}</span>
+                </button>
+              </div>
             </div>
-          </div>
+          </TransitionGroup>
         </div>
       </div>
     </main>
@@ -312,7 +347,7 @@
 
               <div class="flex items-center gap-2 text-tertiary">
                 <MessageCircle class="w-5 h-5" />
-                <span class="font-bold text-sm">{{ post.comments || 0 }}</span>
+                <span class="font-bold text-sm">{{ comments.length }}</span>
               </div>
             </div>
           </div>
@@ -320,26 +355,61 @@
           <!-- Comment Section -->
           <div class="space-y-4 pt-4 border-t border-black/10 dark:border-white/10">
             <h3 class="font-headline text-lg font-bold text-primary">评论</h3>
-            
+
             <!-- Comments List -->
-            <div class="space-y-3 max-h-96 overflow-y-auto">
+            <TransitionGroup tag="div" class="space-y-3 max-h-96 overflow-y-auto" name="comment">
               <div
-                v-for="(comment, index) in comments"
-                :key="index"
-                class="p-3 bg-black/5 dark:bg-white/5 rounded-lg"
+                v-for="comment in sortedComments"
+                :key="comment.id"
+                class="p-3 rounded-lg transition-all duration-300"
+                :class="comment.pinned && isOwner ? 'bg-primary/10 dark:bg-primary/20' : 'bg-black/5 dark:bg-white/5'"
               >
-                <div class="flex items-center gap-2 mb-2">
-                  <div class="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center">
-                    <span class="text-xs font-bold text-secondary">{{ comment.author[0] }}</span>
+                <div class="flex items-start justify-between">
+                  <div class="flex items-center gap-2 mb-2 flex-1">
+                    <div class="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center">
+                      <span class="text-xs font-bold text-secondary">{{ comment.author[0] }}</span>
+                    </div>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <p class="text-sm font-bold text-primary">{{ comment.author }}</p>
+                        <Transition name="pin">
+                          <span v-if="comment.pinned" class="text-[10px] px-1.5 py-0.5 bg-primary text-white rounded-full">置顶</span>
+                        </Transition>
+                      </div>
+                      <p class="text-xs text-tertiary">{{ comment.time }}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p class="text-sm font-bold text-primary">{{ comment.author }}</p>
-                    <p class="text-xs text-tertiary">{{ comment.time }}</p>
+                  <!-- Owner Actions -->
+                  <div v-if="isOwner" class="flex items-center gap-1 ml-2">
+                    <button
+                      @click="togglePin(comment)"
+                      class="p-1 text-tertiary hover:text-primary transition-all duration-300"
+                      title="置顶"
+                    >
+                      <Pin class="w-4 h-4 transition-all duration-300" :class="{ 'fill-current text-primary': comment.pinned }" />
+                    </button>
+                    <button
+                      @click="deleteComment(comment.id)"
+                      class="p-1 text-tertiary hover:text-red-500 transition-all duration-300"
+                      title="删除"
+                    >
+                      <Trash2 class="w-4 h-4 transition-all duration-300" />
+                    </button>
                   </div>
                 </div>
                 <p class="text-sm text-primary">{{ comment.text }}</p>
+                <!-- Like Button for Comment -->
+                <div class="flex items-center gap-1 mt-2">
+                  <button
+                    @click="likeComment(comment.id)"
+                    class="flex items-center gap-1 text-xs text-tertiary hover:text-primary transition-all duration-300"
+                  >
+                    <ThumbsUp class="w-3.5 h-3.5 transition-all duration-300" :class="[comment.liked ? 'text-red-500 fill-current' : 'text-tertiary']" />
+                    <span>{{ comment.likes || 0 }}</span>
+                  </button>
+                </div>
               </div>
-            </div>
+            </TransitionGroup>
 
             <!-- Comment Input -->
             <div class="flex gap-2 pt-4">
@@ -364,9 +434,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { ChevronLeft, Heart, MessageCircle, Send } from "lucide-vue-next";
+import { ChevronLeft, MessageCircle, Send, Pin, Trash2, ThumbsUp } from "lucide-vue-next";
 
 const route = useRoute();
 const post = ref<any>(null);
@@ -374,23 +444,23 @@ const isLiked = ref(false);
 const likeCount = ref(0);
 const newComment = ref("");
 const imageAspectRatio = ref("3/2");
-const comments = ref<any[]>([
-  {
-    author: "张三",
-    time: "2小时前",
-    text: "这张明信片真的太美了！",
-  },
-  {
-    author: "李四",
-    time: "1小时前",
-    text: "收藏价值很高，推荐！",
-  },
-]);
+const isOwner = ref(false);
+const comments = ref<any[]>([]);
+
+let commentIdCounter = 0;
 
 onMounted(() => {
   window.scrollTo(0, 0);
   const postId = route.params.id;
   loadPost(postId);
+});
+
+const sortedComments = computed(() => {
+  return [...comments.value].sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return 0;
+  });
 });
 
 const loadPost = (id: any) => {
@@ -406,6 +476,7 @@ const loadPost = (id: any) => {
         likes: 0,
         comments: 0,
       };
+      isOwner.value = true;
       imageAspectRatio.value = '3/2';
 
       // 检查是否已点赞并计算点赞数
@@ -417,88 +488,33 @@ const loadPost = (id: any) => {
       } else {
         likeCount.value = 0;
       }
+
+      // 加载该明信片的评论
+      const commentStored = localStorage.getItem(`comments_${userCard.id}`);
+      if (commentStored) {
+        comments.value = JSON.parse(commentStored);
+        commentIdCounter = Math.max(...comments.value.map((c: any) => c.id || 0)) + 1;
+      }
       return;
     }
   }
 
+  // 示例明信片
   const posts = [
-    {
-      id: 1,
-      title: "Silent Hallway",
-      location: "Kyoto, Japan",
-      image:
-        "https://lh3.googleusercontent.com/aida-public/AB6AXuBMKuwdrzd0kycg5QbGFmMJMDT8RsE6UNc85oboGn-Tofw_7BqW1Fr1AxqgdIPVAOliVNVYW_xxX0D9w4teG8vu716EueLdlhtDZNMzx4AmtF6xpsxUovOnN9vxwxh4HShX2hixpG3URlodGZn0CCfMvapoqBDQoMNPiYZ7qRUDV_u5MqQexSdA1w6diNCYt21t14DqvZwE3JkN7udert8x6WNdDwaS9gdJzPKoMDZmPcvKSVzXPcgpoOY3CCfVKFU3sqia8imIUDUG",
-      likes: 342,
-      comments: 28,
-    },
-    {
-      id: 2,
-      title: "Horizon Line",
-      location: "Expedition 04",
-      image:
-        "https://lh3.googleusercontent.com/aida-public/AB6AXuD8esTrkcudCbjzxuyIIZl0OCZpj1YT0KrcsHLaFrj43bnf3Yyf1EG7V2yrCFBiQJK_VMmMd5xZhxjcmY85_K-f3XyDDmIxud0i4ZezXKMBuMwEqvSQtj3Siz08fk9w-dqNpBzh7L7aQUeOx5qtP7b7xOX0rbyi563zBqiOlcDN2Q9U5FKt-KltCVOYDRP7g3Ed3QL9fU9JY6-I1HARQriDG_92_H4iVMyiV6Lsnf7cEnK1_Dy0rY0plcdR2YAIPfEZgGmPRYvzw_V5",
-      likes: 128,
-      comments: 15,
-    },
-    {
-      id: 3,
-      title: "Misty Peaks",
-      location: "Alpine Morning",
-      image:
-        "https://lh3.googleusercontent.com/aida-public/AB6AXuA0i-x6RyD7D2rgu2L8AzwaNHZzBYtWuJj6TtriMJjqVRxLpFGpCq4NIH2Grin9XOy8Pd3vjY8zFfJ35c0h20F0IrFtD7y28Xd9NfXGoploNukwtK3NgoPGEa7VSOEBh4KD4kyXVIRQ0jWYVLO2kJHCx9n8kcXqOQdi-Nd68yzmGnwkZBGhLGX0_S9Cu8AfSXzjBlGzXqf8l2XI-wAwWqxhTz_RASrcIKtt1Bdh6wqEzNFbMHjXcTtyd41-AhHu91wpD4qb4WLcp1F2",
-      likes: 856,
-      comments: 42,
-    },
-    {
-      id: 4,
-      title: "Single Bloom",
-      location: "Botanical Series",
-      image:
-        "https://lh3.googleusercontent.com/aida-public/AB6AXuBnUhh60TiT7aekmcLcT4l_yIZOLue3dmhExmphjrn1fS3VZTrDAv2lbSz6059VL7VGYbj-rv9_i-a1MIdVEDnRSYMX2KMJHvlExgAM1Ve24Mpbi0OYM-RD0ZeF-iO7SG-b04WRIc1xMmC_aDQStq7yjMkkY2PTeqxfqehT_Lr2H3JDCZ48bzFj4pMkgu653P__1D9wlGCUu7oBr85cnBGBS5U3tk7iQ0IRtow3JTzH79CSEPytQNknDAx3BGxkfY6jR7U3m_ZfqidY",
-      likes: 42,
-      comments: 8,
-    },
-    {
-      id: 5,
-      title: "Quiet Afternoon",
-      location: "Interior Study",
-      image:
-        "https://lh3.googleusercontent.com/aida-public/AB6AXuACTQfqd5zXW2cKBxVnuuNO9i9sq9Pk5JxreFwtXeFdwc2pIGVpcU8BSfkdg66pV8mXppMTUSNe2TNBt-8TAoJ_2qqGJdzR_AFhAht55cKNTHZl4J9MiGOF0m0GQeEaxBa0yPxLxlEqKz087elMQkmKsxl-N_MVFnQRLbTNconhVSYMHMKpzscx-mjg_lrzPMKbISEr9Tkei_ZxplmcGlDa-zn-f5Au102bOzwcGfBXkE4OHYlcPjh2knYoakUw-Zw564zPDVLeUzRI",
-      likes: 215,
-      comments: 18,
-    },
-    {
-      id: 6,
-      title: "Golden Solitude",
-      location: "Tuscany, Italy",
-      image:
-        "https://lh3.googleusercontent.com/aida-public/AB6AXuBpQB1UjhAO6vKRAmMCZ3S-ZXr4gDQlqg5p_W8s3VQpSmvRI8ZFWb77GoNBv1pQSFrp29yzGKO7ToSmCsWu9eNOaU_yX73rDlmxzzYR-EYGqNvFUE9GU6-pML47z4gssxtjKw_D_hu5YoklvsjsZ5dZrTS2IeRIP-gSHZcX3uPab0dieLB1NT001ypZsLjEHGBoDGCLhP1xeR5D_2qEjeG2fSwr4mRFlZdTvCOPQXRPk_odlghJSqkYkSEVqyTj6SUXh89WxKOTVryA",
-      likes: 567,
-      comments: 35,
-    },
-    {
-      id: 7,
-      title: "Still Waters",
-      location: "Nordic Summer",
-      image:
-        "https://lh3.googleusercontent.com/aida-public/AB6AXuBd6X2WJj88uA-1RVrxPORBU5AZOzg0nPJE0215heBs15OL-FE5V0Emhxn5a0nfklc9t6clO3mSiIjAFO0I0Mu6Y2NWyuafRtrW3L14crLdzu4cKDxHP18lUsiFqiPeocxG9WI6YO4O4sNEKukHmVSUdMlVnvlI-UWmX3fegWKNND6QcgHxDuYmLtaJ0Wtz_zWoy5sgdMRBUu-O97TbNR-8JnQ8bWqrJpMMyC0G6wyiLUlrmBrDU1-IrnmebQHtx7qpfUFYV-XhueBQ",
-      likes: 89,
-      comments: 12,
-    },
-    {
-      id: 8,
-      title: "Exhibition No. 1",
-      location: "Parisian Space",
-      image:
-        "https://lh3.googleusercontent.com/aida-public/AB6AXuA4U7Ek60wAah3qefguCpTutfJJZhFfS_ix4T5iFiFXnnNWiveiB71-3Q8Yu3Lr33vGg_jfwu5tDvu9-9FWhic64iKpeBqfAc6O9o9grdYjSsYzDvJhxNa31crJ4cDkITQzVlkp0l7prnAn4ekzapcu1pPpcnTcHH5W6Vo4WSVoOJT1rGVM_RSIw_DstVkzOX3Qnatn3Q2tzxWirXUsJfbfxtwdY7MlnvVaCTaPRo3P2OHDE-6FyIK_FQHwgDrtO2U-Twwx9tP4drm-",
-      likes: 1024,
-      comments: 89,
-    },
+    { id: 1, title: "Silent Hallway", location: "Kyoto, Japan", likes: 342 },
+    { id: 2, title: "Horizon Line", location: "Expedition 04", likes: 128 },
+    { id: 3, title: "Misty Peaks", location: "Alpine Morning", likes: 856 },
+    { id: 4, title: "Single Bloom", location: "Botanical Series", likes: 42 },
+    { id: 5, title: "Quiet Afternoon", location: "Interior Study", likes: 215 },
+    { id: 6, title: "Golden Solitude", location: "Tuscany, Italy", likes: 567 },
+    { id: 7, title: "Still Waters", location: "Nordic Summer", likes: 89 },
+    { id: 8, title: "Exhibition No. 1", location: "Parisian Space", likes: 1024 },
   ];
 
   const found = posts.find((p) => p.id === parseInt(id as string));
   if (found) {
     post.value = found;
+    isOwner.value = false;
 
     // 检查是否已点赞并计算点赞数
     const likedStored = localStorage.getItem('likedPostcards');
@@ -510,22 +526,12 @@ const loadPost = (id: any) => {
       likeCount.value = found.likes;
     }
 
-    // 检测图片宽高比
-    const img = new Image();
-    img.onload = () => {
-      const ratio = img.width / img.height;
-      // 如果宽高比小于 1，说明是竖图
-      if (ratio < 1) {
-        imageAspectRatio.value = `${img.width}/${img.height}`;
-      } else {
-        imageAspectRatio.value = `${img.width}/${img.height}`;
-      }
-    };
-    img.onerror = () => {
-      // 如果图片加载失败，使用默认比例
-      imageAspectRatio.value = "3/2";
-    };
-    img.src = found.image;
+    // 加载评论
+    const commentStored = localStorage.getItem(`comments_${id}`);
+    if (commentStored) {
+      comments.value = JSON.parse(commentStored);
+      commentIdCounter = Math.max(...comments.value.map((c: any) => c.id || 0)) + 1;
+    }
   }
 };
 
@@ -534,11 +540,9 @@ const toggleLike = () => {
   let liked: any[] = stored ? JSON.parse(stored) : [];
 
   if (liked.some((p: any) => String(p.id) === String(post.value.id))) {
-    // 已点赞，取消点赞
     liked = liked.filter((p: any) => String(p.id) !== String(post.value.id));
     isLiked.value = false;
   } else {
-    // 未点赞，添加点赞
     liked.push({
       id: post.value.id,
       title: post.value.title,
@@ -553,18 +557,98 @@ const toggleLike = () => {
   }
 
   localStorage.setItem('likedPostcards', JSON.stringify(liked));
-  // 重新计算点赞数
   likeCount.value = post.value.likes + liked.filter((p: any) => String(p.id) === String(post.value.id)).length;
 };
 
 const addComment = () => {
   if (newComment.value.trim()) {
-    comments.value.push({
+    const newCommentObj = {
+      id: ++commentIdCounter,
       author: "我",
       time: "刚刚",
       text: newComment.value,
-    });
+      liked: false,
+      likes: 0,
+      pinned: false,
+    };
+    comments.value.push(newCommentObj);
+    saveComments();
     newComment.value = "";
   }
 };
+
+const likeComment = (id: number) => {
+  const comment = comments.value.find((c) => c.id === id);
+  if (comment) {
+    comment.liked = !comment.liked;
+    comment.likes = (comment.likes || 0) + (comment.liked ? 1 : -1);
+    saveComments();
+  }
+};
+
+const deleteComment = (id: number) => {
+  if (confirm('确定要删除这条评论吗？')) {
+    comments.value = comments.value.filter((c) => c.id !== id);
+    saveComments();
+  }
+};
+
+const togglePin = (comment: any) => {
+  // 如果已经是置顶，取消置顶
+  if (comment.pinned) {
+    comment.pinned = false;
+  } else {
+    // 先取消所有其他评论的置顶
+    comments.value.forEach((c) => {
+      c.pinned = false;
+    });
+    // 然后置顶当前评论
+    comment.pinned = true;
+  }
+  saveComments();
+};
+
+const saveComments = () => {
+  if (post.value && post.value.id) {
+    localStorage.setItem(`comments_${post.value.id}`, JSON.stringify(comments.value));
+  }
+};
 </script>
+
+<style scoped>
+.comment-move,
+.comment-enter-active,
+.comment-leave-active {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.comment-enter-from {
+  opacity: 0;
+  transform: translateY(-20px) scale(0.95);
+}
+
+.comment-leave-to {
+  opacity: 0;
+  transform: translateX(-100%) scale(0.95);
+}
+
+.comment-move {
+  transform-origin: center;
+}
+
+/* 置顶标签动画 */
+.pin-enter-active,
+.pin-leave-active {
+  transition: all 0.3s ease;
+}
+
+.pin-enter-from {
+  opacity: 0;
+  transform: scale(0.8) translateY(-10px);
+}
+
+.pin-leave-to {
+  opacity: 0;
+  transform: scale(0.8);
+}
+</style>
