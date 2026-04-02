@@ -21,11 +21,11 @@
     </header>
 
     <main class="max-w-7xl mx-auto px-4 pt-6">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:items-start">
+      <div class="grid grid-cols-1 lg:gap-8 lg:items-start" :class="postcardAspectRatio === '3/2' ? 'lg:grid-cols-2' : 'lg:grid-cols-[1fr_1.5fr]'">
         <!-- Left Column - Postcard Preview -->
-        <div class="lg:sticky lg:top-20 lg:self-start">
+        <div class="lg:sticky lg:top-20 lg:self-start" :class="postcardAspectRatio === '2/3' ? 'max-w-sm' : ''">
         <!-- Stacked Postcard Preview -->
-        <div class="relative w-full" style="aspect-ratio: 3/2;">
+        <div class="relative w-full transition-all duration-500" :style="{ 'aspect-ratio': postcardAspectRatio }">
           <div class="relative w-full h-full" ref="postcardCanvasRef">
 
           <!-- Postcard Front (Image) -->
@@ -339,7 +339,7 @@
           </div><!-- end stacked wrapper -->
         </div><!-- end stacked container -->
 
-        <!-- Front/Back Toggle - below postcard -->
+        <!-- Front/Back Toggle + Aspect Ratio Toggle - below postcard -->
         <div class="flex items-center justify-center gap-4 mt-4">
           <button
             @click="showFront = !showFront"
@@ -362,6 +362,31 @@
               class="relative z-10 flex-1 text-center text-xs font-bold tracking-wide transition-colors duration-300 py-1"
               :class="!showFront ? 'text-white' : 'text-black/40 dark:text-white/40'"
             >反面</span>
+          </button>
+
+          <!-- Aspect Ratio Toggle -->
+          <button
+            @click="toggleAspectRatio"
+            class="relative flex items-center gap-1 px-1 py-1 rounded-full border-2 transition-all duration-500 focus:outline-none select-none"
+            :class="postcardAspectRatio === '3/2' ? 'bg-white dark:bg-neutral border-black/15 dark:border-white/15' : 'bg-secondary/10 border-secondary/40'"
+            style="width: 148px;"
+            title="切换明信片比例"
+          >
+            <!-- Sliding pill indicator -->
+            <span
+              class="absolute top-1 bottom-1 w-[66px] rounded-full shadow-md transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+              :class="postcardAspectRatio === '3/2' ? 'left-1 bg-primary dark:bg-white' : 'left-[75px] bg-secondary'"
+            ></span>
+            <!-- 3:2 label -->
+            <span
+              class="relative z-10 flex-1 text-center text-xs font-bold tracking-wide transition-colors duration-300 py-1"
+              :class="postcardAspectRatio === '3/2' ? 'text-white dark:text-neutral' : 'text-black/40 dark:text-white/40'"
+            >3:2</span>
+            <!-- 2:3 label -->
+            <span
+              class="relative z-10 flex-1 text-center text-xs font-bold tracking-wide transition-colors duration-300 py-1"
+              :class="postcardAspectRatio === '2/3' ? 'text-white' : 'text-black/40 dark:text-white/40'"
+            >2:3</span>
           </button>
         </div>
 
@@ -957,6 +982,7 @@ const showColorPicker = ref(false);
 const showFontDropdown = ref(false);
 const toolbarTooltip = ref<string | null>(null);
 const showFront = ref(true); // true=正面, false=反面
+const postcardAspectRatio = ref('3/2'); // 明信片比例
 const textEditRefs = ref<Record<number, HTMLElement>>({});
 const selectedImage = ref<string | null>(null);
 const cameraInput = ref<HTMLInputElement>();
@@ -1527,6 +1553,10 @@ const deleteElement = () => {
   }
 };
 
+const toggleAspectRatio = () => {
+  postcardAspectRatio.value = postcardAspectRatio.value === '3/2' ? '2/3' : '3/2';
+};
+
 const moveElementUp = () => {
   if (selectedElementIndex.value !== -1 && selectedElementIndex.value < interactiveElements.value.length - 1) {
     const temp = interactiveElements.value[selectedElementIndex.value];
@@ -1606,6 +1636,7 @@ const confirmPublish = () => {
     createdAt: new Date().toISOString(),
     canvasWidth,
     canvasHeight,
+    aspectRatio: postcardAspectRatio.value,
   };
   existing.unshift(newCard);
   localStorage.setItem('userPostcards', JSON.stringify(existing));

@@ -436,7 +436,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { ChevronLeft, MessageCircle, Send, Pin, Trash2, ThumbsUp } from "lucide-vue-next";
+import { ChevronLeft, MessageCircle, Send, Pin, Trash2, Heart, ThumbsUp } from "lucide-vue-next";
 
 const route = useRoute();
 const post = ref<any>(null);

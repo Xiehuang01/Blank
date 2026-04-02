@@ -91,7 +91,7 @@ onMounted(() => {
         imageOffset: c.imageOffset,
         imageScale: c.imageScale,
         imageRotation: c.imageRotation,
-        aspect: 'aspect-[3/2]',
+        aspect: c.aspectRatio === '2/3' ? 'aspect-[2/3]' : 'aspect-[3/2]',
         likes: 0,
       }));
   }
