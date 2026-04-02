@@ -76,32 +76,6 @@ import { Search, Heart } from "lucide-vue-next";
 
 const activeTab = ref("发现");
 const userPublicCards = ref<any[]>([]);
-
-onMounted(() => {
-  const stored = localStorage.getItem('userPostcards');
-  if (stored) {
-    const all = JSON.parse(stored);
-    userPublicCards.value = all
-      .filter((c: any) => c.isPublic)
-      .map((c: any) => ({
-        id: c.id,
-        title: c.title || '无标题明信片',
-        location: new Date(c.createdAt).toLocaleDateString('zh-CN'),
-        image: c.image,
-        imageOffset: c.imageOffset,
-        imageScale: c.imageScale,
-        imageRotation: c.imageRotation,
-        aspect: c.aspectRatio === '2/3' ? 'aspect-[2/3]' : 'aspect-[3/2]',
-        likes: 0,
-      }));
-  }
-});
-
-const postcards = computed(() => [
-  ...userPublicCards.value,
-  ...sampleCards,
-]);
-
 const likedIds = ref<Set<number | string>>(new Set());
 const likedCountMap = ref<Map<number | string, number>>(new Map());
 
@@ -119,7 +93,7 @@ onMounted(() => {
         imageOffset: c.imageOffset,
         imageScale: c.imageScale,
         imageRotation: c.imageRotation,
-        aspect: 'aspect-[3/2]',
+        aspect: c.aspectRatio === '2/3' ? 'aspect-[2/3]' : 'aspect-[3/2]',
         likes: 0,
       }));
   }
@@ -143,6 +117,11 @@ onMounted(() => {
     });
   }
 });
+
+const postcards = computed(() => [
+  ...userPublicCards.value,
+  ...sampleCards,
+]);
 
 const isLiked = (id: number | string) => likedIds.value.has(id);
 

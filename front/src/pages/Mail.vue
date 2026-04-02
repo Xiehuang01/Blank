@@ -41,8 +41,12 @@
         <div
           v-for="(card, index) in allPostcards"
           :key="card.id"
-          class="relative w-full group cursor-pointer"
-          :style="{ aspectRatio: card.aspectRatio === '3:4' ? '3/4' : '4/3' }"
+          class="relative group cursor-pointer"
+          :style="{ 
+            aspectRatio: card.aspectRatio || '3/2',
+            width: card.aspectRatio === '2/3' ? '70%' : '100%',
+            margin: card.aspectRatio === '2/3' ? '0 auto' : '0'
+          }"
           @click.stop="toggleFlip(index)"
         >
           <!-- Back (text side) - 未翻转时在后面(z-0)，翻转后在前面(z-10) -->
