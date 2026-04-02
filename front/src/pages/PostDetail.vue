@@ -251,70 +251,83 @@
           <div class="relative" :style="{ 
             aspectRatio: imageAspectRatio,
             width: post.aspectRatio === '2/3' ? 'calc(50% - 12px)' : '100%'
-          }">
-            <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral p-3 flex border border-black/10 dark:border-white/10 shadow-lg overflow-hidden">
-              <!-- Left Side - Message -->
-              <div class="flex-1 flex flex-col pr-3 border-r border-black/20 dark:border-white/20 relative overflow-hidden">
-                <h4 class="font-headline text-sm tracking-widest text-black/60 dark:text-white/60 mb-1">POSTCARD</h4>
-                <div class="relative flex-1">
-                  <div class="flex flex-col gap-8 h-full pt-6 pb-2">
-                    <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                    <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                    <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                    <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                    <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                    <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                    <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                    <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                    <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                    <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Right Side - Address & Stamp -->
-              <div class="flex-1 flex flex-col pl-3 relative">
-                <div class="flex justify-end relative mb-2">
-                  <div class="w-16 h-20 border-[2px] border-black/30 dark:border-white/30 flex items-center justify-center relative bg-black/5 dark:bg-white/5 flex-shrink-0" style="border-style: dashed;">
-                    <span v-if="!post.stamp" class="text-xs font-bold text-black/40 dark:text-white/40">邮票</span>
-                  </div>
-                  <div v-if="post.stamp" class="absolute -top-1 -right-1 w-32 h-32 flex items-center justify-center pointer-events-none">
-                    <img :src="post.stamp.image" :alt="post.stamp.title" class="w-full h-full object-cover" />
-                  </div>
-                </div>
-                <div class="flex-1 flex flex-col justify-end gap-4 pb-2">
-                  <div class="flex items-end gap-3">
-                    <span class="text-xs text-black/60 dark:text-white/60 font-body">to:</span>
-                    <div class="flex-1 h-[1px] bg-black/20 dark:bg-white/20"></div>
-                  </div>
-                  <div class="w-full h-[1px] bg-black/20 dark:bg-white/20 mt-3"></div>
-                  <div class="flex items-end gap-3">
-                    <span class="text-xs text-black/60 dark:text-white/60 font-body">from:</span>
-                    <div class="flex-1 h-[1px] bg-black/20 dark:bg-white/20"></div>
-                  </div>
-                  <div class="w-full h-[1px] bg-black/20 dark:bg-white/20"></div>
-                </div>
-              </div>
-
-              <!-- Interactive Elements -->
+          }"
+          :ref="el => { if (el) cardCanvasRefs[0] = el as HTMLElement }"
+          >
+            <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral border border-black/10 dark:border-white/10 shadow-lg overflow-hidden">
+              <!-- Scale wrapper -->
               <div
-                v-for="(el, idx) in (post.elements || [])"
-                :key="idx"
-                class="absolute pointer-events-none"
-                :style="{
-                  left: el.x + 'px', top: el.y + 'px',
-                  transform: `rotate(${el.rotation}deg) scale(${el.scale || 1})`,
-                  transformOrigin: 'top left',
-                  width: el.type === 'text' ? 'auto' : el.width + 'px',
-                  height: el.type === 'text' ? 'auto' : el.height + 'px',
-                  zIndex: (idx as number) + 10
-                }"
+                class="absolute top-0 left-0 origin-top-left"
+                :style="getBackScaleStyle(post, 0)"
               >
-                <span
-                  v-if="el.type === 'text'"
-                  :style="{ fontFamily: el.fontFamily, fontSize: el.fontSize + 'px', color: el.color, fontWeight: el.fontWeight, fontStyle: el.fontStyle, textDecoration: el.textDecoration, whiteSpace: 'pre-wrap' }"
-                >{{ el.content }}</span>
-                <img v-else-if="el.type === 'sticker'" :src="el.content" class="w-full h-full object-contain" />
+                <div
+                  class="flex p-5 bg-white dark:bg-neutral"
+                  :style="{ width: (post.canvasWidth || 600) + 'px', height: (post.canvasHeight || 400) + 'px' }"
+                >
+                  <!-- Left Side - Message -->
+                  <div class="flex-1 flex flex-col pr-5 border-r border-black/20 dark:border-white/20 relative overflow-hidden">
+                    <h4 class="font-headline text-xl tracking-widest text-black/60 dark:text-white/60 mb-2">POSTCARD</h4>
+                    <div class="relative flex-1">
+                      <div class="flex flex-col gap-8 h-full pt-6 pb-2">
+                        <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                        <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                        <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                        <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                        <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                        <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                        <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                        <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                        <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                        <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Right Side - Address & Stamp -->
+                  <div class="flex-1 flex flex-col pl-5 relative">
+                    <div class="flex justify-end relative mb-4">
+                      <div class="w-20 h-24 border-[2px] border-black/30 dark:border-white/30 flex items-center justify-center relative bg-black/5 dark:bg-white/5 flex-shrink-0" style="border-style: dashed;">
+                        <span v-if="!post.stamp" class="text-xs font-bold text-black/40 dark:text-white/40">邮票</span>
+                      </div>
+                      <div v-if="post.stamp" class="absolute -top-4 -right-4 w-32 h-32 flex items-center justify-center pointer-events-none">
+                        <img :src="post.stamp.image" :alt="post.stamp.title" class="w-full h-full object-cover" />
+                      </div>
+                    </div>
+                    <div class="flex-1 flex flex-col justify-end gap-4 pb-2">
+                      <div class="flex items-end gap-3">
+                        <span class="text-xs text-black/60 dark:text-white/60 font-body">to:</span>
+                        <div class="flex-1 h-[1px] bg-black/20 dark:bg-white/20"></div>
+                      </div>
+                      <div class="w-full h-[1px] bg-black/20 dark:bg-white/20 mt-3"></div>
+                      <div class="flex items-end gap-3">
+                        <span class="text-xs text-black/60 dark:text-white/60 font-body">from:</span>
+                        <div class="flex-1 h-[1px] bg-black/20 dark:bg-white/20"></div>
+                      </div>
+                      <div class="w-full h-[1px] bg-black/20 dark:bg-white/20"></div>
+                    </div>
+                  </div>
+
+                  <!-- Interactive Elements -->
+                  <div
+                    v-for="(el, idx) in (post.elements || [])"
+                    :key="idx"
+                    class="absolute pointer-events-none"
+                    :style="{
+                      left: el.x + 'px', top: el.y + 'px',
+                      transform: `rotate(${el.rotation}deg) scale(${el.scale || 1})`,
+                      transformOrigin: 'top left',
+                      width: el.type === 'text' ? 'auto' : el.width + 'px',
+                      height: el.type === 'text' ? 'auto' : el.height + 'px',
+                      zIndex: (idx as number) + 10
+                    }"
+                  >
+                    <span
+                      v-if="el.type === 'text'"
+                      :style="{ fontFamily: el.fontFamily, fontSize: el.fontSize + 'px', color: el.color, fontWeight: el.fontWeight, fontStyle: el.fontStyle, textDecoration: el.textDecoration, whiteSpace: 'pre-wrap' }"
+                    >{{ el.content }}</span>
+                    <img v-else-if="el.type === 'sticker'" :src="el.content" class="w-full h-full object-contain" />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -452,8 +465,24 @@ const newComment = ref("");
 const imageAspectRatio = ref("3/2");
 const isOwner = ref(false);
 const comments = ref<any[]>([]);
+const cardCanvasRefs = ref<Record<number, HTMLElement>>({});
 
 let commentIdCounter = 0;
+
+const getBackScaleStyle = (card: any, index: number = 0) => {
+  const el = cardCanvasRefs.value[index];
+  const srcW = card.canvasWidth || 600;
+  const srcH = card.canvasHeight || 400;
+  const dstW = el ? el.offsetWidth : srcW;
+  const dstH = el ? el.offsetHeight : srcH;
+  const scale = Math.min(dstW / srcW, dstH / srcH);
+  return {
+    width: srcW + 'px',
+    height: srcH + 'px',
+    transform: `scale(${scale})`,
+    transformOrigin: 'top left',
+  };
+};
 
 onMounted(() => {
   window.scrollTo(0, 0);
