@@ -226,11 +226,14 @@
 
     <!-- Desktop Layout -->
     <main class="hidden md:block max-w-7xl mx-auto px-4 pt-6 pb-12">
-      <div v-if="post" class="grid grid-cols-2 gap-12">
+      <div v-if="post" :class="post.aspectRatio === '2/3' ? 'grid grid-cols-2 gap-12' : 'grid grid-cols-2 gap-12'">
         <!-- Left Column - Postcards -->
-        <div class="col-span-1 space-y-6">
+        <div :class="post.aspectRatio === '2/3' ? 'col-span-1 flex gap-6' : 'col-span-1 space-y-6'">
           <!-- Postcard Front (Image) -->
-          <div class="relative w-full" :style="{ aspectRatio: imageAspectRatio }">
+          <div class="relative" :style="{ 
+            aspectRatio: imageAspectRatio,
+            width: post.aspectRatio === '2/3' ? 'calc(50% - 12px)' : '100%'
+          }">
             <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral p-3 border border-black/10 dark:border-white/10 shadow-lg overflow-hidden">
               <div class="w-full h-full relative bg-black/5 flex items-center justify-center rounded-sm overflow-hidden">
                 <img
@@ -245,7 +248,10 @@
           </div>
 
           <!-- Postcard Back (Text side) -->
-          <div class="relative w-full" :style="{ aspectRatio: imageAspectRatio }">
+          <div class="relative" :style="{ 
+            aspectRatio: imageAspectRatio,
+            width: post.aspectRatio === '2/3' ? 'calc(50% - 12px)' : '100%'
+          }">
             <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral p-3 flex border border-black/10 dark:border-white/10 shadow-lg overflow-hidden">
               <!-- Left Side - Message -->
               <div class="flex-1 flex flex-col pr-3 border-r border-black/20 dark:border-white/20 relative overflow-hidden">
@@ -477,7 +483,7 @@ const loadPost = (id: any) => {
         comments: 0,
       };
       isOwner.value = true;
-      imageAspectRatio.value = '3/2';
+      imageAspectRatio.value = userCard.aspectRatio || '3/2';
 
       // 检查是否已点赞并计算点赞数
       const likedStored = localStorage.getItem('likedPostcards');
