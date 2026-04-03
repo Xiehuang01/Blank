@@ -9,7 +9,7 @@
       >
         <ChevronLeft class="w-6 h-6" />
       </button>
-      <h1 class="font-headline text-xl font-bold text-primary">发件箱 / 审核</h1>
+      <h1 class="font-headline text-xl font-bold text-primary">发件箱</h1>
     </header>
 
     <main class="max-w-5xl mx-auto px-4 pt-6 space-y-4">

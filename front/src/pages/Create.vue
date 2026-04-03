@@ -16,7 +16,7 @@
         @click="goToOutbox"
         class="text-sm font-bold text-primary hover:text-secondary transition-colors"
       >
-        审核
+        发件箱
       </button>
     </header>
 
@@ -818,8 +818,8 @@
           </div>
 
           <!-- Postcard Preview -->
-          <div class="px-6 py-6">
-            <div class="relative w-full aspect-[3/2] cursor-pointer" @click="publishFlipped = !publishFlipped">
+          <div class="px-6 py-6 flex justify-center">
+            <div class="relative cursor-pointer" :style="{ width: '100%', maxWidth: '300px', aspectRatio: postcardAspectRatio }" @click="publishFlipped = !publishFlipped">
               <!-- Back (text side) -->
               <div
                 :class="[
@@ -906,7 +906,7 @@
                 </div>
               </div>
             </div>
-            <p class="text-center text-xs text-black/40 dark:text-white/40 mt-3">点击明信片可翻转查看</p>
+            <!-- <p class="text-center text-xs text-black/40 dark:text-white/40 mt-3">点击明信片可翻转查看</p> -->
           </div>
 
           <!-- Actions -->
@@ -946,6 +946,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch, nextTick } from "vue";
 import { useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
 import { ChevronLeft, Camera, Image, Check, Type, Smile, Bold, Italic, Palette, Trash2, ArrowUp, ArrowDown, RotateCw, Sparkles, Underline, Strikethrough, AlignLeft, AlignCenter, AlignRight, Users } from "lucide-vue-next";
 
 const showUploadOptions = ref(false);
@@ -1598,11 +1599,11 @@ const resetUpload = () => {
 
 const publishPostcard = () => {
   if (!selectedImage.value) {
-    alert("请先选择图片");
+    ElMessage.warning("请先选择图片");
     return;
   }
   if (!selectedStamp.value) {
-    alert("请先选择邮票");
+    ElMessage.warning("请先选择邮票");
     return;
   }
   showPublishDialog.value = true;
