@@ -13,6 +13,7 @@ import Register from "../pages/Register.vue";
 import Settings from "../pages/Settings.vue";
 import PersonalInfo from "../pages/PersonalInfo.vue";
 import AccountManagement from "../pages/AccountManagement.vue";
+import CheckIn from "../pages/CheckIn.vue";
 
 export const routes: RouteRecordRaw[] = [
   { path: "/login", component: Login },
@@ -29,5 +30,6 @@ export const routes: RouteRecordRaw[] = [
   { path: "/settings", component: Settings },
   { path: "/personal-info", component: PersonalInfo },
   { path: "/account-management", component: AccountManagement },
+  { path: "/checkin", component: CheckIn },
 ];
 

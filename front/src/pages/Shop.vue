@@ -3,6 +3,9 @@
     <header
       class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-background border-b border-primary/10 gap-4"
     >
+      <button @click="router.push('/my-stamps')" class="text-tertiary hover:text-primary transition-colors flex items-center justify-center">
+        <Archive class="w-5 h-5" />
+      </button>
       <div class="relative flex-1">
         <Search
           class="absolute left-3 top-1/2 -translate-y-1/2 text-tertiary w-4 h-4"
@@ -148,16 +151,19 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, nextTick, onUnmounted } from "vue";
-import { Search, Plus, Minus } from "lucide-vue-next";
+import { Search, Plus, Minus, Archive } from "lucide-vue-next";
 import { ElMessage } from "element-plus";
 import { stamps } from "../data/stamps";
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 const selectedImage = ref<string | null>(null);
 const isDark = ref(false);
 
 // Tab state
-const tabs = ref(['四季', '猫狗', '天气', '心情']);
-const activeTab = ref('四季');
+const tabs = ref(['全部', '四季', '猫狗', '天气', '心情']);
+const activeTab = ref('全部');
 const tabContainerRef = ref<HTMLDivElement | null>(null);
 const activeTabRef = ref<HTMLButtonElement | null>(null);
 const tabRefs = ref<HTMLButtonElement[]>([]);
@@ -236,6 +242,10 @@ const categoryMap: Record<string, string[]> = {
 const filteredStamps = ref<typeof stamps>([]);
 
 const updateFilteredStamps = () => {
+  if (activeTab.value === '全部') {
+    filteredStamps.value = stamps;
+    return;
+  }
   const keywords = categoryMap[activeTab.value] || [];
   filteredStamps.value = stamps.filter(stamp =>
     keywords.some(keyword => stamp.title.includes(keyword))

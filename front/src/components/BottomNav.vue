@@ -13,11 +13,18 @@
           : 'text-tertiary hover:text-primary'
       ]"
     >
-      <component
-        :is="item.icon"
-        class="w-6 h-6"
-        :stroke-width="path === item.path ? 2 : 1.5"
-      />
+      <div class="relative">
+        <component
+          :is="item.icon"
+          class="w-6 h-6"
+          :stroke-width="path === item.path ? 2 : 1.5"
+        />
+        <!-- 签到红点提示 -->
+        <span
+          v-if="item.path === '/profile' && !isCheckedInToday"
+          class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-background"
+        ></span>
+      </div>
     </router-link>
   </nav>
 </template>
@@ -32,9 +39,11 @@ import {
   ShoppingBag,
   UserRound,
 } from "lucide-vue-next";
+import { useCheckIn } from "../store/checkin";
 
 const route = useRoute();
 const path = computed(() => route.path);
+const { isCheckedInToday } = useCheckIn();
 
 const navItems = [
   { icon: Compass, path: "/" },

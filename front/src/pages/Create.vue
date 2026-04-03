@@ -188,7 +188,7 @@
                       <span v-if="!selectedStamp" class="text-xs font-bold text-black/40 dark:text-white/40">邮票</span>
                     </button>
                     <!-- Stamp Image Container -->
-                    <div v-if="selectedStamp" class="absolute -top-1 -right-1 w-32 h-32 flex items-center justify-center cursor-pointer" @click.stop="showStampSelector = !showStampSelector; showStickerPicker = false; selectedElementIndex = -1;">
+                    <div v-if="selectedStamp" class="absolute -top-3 -right-3 w-32 h-32 flex items-center justify-center cursor-pointer" style="filter: drop-shadow(2px 4px 6px rgba(230, 220, 200, 0.8));" @click.stop="showStampSelector = !showStampSelector; showStickerPicker = false; selectedElementIndex = -1;">
                       <img
                         :src="selectedStamp.image"
                         :alt="selectedStamp.title"
@@ -689,18 +689,17 @@
             </div>
             <div class="p-3 bg-white dark:bg-neutral">
               <p v-if="myStamps.length === 0" class="text-xs text-black/40 dark:text-white/40 text-center py-8">还没有购入邮票，请先去商店购买</p>
-              <div v-else class="grid grid-cols-2 gap-2 max-h-72 overflow-y-auto">
+              <div v-else class="grid grid-cols-3 gap-2 max-h-72 overflow-y-auto">
               <button
                 v-for="stamp in myStamps"
                 :key="stamp.id"
                 @click="selectStamp(stamp)"
-                class="group relative rounded-xl border-2 transition-all duration-200 flex items-center justify-center bg-black/5 dark:bg-white/5" style="height: 72px;"
+                class="group relative rounded-xl border-2 transition-all duration-200 flex items-center justify-center bg-black/5 dark:bg-white/5 aspect-square"
                 :class="selectedStamp?.id === stamp.id ? 'border-secondary shadow-md' : 'border-transparent hover:border-secondary/50'"
               >
                 <img :src="stamp.image" :alt="stamp.title" class="w-full h-full object-contain p-1.5 group-hover:scale-105 transition-transform duration-200" />
-                <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-xl"></div>
-                <div class="absolute bottom-0 left-0 right-0 px-2 py-1">
-                  <p class="text-white text-xs font-semibold truncate">{{ stamp.title }}</p>
+                <div class="absolute bottom-0 left-0 right-0 px-1 py-1">
+                  <p class="text-xs font-semibold truncate text-black/70 dark:text-white/70 text-center bg-white/50 dark:bg-black/50 backdrop-blur-sm rounded">{{ stamp.title }}</p>
                 </div>
                 <div v-if="selectedStamp?.id === stamp.id" class="absolute top-1.5 right-1.5 w-5 h-5 bg-secondary rounded-full flex items-center justify-center shadow">
                   <Check class="w-3 h-3 text-white" />
@@ -858,7 +857,7 @@
                     <!-- Right Side -->
                     <div class="flex-1 flex flex-col pl-5 relative">
                       <div class="flex justify-end relative mb-4">
-                        <div v-if="selectedStamp" class="absolute -top-4 -right-4 w-32 h-32 flex items-center justify-center">
+                        <div v-if="selectedStamp" class="absolute -top-4 -right-4 w-32 h-32 flex items-center justify-center" style="filter: drop-shadow(2px 4px 6px rgba(230, 220, 200, 0.8));">
                           <img :src="selectedStamp.image" class="w-full h-full object-cover" />
                         </div>
                         <div v-else class="w-20 h-24 border-[2px] border-dashed border-black/30 dark:border-white/30 flex items-center justify-center bg-black/5">

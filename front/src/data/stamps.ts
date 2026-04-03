@@ -1,72 +1,89 @@
 export const stamps = [
-  {
-    id: 1,
-    title: "雨天邮票",
-    desc: "描绘暴雨将至的原野，乌云压城，雨丝细密，营造出一种深沉、静谧且略带压抑的雨天氛围。",
-    price: 5,
-    image: new URL("../../../res/stamps/systemstamps/weather/雨天.png", import.meta.url).href,
-  },
-  {
-    id: 2,
-    title: "冬季邮票",
-    desc: "寒梅傲雪的冬日插画，冰清玉洁的红梅在蓝天背景下傲然绽放，寓意寒冬中的坚韧与希望。",
-    price: 5,
-    image: new URL("../../../res/stamps/systemstamps/fourseason/冬.png", import.meta.url).href,
-  },
-  {
-    id: 3,
-    title: "秋天邮票",
-    desc: "金秋向日葵画卷，明黄底色映衬着饱满的花盘，文字鎏金，充满了秋日的丰收与温暖质感。",
-    price: 5,
-    image: new URL("../../../res/stamps/systemstamps/fourseason/秋.png", import.meta.url).href,
-  },
+  // series_id: 1 (四季)
   {
     id: 4,
+    series_id: 1,
     title: "春天邮票",
     desc: "春日繁花初绽插画，洁白的花朵搭配嫩绿枝芽，清新的黄色背景，唤醒万物复苏的生机。",
     price: 5,
     image: new URL("../../../res/stamps/systemstamps/fourseason/春.png", import.meta.url).href,
   },
   {
+    id: 10,
+    series_id: 1,
+    title: "夏天邮票",
+    desc: "夏日清荷插画，粉嫩的荷花与翠绿荷叶相映成趣，清新雅致，寓意盛夏的清新与静谧。",
+    price: 5,
+    image: new URL("../../../res/stamps/systemstamps/fourseason/夏.png", import.meta.url).href,
+  },
+  {
+    id: 3,
+    series_id: 1,
+    title: "秋天邮票",
+    desc: "金秋向日葵画卷，明黄底色映衬着饱满的花盘，文字鎏金，充满了秋日的丰收与温暖质感。",
+    price: 5,
+    image: new URL("../../../res/stamps/systemstamps/fourseason/秋.png", import.meta.url).href,
+  },
+  {
+    id: 2,
+    series_id: 1,
+    title: "冬季邮票",
+    desc: "寒梅傲雪的冬日插画，冰清玉洁的红梅在蓝天背景下傲然绽放，寓意寒冬中的坚韧与希望。",
+    price: 5,
+    image: new URL("../../../res/stamps/systemstamps/fourseason/冬.png", import.meta.url).href,
+  },
+
+  // series_id: 2 (猫狗)
+  {
     id: 5,
+    series_id: 2,
     title: "狗狗邮票",
     desc: "幻彩霓虹风的萌犬肖像，冷暖色调交织碰撞，呈现出梦幻又温暖的光影效果，极具艺术感。",
     price: 5,
     image: new URL("../../../res/stamps/systemstamps/dogandcat/狗狗.png", import.meta.url).href,
   },
   {
-    id: 6,
-    title: "开心邮票",
-    desc: "定格花海中雀跃的瞬间，明媚的笑容与金黄阳光融为一体，传递着纯粹的喜悦与青春活力。",
-    price: 5,
-    image: new URL("../../../res/stamps/systemstamps/emotion/开心.png", import.meta.url).href,
-  },
-  {
     id: 7,
+    series_id: 2,
     title: "咪咪邮票",
     desc: "梦幻渐变风的猫咪特写，橙蓝撞色光影，慵懒又灵动，尽显猫咪的神秘与治愈气质。",
     price: 5,
     image: new URL("../../../res/stamps/systemstamps/dogandcat/咪咪.png", import.meta.url).href,
   },
+
+  // series_id: 3 (天气)
   {
     id: 8,
+    series_id: 3,
     title: "晴天邮票",
     desc: "治愈系黄昏风景画，暖阳高挂，云层层叠浸染，绿意盎然的大地沐浴在金色余晖中。",
     price: 5,
     image: new URL("../../../res/stamps/systemstamps/weather/晴天.png", import.meta.url).href,
   },
   {
+    id: 1,
+    series_id: 3,
+    title: "雨天邮票",
+    desc: "描绘暴雨将至的原野，乌云压城，雨丝细密，营造出一种深沉、静谧且略带压抑的雨天氛围。",
+    price: 5,
+    image: new URL("../../../res/stamps/systemstamps/weather/雨天.png", import.meta.url).href,
+  },
+
+  // series_id: 4 (心情)
+  {
+    id: 6,
+    series_id: 4,
+    title: "开心邮票",
+    desc: "定格花海中雀跃的瞬间，明媚的笑容与金黄阳光融为一体，传递着纯粹的喜悦与青春活力。",
+    price: 5,
+    image: new URL("../../../res/stamps/systemstamps/emotion/开心.png", import.meta.url).href,
+  },
+  {
     id: 9,
+    series_id: 4,
     title: "伤心邮票",
     desc: "落寞身影融入花海，色调清冷忧郁，描绘了沉浸在悲伤情绪中、独自沉思的孤独时刻。",
     price: 5,
     image: new URL("../../../res/stamps/systemstamps/emotion/伤心.png", import.meta.url).href,
-  },
-  {
-    id: 10,
-    title: "夏天邮票",
-    desc: "夏日清荷插画，粉嫩的荷花与翠绿荷叶相映成趣，清新雅致，寓意盛夏的清新与静谧。",
-    price: 5,
-    image: new URL("../../../res/stamps/systemstamps/fourseason/夏.png", import.meta.url).href,
   },
 ];

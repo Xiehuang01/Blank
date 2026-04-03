@@ -2,8 +2,15 @@
   <div class="min-h-screen bg-background pb-32 md:pb-0">
     <!-- Header - 共用 -->
     <header
-      class="flex justify-end items-center w-full px-6 py-4 sticky top-0 z-50 bg-background md:bg-background/90 md:backdrop-blur-sm md:border-b md:border-primary/10"
+      class="flex justify-between items-center w-full px-6 py-4 sticky top-0 z-50 bg-background md:bg-background/90 md:backdrop-blur-sm md:border-b md:border-primary/10"
     >
+      <button @click="$router.push('/checkin')" class="relative text-primary hover:opacity-80 transition-opacity">
+        <CalendarCheck class="w-6 h-6" />
+        <span
+          v-if="!isCheckedInToday"
+          class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-background"
+        ></span>
+      </button>
       <button @click="toggleDarkMode" class="text-primary hover:opacity-80 transition-opacity">
         <component :is="isDarkMode ? Sun : Moon" class="w-6 h-6" />
       </button>
@@ -410,9 +417,12 @@ import {
   UsersRound,
   PenLine,
   LogOut,
+  CalendarCheck,
 } from "lucide-vue-next";
+import { useCheckIn } from "../store/checkin";
 
 const router = useRouter();
+const { isCheckedInToday } = useCheckIn();
 
 const isDarkMode = ref(document.documentElement.classList.contains("dark"));
 
