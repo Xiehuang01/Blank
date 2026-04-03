@@ -152,10 +152,16 @@
               transition: 'transform 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.45s ease, z-index 0s 0.22s',
             }"
           >
-            <div class="relative w-full h-full group overflow-hidden" @click="selectedElementIndex = -1; showStickerPicker = false; showStampSelector = false">
+            <div class="relative w-full h-full group overflow-hidden" ref="editBackContainerRef" @click="selectedElementIndex = -1; showStickerPicker = false; showStampSelector = false">
               <div
-                class="absolute inset-0 rounded-none bg-white dark:bg-neutral p-5 flex border border-black/10 dark:border-white/10 shadow-lg overflow-hidden"
+                class="absolute inset-0 rounded-none bg-white dark:bg-neutral border border-black/10 dark:border-white/10 shadow-lg overflow-hidden"
               >
+                <!-- Scale wrapper: render at fixed reference size, scale to fit container -->
+                <div class="absolute top-0 left-0 origin-top-left" :style="getEditBackScaleStyle()">
+                  <div
+                    class="flex p-5 bg-white dark:bg-neutral"
+                    :style="{ width: backRefWidth + 'px', height: backRefHeight + 'px' }"
+                  >
                 <!-- Left Side - Message -->
                 <div class="flex-1 flex flex-col pr-5 border-r border-black/20 dark:border-white/20 relative overflow-hidden">
                   <h4 class="font-headline text-xl tracking-widest text-black/60 dark:text-white/60 mb-2">POSTCARD</h4>
@@ -207,6 +213,8 @@
                       <div class="flex-1 h-[1px] bg-black/20 dark:bg-white/20"></div>
                     </div>
                     <div class="w-full h-[1px] bg-black/20 dark:bg-white/20"></div>
+                  </div>
+                </div>
                   </div>
                 </div>
               </div>
@@ -950,11 +958,31 @@ import { ChevronLeft, Camera, Image, Check, Type, Smile, Bold, Italic, Palette, 
 
 const showUploadOptions = ref(false);
 const postcardCanvasRef = ref<HTMLElement | null>(null);
+const editBackContainerRef = ref<HTMLElement | null>(null);
 const publishBackRef = ref<HTMLElement | null>(null);
 const postcardTitle = ref('');
 const recipientInput = ref('');
 const isPublicToSquare = ref(false);
 const showFriendSelector = ref(false);
+
+// Fixed reference sizes for consistent back rendering across screen sizes
+const backRefWidth = computed(() => postcardAspectRatio.value === '3/2' ? 600 : 400);
+const backRefHeight = computed(() => postcardAspectRatio.value === '3/2' ? 400 : 600);
+
+const getEditBackScaleStyle = () => {
+  const dst = editBackContainerRef.value;
+  const srcW = backRefWidth.value;
+  const srcH = backRefHeight.value;
+  const dstW = dst ? dst.offsetWidth : srcW;
+  const dstH = dst ? dst.offsetHeight : srcH;
+  const scale = Math.min(dstW / srcW, dstH / srcH);
+  return {
+    width: srcW + 'px',
+    height: srcH + 'px',
+    transform: `scale(${scale})`,
+    transformOrigin: 'top left',
+  };
+};
 
 const getPublishBackScaleStyle = () => {
   const src = postcardCanvasRef.value;

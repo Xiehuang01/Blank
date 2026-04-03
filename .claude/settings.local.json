@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(node -e \"setTimeout\\(\\(\\) => process.exit\\(0\\), 1000\\);\")",
+      "Bash(grep -E \"^.*error.*$|✓ built\")"
     ]
   }
 }

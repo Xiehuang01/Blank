@@ -11,10 +11,10 @@
           发现
         </button>
         <button
-          @click="activeTab = '同城'"
-          :class="['text-lg transition-colors', activeTab === '同城' ? 'font-headline font-bold text-primary' : 'font-headline font-medium text-tertiary hover:text-secondary']"
+          @click="activeTab = '漂流传递'"
+          :class="['text-lg transition-colors', activeTab === '漂流传递' ? 'font-headline font-bold text-primary' : 'font-headline font-medium text-tertiary hover:text-secondary']"
         >
-          同城
+          漂流传递
         </button>
       </div>
       <div class="relative w-48">
