@@ -400,6 +400,49 @@
         </div>
       </div>
     </main>
+    <!-- 退出登录确认弹窗 -->
+    <Teleport to="body">
+      <Transition name="logout-dialog">
+        <div
+          v-if="showLogoutDialog"
+          class="fixed inset-0 z-[9999] flex items-center justify-center"
+          @click.self="showLogoutDialog = false"
+        >
+          <!-- 遮罩 -->
+          <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+          <!-- 弹窗 -->
+          <div class="relative bg-neutral rounded-2xl shadow-xl border border-black/5 dark:border-white/10 w-[340px] max-w-[90vw] overflow-hidden">
+            <!-- 顶部图标区域 -->
+            <div class="flex justify-center pt-8 pb-4">
+              <div class="w-16 h-16 rounded-full bg-red-50 dark:bg-red-500/10 flex items-center justify-center">
+                <LogOut class="w-8 h-8 text-red-500" />
+              </div>
+            </div>
+            <!-- 文字区域 -->
+            <div class="text-center px-6 pb-6">
+              <h3 class="text-lg font-bold text-primary mb-2">退出登录</h3>
+              <p class="text-sm text-tertiary leading-relaxed">确定要退出当前账号吗？退出后需要重新登录才能使用全部功能。</p>
+            </div>
+            <!-- 按钮区域 -->
+            <div class="flex border-t border-black/5 dark:border-white/10">
+              <button
+                @click="showLogoutDialog = false"
+                class="flex-1 py-3.5 text-sm font-semibold text-tertiary hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              >
+                取消
+              </button>
+              <div class="w-px bg-black/5 dark:bg-white/10"></div>
+              <button
+                @click="confirmLogout"
+                class="flex-1 py-3.5 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+              >
+                退出登录
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -421,7 +464,7 @@ import {
   LogOut,
   CalendarCheck,
 } from "lucide-vue-next";
-import { ElMessageBox, ElMessage } from "element-plus";
+import { ElMessage } from "element-plus";
 import { useCheckIn } from "../store/checkin";
 import { useUser } from "../store/user";
 
@@ -447,23 +490,17 @@ const displayUserInfo = computed(() => ({
 }));
 
 // 退出登录
-const handleLogout = async () => {
-  try {
-    await ElMessageBox.confirm(
-      '确定要退出登录吗？',
-      '退出登录',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }
-    );
-    logout();
-    ElMessage.success('已退出登录');
-    router.push('/login');
-  } catch {
-    // 用户取消操作
-  }
+const showLogoutDialog = ref(false);
+
+const handleLogout = () => {
+  showLogoutDialog.value = true;
+};
+
+const confirmLogout = () => {
+  showLogoutDialog.value = false;
+  logout();
+  ElMessage.success('已退出登录');
+  router.push('/login');
 };
 
 const isDarkMode = ref(document.documentElement.classList.contains("dark"));
@@ -497,3 +534,26 @@ const toggleDarkMode = () => {
   }
 };
 </script>
+
+<style scoped>
+.logout-dialog-enter-active,
+.logout-dialog-leave-active {
+  transition: opacity 0.2s ease;
+}
+.logout-dialog-enter-active .relative,
+.logout-dialog-leave-active .relative {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.logout-dialog-enter-from,
+.logout-dialog-leave-to {
+  opacity: 0;
+}
+.logout-dialog-enter-from .relative {
+  transform: scale(0.95);
+  opacity: 0;
+}
+.logout-dialog-leave-to .relative {
+  transform: scale(0.95);
+  opacity: 0;
+}
+</style>
