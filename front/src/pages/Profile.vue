@@ -42,7 +42,7 @@
             <div class="flex items-center gap-3">
               <h2 class="font-headline text-2xl text-primary font-bold">苏木</h2>
               <button class="text-tertiary hover:text-primary transition-colors">
-                <PenLine class="w-4 h-4" />
+                <PenLine class="w-4 h-4" @click="$router.push('/personal-info')"/>
               </button>
             </div>
             <div class="flex flex-col mt-1 space-y-2">
@@ -266,7 +266,7 @@
               <div class="flex items-center gap-2 mb-1">
                 <h2 class="font-headline text-2xl text-primary font-bold">苏木</h2>
                 <button class="text-tertiary hover:text-primary transition-colors">
-                  <PenLine class="w-4 h-4" />
+                  <PenLine class="w-4 h-4" @click="$router.push('/personal-info')"/>
                 </button>
               </div>
               <p class="text-sm text-tertiary font-medium mb-4">UID: 1024520</p>

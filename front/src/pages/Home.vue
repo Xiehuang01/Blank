@@ -76,6 +76,7 @@ import { Search, Heart } from "lucide-vue-next";
 
 const activeTab = ref("发现");
 const userPublicCards = ref<any[]>([]);
+const userDriftingCards = ref<any[]>([]);
 const likedIds = ref<Set<number | string>>(new Set());
 const likedCountMap = ref<Map<number | string, number>>(new Map());
 
@@ -84,10 +85,24 @@ onMounted(() => {
   if (stored) {
     const all = JSON.parse(stored);
     userPublicCards.value = all
-      .filter((c: any) => c.isPublic)
+      .filter((c: any) => c.isPublic && c.postcardType !== 'drifting')
       .map((c: any) => ({
         id: c.id,
         title: c.title || '无标题明信片',
+        location: new Date(c.createdAt).toLocaleDateString('zh-CN'),
+        image: c.image,
+        imageOffset: c.imageOffset,
+        imageScale: c.imageScale,
+        imageRotation: c.imageRotation,
+        aspect: c.aspectRatio === '2/3' ? 'aspect-[2/3]' : 'aspect-[3/2]',
+        likes: 0,
+      }));
+
+    userDriftingCards.value = all
+      .filter((c: any) => c.postcardType === 'drifting')
+      .map((c: any) => ({
+        id: c.id,
+        title: c.title || '漂流明信片',
         location: new Date(c.createdAt).toLocaleDateString('zh-CN'),
         image: c.image,
         imageOffset: c.imageOffset,
@@ -111,6 +126,10 @@ onMounted(() => {
       const userLikes = liked.filter((p: any) => p.id === card.id).length;
       likedCountMap.value.set(card.id, 0 + userLikes);
     });
+    userDriftingCards.value.forEach(card => {
+      const userLikes = liked.filter((p: any) => p.id === card.id).length;
+      likedCountMap.value.set(card.id, 0 + userLikes);
+    });
   } else {
     sampleCards.forEach(card => {
       likedCountMap.value.set(card.id, card.likes);
@@ -118,10 +137,18 @@ onMounted(() => {
   }
 });
 
-const postcards = computed(() => [
-  ...userPublicCards.value,
-  ...sampleCards,
-]);
+const postcards = computed(() => {
+  if (activeTab.value === '发现') {
+    return [
+      ...userPublicCards.value,
+      ...sampleCards,
+    ];
+  } else {
+    return [
+      ...userDriftingCards.value,
+    ];
+  }
+});
 
 const isLiked = (id: number | string) => likedIds.value.has(id);
 

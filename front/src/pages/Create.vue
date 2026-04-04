@@ -318,6 +318,13 @@
                     v-if="selectedElementIndex === index"
                     class="absolute top-0 -right-12 flex flex-col gap-2"
                   >
+                    <!-- Show creator info if available -->
+                    <div v-if="element.creatorName" class="absolute -right-2 top-0 -translate-y-full pb-2">
+                      <div class="bg-black/80 dark:bg-white/80 text-white dark:text-black text-[10px] px-2 py-1 rounded whitespace-nowrap whitespace-nowrap shadow-sm">
+                        由 {{ element.creatorName }} 添加
+                        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-black/80 dark:border-t-white/80"></div>
+                      </div>
+                    </div>
                     <button
                       @click.stop="moveElementUp"
                       class="w-8 h-8 bg-white dark:bg-neutral border border-black/10 dark:border-white/10 rounded-full flex items-center justify-center shadow-sm text-tertiary hover:text-primary dark:hover:text-white"
@@ -402,6 +409,37 @@
 
         <!-- Right Column - Stamp Selection & Actions -->
         <div class="space-y-6" @click.stop>
+          <!-- Postcard Type Selection -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="font-headline text-lg font-bold text-primary">明信片类型</h3>
+              <button
+                v-if="postcardType === 'drifting'"
+                @click="showDriftHelpDialog = true"
+                class="text-primary/60 hover:text-primary transition-colors flex items-center justify-center p-1"
+                title="漂流明信片规则"
+              >
+                <HelpCircle class="w-5 h-5" />
+              </button>
+            </div>
+            <div class="flex bg-black/5 dark:bg-white/5 p-1 rounded-xl">
+              <button
+                @click="postcardType = 'normal'"
+                class="flex-1 py-2 text-sm font-bold rounded-lg transition-all duration-300"
+                :class="postcardType === 'normal' ? 'bg-white dark:bg-neutral shadow-sm text-primary dark:text-white' : 'text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white'"
+              >
+                普通明信片
+              </button>
+              <button
+                @click="postcardType = 'drifting'"
+                class="flex-1 py-2 text-sm font-bold rounded-lg transition-all duration-300"
+                :class="postcardType === 'drifting' ? 'bg-white dark:bg-neutral shadow-sm text-primary dark:text-white' : 'text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white'"
+              >
+                漂流传递
+              </button>
+            </div>
+          </div>
+
           <!-- Add Elements Buttons -->
           <div class="space-y-3">
             <h3 class="font-headline text-lg font-bold text-primary">添加元素</h3>
@@ -750,9 +788,9 @@
               </div>
             </div>
 
-            <!-- Public to Square Checkbox -->
-            <div class="flex items-center gap-2">
-              
+            <!-- Public to Square Checkbox (Only for Normal Postcards) -->
+            <div v-if="postcardType === 'normal'" class="flex items-center gap-2">
+
               <label for="publicCheckbox" class="text-sm font-medium text-black/70 dark:text-white/70 cursor-pointer">
                 公开到广场
               </label>
@@ -784,6 +822,36 @@
         </div>
       </div>
     </main>
+
+    <!-- Drift Help Dialog -->
+    <transition name="fade">
+      <div v-if="showDriftHelpDialog" class="fixed inset-0 z-[100] flex items-center justify-center p-4" @click.self="showDriftHelpDialog = false">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <!-- Dialog -->
+        <div class="relative bg-white dark:bg-neutral rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-auto overflow-hidden">
+          <div class="flex items-center justify-between mb-4 border-b border-black/5 dark:border-white/5 pb-3">
+            <h3 class="font-headline text-lg font-bold text-primary dark:text-white flex items-center gap-2">
+              <Sparkles class="w-5 h-5 text-secondary" />
+              漂流传递明信片
+            </h3>
+            <button @click="showDriftHelpDialog = false" class="w-8 h-8 rounded-full flex items-center justify-center text-black/40 dark:text-white/40 hover:bg-black/10 dark:hover:bg-white/10 transition-colors">✕</button>
+          </div>
+          <div class="space-y-4 text-sm text-black/70 dark:text-white/70">
+            <p><strong>发布规则：</strong> 只能插入一个文本框和一张贴纸。</p>
+            <p><strong>传递规则：</strong> 发布后明信片会出现在首页的漂流传递中。</p>
+            <p><strong>接力规则：</strong> 其它用户可以点击并继续插入一个文本框和一张贴纸。</p>
+            <p><strong>管理权限：</strong> 明信片右边会显示每个人添加的元素。发布人可以任意删除对应的用户操作。</p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-black/5 dark:border-white/5">
+            <button
+              @click="showDriftHelpDialog = false"
+              class="w-full py-3 rounded-xl bg-primary dark:bg-secondary text-white dark:text-black font-bold hover:opacity-90 transition-opacity"
+            >我知道了</button>
+          </div>
+        </div>
+      </div>
+    </transition>
 
     <!-- Reset Confirm Dialog -->
     <transition name="fade">
@@ -842,7 +910,7 @@
                 >
                   <div
                     class="flex p-5 bg-white dark:bg-neutral"
-                    :style="{ width: (postcardCanvasRef ? postcardCanvasRef.offsetWidth : 600) + 'px', height: (postcardCanvasRef ? postcardCanvasRef.offsetHeight : 400) + 'px' }"
+                    :style="{ width: publishBackRefWidth + 'px', height: publishBackRefHeight + 'px' }"
                   >
                     <!-- Left Side -->
                     <div class="flex-1 flex flex-col pr-5 border-r border-black/20 dark:border-white/20 overflow-hidden relative">
@@ -951,10 +1019,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch, nextTick } from "vue";
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
-import { ChevronLeft, Camera, Image, Check, Type, Smile, Bold, Italic, Palette, Trash2, ArrowUp, ArrowDown, RotateCw, Sparkles, Underline, Strikethrough, AlignLeft, AlignCenter, AlignRight, Users } from "lucide-vue-next";
+import { ChevronLeft, Camera, Image, Check, Type, Smile, Bold, Italic, Palette, Trash2, ArrowUp, ArrowDown, RotateCw, Sparkles, Underline, Strikethrough, AlignLeft, AlignCenter, AlignRight, Users, HelpCircle } from "lucide-vue-next";
 
 const showUploadOptions = ref(false);
 const postcardCanvasRef = ref<HTMLElement | null>(null);
@@ -964,17 +1032,86 @@ const postcardTitle = ref('');
 const recipientInput = ref('');
 const isPublicToSquare = ref(false);
 const showFriendSelector = ref(false);
+const postcardType = ref('normal'); // 'normal' | 'drifting'
+const showDriftHelpDialog = ref(false);
+
+const containerSize = ref({ width: 0, height: 0 });
+const publishContainerSize = ref({ width: 0, height: 0 });
+let resizeObserver: ResizeObserver | null = null;
+let publishResizeObserver: ResizeObserver | null = null;
+
+  onMounted(() => {
+  loadMyStamps();
+
+  // ResizeObserver for edit back container
+  if (editBackContainerRef.value) {
+    containerSize.value = {
+      width: editBackContainerRef.value.offsetWidth,
+      height: editBackContainerRef.value.offsetHeight
+    };
+    resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        containerSize.value = {
+          width: entry.contentRect.width,
+          height: entry.contentRect.height
+        };
+      }
+    });
+    resizeObserver.observe(editBackContainerRef.value);
+  }
+
+  // ResizeObserver for publish back container (can be set later when the dialog opens)
+  watch(showPublishDialog, async (newVal) => {
+    if (newVal) {
+      await nextTick();
+      if (publishBackRef.value) {
+        publishContainerSize.value = {
+          width: publishBackRef.value.offsetWidth,
+          height: publishBackRef.value.offsetHeight
+        };
+        if (!publishResizeObserver) {
+          publishResizeObserver = new ResizeObserver((entries) => {
+            for (let entry of entries) {
+              publishContainerSize.value = {
+                width: entry.contentRect.width,
+                height: entry.contentRect.height
+              };
+            }
+          });
+        }
+        publishResizeObserver.observe(publishBackRef.value);
+      }
+    } else {
+        if (publishResizeObserver && publishBackRef.value) {
+            publishResizeObserver.unobserve(publishBackRef.value);
+        }
+    }
+  });
+
+  // Close font dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    const target = e.target as Node;
+    const fontDropdownEl = document.getElementById('font-dropdown-wrapper');
+    if (fontDropdownEl && !fontDropdownEl.contains(target)) {
+      showFontDropdown.value = false;
+    }
+  });
+});
+
+onUnmounted(() => {
+  if (resizeObserver) resizeObserver.disconnect();
+  if (publishResizeObserver) publishResizeObserver.disconnect();
+});
 
 // Fixed reference sizes for consistent back rendering across screen sizes
 const backRefWidth = computed(() => postcardAspectRatio.value === '3/2' ? 600 : 400);
 const backRefHeight = computed(() => postcardAspectRatio.value === '3/2' ? 400 : 600);
 
 const getEditBackScaleStyle = () => {
-  const dst = editBackContainerRef.value;
   const srcW = backRefWidth.value;
   const srcH = backRefHeight.value;
-  const dstW = dst ? dst.offsetWidth : srcW;
-  const dstH = dst ? dst.offsetHeight : srcH;
+  const dstW = containerSize.value.width || srcW;
+  const dstH = containerSize.value.height || srcH;
   const scale = Math.min(dstW / srcW, dstH / srcH);
   return {
     width: srcW + 'px',
@@ -984,13 +1121,15 @@ const getEditBackScaleStyle = () => {
   };
 };
 
+// 发布预览相关的处理
+const publishBackRefWidth = computed(() => postcardAspectRatio.value === '3/2' ? 600 : 400);
+const publishBackRefHeight = computed(() => postcardAspectRatio.value === '3/2' ? 400 : 600);
+
 const getPublishBackScaleStyle = () => {
-  const src = postcardCanvasRef.value;
-  const dst = publishBackRef.value;
-  const srcW = src ? src.offsetWidth : 600;
-  const srcH = src ? src.offsetHeight : 400;
-  const dstW = dst ? dst.offsetWidth : srcW;
-  const dstH = dst ? dst.offsetHeight : srcH;
+  const srcW = publishBackRefWidth.value;
+  const srcH = publishBackRefHeight.value;
+  const dstW = publishContainerSize.value.width || srcW;
+  const dstH = publishContainerSize.value.height || srcH;
   const scale = Math.min(dstW / srcW, dstH / srcH);
   return {
     width: srcW + 'px',
@@ -1270,6 +1409,14 @@ const startDrag = (e: MouseEvent | TouchEvent) => {
 };
 
 const addTextElement = () => {
+  if (postcardType.value === 'drifting') {
+    const hasText = interactiveElements.value.some(el => el.type === 'text');
+    if (hasText) {
+      ElMessage.warning('漂流传递明信片只能添加一个文本框');
+      return;
+    }
+  }
+
   showFront.value = false;
   // 先取消当前选中，blur 旧文本框
   if (selectedElementIndex.value !== -1 && textEditRefs.value[selectedElementIndex.value]) {
@@ -1310,6 +1457,14 @@ const addTextElement = () => {
 };
 
 const addStickerElement = (stickerUrl: string) => {
+  if (postcardType.value === 'drifting') {
+    const hasSticker = interactiveElements.value.some(el => el.type === 'sticker');
+    if (hasSticker) {
+      ElMessage.warning('漂流传递明信片只能添加一张贴纸');
+      return;
+    }
+  }
+
   showFront.value = false;
   const newIndex = interactiveElements.value.length;
   interactiveElements.value.push({
@@ -1652,12 +1807,17 @@ const confirmPublish = () => {
     id: Date.now(),
     title: postcardTitle.value || '无标题明信片',
     recipient: recipientInput.value,
-    isPublic: isPublicToSquare.value,
+    isPublic: postcardType.value === 'drifting' ? true : isPublicToSquare.value,
+    postcardType: postcardType.value,
     image: selectedImage.value,
     imageOffset: { ...imageOffset.value },
     imageScale: imageScale.value,
     imageRotation: imageRotation.value,
-    elements: interactiveElements.value.map(el => ({ ...el })),
+    elements: interactiveElements.value.map(el => ({
+      ...el,
+      creatorId: '1024520', // 使用当前用户UID
+      creatorName: '苏木' // 使用当前用户名
+    })),
     stamp: selectedStamp.value,
     aiReviewStatus: '通过',
     manualReviewStatus: '待审核',
