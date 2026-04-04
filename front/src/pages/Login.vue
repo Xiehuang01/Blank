@@ -419,8 +419,11 @@
 import { ref, nextTick, computed } from "vue";
 import { useRouter } from "vue-router";
 import { Eye, EyeOff } from "lucide-vue-next";
+import { ElMessage } from "element-plus";
+import { useUser } from "../store/user";
 
 const router = useRouter();
+const { login: loginUser } = useUser();
 
 const flipped = ref(false);
 const isLoading = ref(false);
@@ -511,10 +514,18 @@ const verifyAndComplete = async () => {
   isVerifying.value = true;
   try {
     await new Promise(resolve => setTimeout(resolve, 800));
-    localStorage.setItem('user', JSON.stringify({
+    
+    // 使用user store保存用户信息
+    loginUser({
+      uid: Math.floor(Math.random() * 9000000 + 1000000).toString(), // 生成随机UID
       username: registerForm.value.username,
       email: registerForm.value.email,
-    }));
+      avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBYArdRu7qlNp4cuo06XFR6gjYC0xtUePbpepRVZFPb60NLBx_VR9amuEGGGmcgoSJxZnTSvk-qC-pT40C1BcNky-vgDMQS81oXbUZ1ZhPGx8TyP5kDLnK2UxXs44i4R9b0C6J2F0AegR2bJ6baLYqRUydE5fXGJMLngQf9plW3-BdtpO6Gnq5BWbM5Y8_ZXBxCkBcu_AycBYRNspo0GmyLKNOwz7WDP8qJiBl97glqeE0pFejorxYMHYxFqX9mdXogSMmgx3TMR9IR',
+      vipLevel: 'FREE',
+      coins: 100, // 新用户赠送100邮分
+      rememberMe: false,
+    });
+    
     // Wind-up lean left
     envelopePhase.value = 'sending';
     await new Promise(resolve => setTimeout(resolve, 380));
@@ -523,7 +534,7 @@ const verifyAndComplete = async () => {
     await new Promise(resolve => setTimeout(resolve, 600));
     router.push('/');
   } catch (error) {
-    alert('验证失败，请重试');
+    ElMessage.error('验证失败，请重试');
     isVerifying.value = false;
   }
 };
@@ -549,7 +560,7 @@ const showRegisterConfirm = ref(false);
 
 const handleLogin = async () => {
   if (!loginForm.value.email || !loginForm.value.password) {
-    alert("请输入邮箱和密码");
+    ElMessage.warning("请输入邮箱和密码");
     return;
   }
 
@@ -558,15 +569,21 @@ const handleLogin = async () => {
   try {
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    localStorage.setItem("user", JSON.stringify({
+    // 使用user store保存用户信息
+    loginUser({
+      uid: '1024520', // 模拟用户ID
+      username: '苏木', // 模拟用户名
       email: loginForm.value.email,
+      avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBYArdRu7qlNp4cuo06XFR6gjYC0xtUePbpepRVZFPb60NLBx_VR9amuEGGGmcgoSJxZnTSvk-qC-pT40C1BcNky-vgDMQS81oXbUZ1ZhPGx8TyP5kDLnK2UxXs44i4R9b0C6J2F0AegR2bJ6baLYqRUydE5fXGJMLngQf9plW3-BdtpO6Gnq5BWbM5Y8_ZXBxCkBcu_AycBYRNspo0GmyLKNOwz7WDP8qJiBl97glqeE0pFejorxYMHYxFqX9mdXogSMmgx3TMR9IR',
+      vipLevel: 'VIP',
+      coins: 850,
       rememberMe: loginForm.value.rememberMe,
-    }));
+    });
 
-    alert("登录成功！");
+    ElMessage.success("登录成功！");
     router.push("/");
   } catch (error) {
-    alert("登录失败，请重试");
+    ElMessage.error("登录失败，请重试");
   } finally {
     isLoading.value = false;
   }
@@ -574,17 +591,17 @@ const handleLogin = async () => {
 
 const handleRegister = async () => {
   if (!registerForm.value.username || !registerForm.value.email || !registerForm.value.password || !registerForm.value.confirmPassword) {
-    alert("请填写所有字段");
+    ElMessage.warning("请填写所有字段");
     return;
   }
 
   if (registerForm.value.password !== registerForm.value.confirmPassword) {
-    alert("两次输入的密码不一致");
+    ElMessage.warning("两次输入的密码不一致");
     return;
   }
 
   if (registerForm.value.password.length < 6) {
-    alert("密码长度至少为 6 位");
+    ElMessage.warning("密码长度至少为 6 位");
     return;
   }
 

@@ -26,7 +26,7 @@
               class="w-20 h-20 rounded-full overflow-hidden border-2 border-black/10 shadow-sm"
             >
               <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYArdRu7qlNp4cuo06XFR6gjYC0xtUePbpepRVZFPb60NLBx_VR9amuEGGGmcgoSJxZnTSvk-qC-pT40C1BcNky-vgDMQS81oXbUZ1ZhPGx8TyP5kDLnK2UxXs44i4R9b0C6J2F0AegR2bJ6baLYqRUydE5fXGJMLngQf9plW3-BdtpO6Gnq5BWbM5Y8_ZXBxCkBcu_AycBYRNspo0GmyLKNOwz7WDP8qJiBl97glqeE0pFejorxYMHYxFqX9mdXogSMmgx3TMR9IR"
+                :src="displayUserInfo.avatar"
                 alt="Avatar"
                 class="w-full h-full object-cover"
                 referrerpolicy="no-referrer"
@@ -35,26 +35,26 @@
             <div
               class="absolute -bottom-1 -right-1 bg-secondary text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm"
             >
-              VIP
+              {{ displayUserInfo.vipLevel }}
             </div>
           </div>
           <div class="flex flex-col">
             <div class="flex items-center gap-3">
-              <h2 class="font-headline text-2xl text-primary font-bold">苏木</h2>
+              <h2 class="font-headline text-2xl text-primary font-bold">{{ displayUserInfo.username }}</h2>
               <button class="text-tertiary hover:text-primary transition-colors">
                 <PenLine class="w-4 h-4" @click="$router.push('/personal-info')"/>
               </button>
             </div>
             <div class="flex flex-col mt-1 space-y-2">
               <span class="text-sm text-tertiary font-medium tracking-tight"
-                >UID: 1024520</span
+                >UID: {{ displayUserInfo.uid }}</span
               >
               <div
                 class="inline-flex items-center gap-1.5 px-3 py-1 bg-black/5 dark:bg-white/5 rounded-full w-fit"
               >
                 <Coins class="w-4 h-4 text-tertiary" />
                 <span class="text-xs font-semibold text-primary"
-                  >虚拟货币: 850 邮分</span
+                  >虚拟货币: {{ displayUserInfo.coins }} 邮分</span
                 >
               </div>
             </div>
@@ -234,6 +234,7 @@
       <!-- 退出登录 -->
       <section class="pt-2">
         <button
+          @click="handleLogout"
           class="w-full py-3.5 bg-neutral rounded-xl text-red-500 font-bold shadow-sm border border-black/5 dark:border-white/5 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors flex items-center justify-center gap-2"
         >
           <LogOut class="w-5 h-5" />
@@ -253,26 +254,26 @@
               <div class="relative group mb-4">
                 <div class="w-28 h-28 rounded-full overflow-hidden border-2 border-black/10 shadow-sm">
                   <img
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYArdRu7qlNp4cuo06XFR6gjYC0xtUePbpepRVZFPb60NLBx_VR9amuEGGGmcgoSJxZnTSvk-qC-pT40C1BcNky-vgDMQS81oXbUZ1ZhPGx8TyP5kDLnK2UxXs44i4R9b0C6J2F0AegR2bJ6baLYqRUydE5fXGJMLngQf9plW3-BdtpO6Gnq5BWbM5Y8_ZXBxCkBcu_AycBYRNspo0GmyLKNOwz7WDP8qJiBl97glqeE0pFejorxYMHYxFqX9mdXogSMmgx3TMR9IR"
+                    :src="displayUserInfo.avatar"
                     alt="Avatar"
                     class="w-full h-full object-cover"
                     referrerpolicy="no-referrer"
                   />
                 </div>
                 <div class="absolute -bottom-1 -right-1 bg-secondary text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
-                  VIP
+                  {{ displayUserInfo.vipLevel }}
                 </div>
               </div>
               <div class="flex items-center gap-2 mb-1">
-                <h2 class="font-headline text-2xl text-primary font-bold">苏木</h2>
+                <h2 class="font-headline text-2xl text-primary font-bold">{{ displayUserInfo.username }}</h2>
                 <button class="text-tertiary hover:text-primary transition-colors">
                   <PenLine class="w-4 h-4" @click="$router.push('/personal-info')"/>
                 </button>
               </div>
-              <p class="text-sm text-tertiary font-medium mb-4">UID: 1024520</p>
+              <p class="text-sm text-tertiary font-medium mb-4">UID: {{ displayUserInfo.uid }}</p>
               <div class="inline-flex items-center gap-2 px-4 py-2 bg-black/5 dark:bg-white/5 rounded-full">
                 <Coins class="w-5 h-5 text-tertiary" />
-                <span class="text-sm font-semibold text-primary">850 邮分</span>
+                <span class="text-sm font-semibold text-primary">{{ displayUserInfo.coins }} 邮分</span>
               </div>
             </div>
           </div>
@@ -334,6 +335,7 @@
 
           <!-- 退出登录 -->
           <button
+            @click="handleLogout"
             class="w-full py-3.5 bg-neutral rounded-xl text-red-500 font-bold shadow-sm border border-black/5 dark:border-white/5 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors flex items-center justify-center gap-2"
           >
             <LogOut class="w-5 h-5" />
@@ -402,7 +404,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import {
   Moon,
@@ -419,10 +421,50 @@ import {
   LogOut,
   CalendarCheck,
 } from "lucide-vue-next";
+import { ElMessageBox, ElMessage } from "element-plus";
 import { useCheckIn } from "../store/checkin";
+import { useUser } from "../store/user";
 
 const router = useRouter();
 const { isCheckedInToday } = useCheckIn();
+const { userInfo, isLoggedIn, logout } = useUser();
+
+// 检查登录状态
+onMounted(() => {
+  if (!isLoggedIn.value) {
+    router.push('/login');
+  }
+});
+
+// 用户信息（从store获取或使用默认值）
+const displayUserInfo = computed(() => ({
+  uid: userInfo.value?.uid || '1024520',
+  username: userInfo.value?.username || '苏木',
+  email: userInfo.value?.email || '',
+  avatar: userInfo.value?.avatar || 'https://lh3.googleusercontent.com/aida-public/AB6AXuBYArdRu7qlNp4cuo06XFR6gjYC0xtUePbpepRVZFPb60NLBx_VR9amuEGGGmcgoSJxZnTSvk-qC-pT40C1BcNky-vgDMQS81oXbUZ1ZhPGx8TyP5kDLnK2UxXs44i4R9b0C6J2F0AegR2bJ6baLYqRUydE5fXGJMLngQf9plW3-BdtpO6Gnq5BWbM5Y8_ZXBxCkBcu_AycBYRNspo0GmyLKNOwz7WDP8qJiBl97glqeE0pFejorxYMHYxFqX9mdXogSMmgx3TMR9IR',
+  vipLevel: userInfo.value?.vipLevel || 'VIP',
+  coins: userInfo.value?.coins || 850,
+}));
+
+// 退出登录
+const handleLogout = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '确定要退出登录吗？',
+      '退出登录',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+    logout();
+    ElMessage.success('已退出登录');
+    router.push('/login');
+  } catch {
+    // 用户取消操作
+  }
+};
 
 const isDarkMode = ref(document.documentElement.classList.contains("dark"));
 

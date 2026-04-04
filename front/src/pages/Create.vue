@@ -152,14 +152,14 @@
               transition: 'transform 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.45s ease, z-index 0s 0.22s',
             }"
           >
-            <div class="relative w-full h-full group overflow-hidden" ref="editBackContainerRef" @click="selectedElementIndex = -1; showStickerPicker = false; showStampSelector = false">
+            <div class="relative w-full h-full group" ref="editBackContainerRef" @click="selectedElementIndex = -1; showStickerPicker = false; showStampSelector = false">
               <div
-                class="absolute inset-0 rounded-none bg-white dark:bg-neutral border border-black/10 dark:border-white/10 shadow-lg overflow-hidden"
+                class="absolute inset-0 rounded-none bg-white dark:bg-neutral border border-black/10 dark:border-white/10 shadow-lg overflow-visible"
               >
                 <!-- Scale wrapper: render at fixed reference size, scale to fit container -->
                 <div class="absolute top-0 left-0 origin-top-left" :style="getEditBackScaleStyle()">
                   <div
-                    class="flex p-5 bg-white dark:bg-neutral"
+                    class="flex p-5 bg-white dark:bg-neutral overflow-hidden"
                     :style="{ width: backRefWidth + 'px', height: backRefHeight + 'px' }"
                   >
                 <!-- Left Side - Message -->
@@ -186,7 +186,7 @@
                   <div class="flex justify-end relative mb-4">
                     <!-- Stamp -->
                     <button
-                      @click.stop="showStampSelector = !showStampSelector; showStickerPicker = false; selectedElementIndex = -1;"
+                      @click.stop="toggleStampSelector"
                       class="w-20 h-24 border-[2px] border-black/30 dark:border-white/30 flex items-center justify-center relative bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer flex-shrink-0"
                       style="border-style: dashed;"
                       title="点击选择邮票"
@@ -194,7 +194,7 @@
                       <span v-if="!selectedStamp" class="text-xs font-bold text-black/40 dark:text-white/40">邮票</span>
                     </button>
                     <!-- Stamp Image Container -->
-                    <div v-if="selectedStamp" class="absolute -top-3 -right-3 w-32 h-32 flex items-center justify-center cursor-pointer" style="filter: drop-shadow(2px 4px 6px rgba(230, 220, 200, 0.8));" @click.stop="showStampSelector = !showStampSelector; showStickerPicker = false; selectedElementIndex = -1;">
+                    <div v-if="selectedStamp" class="absolute -top-3 -right-3 w-32 h-32 flex items-center justify-center cursor-pointer" style="filter: drop-shadow(2px 4px 6px rgba(230, 220, 200, 0.8));" @click.stop="toggleStampSelector">
                       <img
                         :src="selectedStamp.image"
                         :alt="selectedStamp.title"
@@ -266,7 +266,7 @@
                       lineHeight: '1.4',
                       display: 'inline-block',
                     }"
-                  ></div>
+                  >{{ element.content }}</div>
                   <!-- Text Display - Show when not selected -->
                   <div
                     v-else-if="element.type === 'text'"
@@ -316,7 +316,9 @@
                   <!-- Action Buttons (Right Side) - Only show when selected -->
                   <div
                     v-if="selectedElementIndex === index"
-                    class="absolute top-0 -right-12 flex flex-col gap-2"
+                    class="absolute top-0 -right-12 md:-right-12 -right-2 flex flex-col gap-2 z-50"
+                    @mousedown.stop
+                    @touchstart.stop
                   >
                     <!-- Show creator info if available -->
                     <div v-if="element.creatorName" class="absolute -right-2 top-0 -translate-y-full pb-2">
@@ -327,21 +329,27 @@
                     </div>
                     <button
                       @click.stop="moveElementUp"
-                      class="w-8 h-8 bg-white dark:bg-neutral border border-black/10 dark:border-white/10 rounded-full flex items-center justify-center shadow-sm text-tertiary hover:text-primary dark:hover:text-white"
+                      @mousedown.stop
+                      @touchstart.stop
+                      class="w-8 h-8 bg-white dark:bg-neutral border border-black/10 dark:border-white/10 rounded-full flex items-center justify-center shadow-sm text-tertiary hover:text-primary dark:hover:text-white pointer-events-auto"
                       title="上移一层"
                     >
                       <ArrowUp class="w-4 h-4" />
                     </button>
                     <button
                       @click.stop="moveElementDown"
-                      class="w-8 h-8 bg-white dark:bg-neutral border border-black/10 dark:border-white/10 rounded-full flex items-center justify-center shadow-sm text-tertiary hover:text-primary dark:hover:text-white"
+                      @mousedown.stop
+                      @touchstart.stop
+                      class="w-8 h-8 bg-white dark:bg-neutral border border-black/10 dark:border-white/10 rounded-full flex items-center justify-center shadow-sm text-tertiary hover:text-primary dark:hover:text-white pointer-events-auto"
                       title="下移一层"
                     >
                       <ArrowDown class="w-4 h-4" />
                     </button>
                     <button
                       @click.stop="deleteElement"
-                      class="w-8 h-8 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-full flex items-center justify-center shadow-sm text-red-500 hover:text-red-600 dark:text-red-400"
+                      @mousedown.stop
+                      @touchstart.stop
+                      class="w-8 h-8 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-full flex items-center justify-center shadow-sm text-red-500 hover:text-red-600 dark:text-red-400 pointer-events-auto"
                       title="删除"
                     >
                       <Trash2 class="w-4 h-4" />
@@ -728,7 +736,7 @@
           </div>
 
           <!-- Stamp Selector -->
-          <div v-if="showStampSelector" class="rounded-2xl border border-black/10 dark:border-white/10 shadow-sm">
+          <div v-if="showStampSelector" ref="stampSelectorRef" class="rounded-2xl border border-black/10 dark:border-white/10 shadow-sm">
             <div class="flex items-center justify-between px-4 py-3 bg-primary/5 dark:bg-white/5 border-b border-black/10 dark:border-white/10 rounded-t-2xl">
               <h3 class="text-sm font-bold text-primary dark:text-white tracking-wide">选择邮票</h3>
               <button @click="showStampSelector = false" class="w-6 h-6 rounded-full flex items-center justify-center text-black/30 dark:text-white/30 hover:text-black dark:hover:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-sm">✕</button>
@@ -1139,6 +1147,7 @@ const getPublishBackScaleStyle = () => {
   };
 };
 const showStampSelector = ref(false);
+const stampSelectorRef = ref<HTMLElement | null>(null);
 const showStickerPicker = ref(false);
 const showAiAgent = ref(false);
 const showResetDialog = ref(false);
@@ -1641,6 +1650,30 @@ const startElementRotate = (e: MouseEvent | TouchEvent, index: number) => {
   document.addEventListener('touchmove', handleMove, { passive: false });
   document.addEventListener('mouseup', handleEnd);
   document.addEventListener('touchend', handleEnd);
+};
+
+const toggleStampSelector = async () => {
+  showStampSelector.value = !showStampSelector.value;
+  showStickerPicker.value = false;
+  selectedElementIndex.value = -1;
+  
+  // 在手机端，如果打开了邮票选择器，滚动到该位置
+  if (showStampSelector.value) {
+    await nextTick();
+    if (stampSelectorRef.value) {
+      // 检查是否是手机端（屏幕宽度小于768px）
+      const isMobile = window.innerWidth < 768;
+      if (isMobile) {
+        // 使用setTimeout确保DOM完全渲染后再滚动
+        setTimeout(() => {
+          stampSelectorRef.value?.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start'
+          });
+        }, 100);
+      }
+    }
+  }
 };
 
 const selectStamp = (stamp: any) => {

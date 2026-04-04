@@ -49,16 +49,16 @@
         <div class="relative w-full" :style="{ aspectRatio: imageAspectRatio }"
           :ref="el => { if (el) mobileBackRef = el as HTMLElement }"
         >
-          <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral border border-black/10 dark:border-white/10 shadow-lg overflow-hidden">
+          <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral border border-black/10 dark:border-white/10 shadow-lg overflow-visible">
             <!-- Scale wrapper -->
             <div class="absolute top-0 left-0 origin-top-left" :style="getMobileBackScaleStyle()">
               <div
-                class="relative flex p-5 bg-white dark:bg-neutral"
+                class="relative flex p-5 bg-white dark:bg-neutral overflow-hidden"
                 :style="{ width: (post.canvasWidth || 600) + 'px', height: (post.canvasHeight || 400) + 'px' }"
-                @click.self="selectedElementIndex = -1"
+                @click="selectedElementIndex = -1"
               >
             <!-- Left Side - Message -->
-            <div class="flex-1 flex flex-col pr-5 border-r border-black/20 dark:border-white/20 relative overflow-hidden">
+            <div class="flex-1 flex flex-col pr-5 border-r border-black/20 dark:border-white/20 relative overflow-hidden" @click="selectedElementIndex = -1">
               <h4 class="font-headline text-xl tracking-widest text-black/60 dark:text-white/60 mb-2">POSTCARD</h4>
               <div class="relative flex-1">
                 <div class="flex flex-col gap-8 h-full pt-6 pb-2">
@@ -77,7 +77,7 @@
             </div>
 
             <!-- Right Side - Address & Stamp -->
-            <div class="flex-1 flex flex-col pl-5 relative">
+            <div class="flex-1 flex flex-col pl-5 relative" @click="selectedElementIndex = -1">
               <div class="flex justify-end relative mb-4">
                 <div class="w-20 h-24 border-[2px] border-black/30 dark:border-white/30 flex items-center justify-center relative bg-black/5 dark:bg-white/5 flex-shrink-0" style="border-style: dashed;">
                   <span v-if="!post.stamp" class="text-xs font-bold text-black/40 dark:text-white/40">邮票</span>
@@ -127,7 +127,7 @@
                   @click.stop @mousedown.stop @touchstart.stop
                   class="bg-transparent border-none p-1 focus:outline-none min-w-[50px] min-h-[24px] whitespace-pre-wrap break-words"
                   :style="{ fontFamily: el.fontFamily || 'Arial', fontSize: (el.fontSize || 16) + 'px', fontWeight: el.fontWeight || 'normal', fontStyle: el.fontStyle || 'normal', color: el.color || '#000000', textDecoration: el.textDecoration || 'none', lineHeight: '1.4', display: 'inline-block' }"
-                ></div>
+                >{{ el.content }}</div>
                 <div
                   v-else-if="el.type === 'text'"
                   class="w-full h-full p-1 pointer-events-none"
@@ -140,8 +140,8 @@
                 <div v-if="selectedElementIndex === (idx as number)" class="absolute -bottom-3 -right-3 w-6 h-6 bg-white dark:bg-neutral border border-primary dark:border-white rounded-full flex items-center justify-center cursor-se-resize shadow-sm" @mousedown.stop="startElementResize($event, idx as number)" @touchstart.stop="startElementResize($event, idx as number)">
                   <div class="w-2 h-2 bg-primary dark:bg-white rounded-full"></div>
                 </div>
-                <div v-if="selectedElementIndex === (idx as number)" class="absolute top-0 -right-12 flex flex-col gap-2">
-                  <button v-if="isOwner || el.creatorId === currentUserId" @click.stop="deleteDriftElement(idx as number)" class="w-8 h-8 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-full flex items-center justify-center shadow-sm text-red-500 hover:text-red-600" title="删除">
+                <div v-if="selectedElementIndex === (idx as number)" class="absolute top-0 -right-12 md:-right-12 -right-2 flex flex-col gap-2 z-50" @mousedown.stop @touchstart.stop>
+                  <button v-if="isOwner || el.creatorId === currentUserId" @click.stop="deleteDriftElement(idx as number)" @mousedown.stop @touchstart.stop class="w-8 h-8 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-full flex items-center justify-center shadow-sm text-red-500 hover:text-red-600 pointer-events-auto" title="删除">
                     <Trash2 class="w-4 h-4" />
                   </button>
                 </div>
@@ -169,6 +169,184 @@
           <div class="flex items-center gap-2 text-tertiary">
             <MessageCircle class="w-5 h-5" />
             <span class="font-bold text-sm">{{ comments.length }}</span>
+          </div>
+        </div>
+
+        <!-- Mobile Drifting: Element History Panel -->
+        <div v-if="post.postcardType === 'drifting'" class="space-y-3 pt-4 border-t border-black/10 dark:border-white/10">
+          <h3 class="font-headline text-lg font-bold text-primary">漂流记录</h3>
+          <div v-if="(post.elements || []).length === 0" class="text-sm text-black/40 dark:text-white/40 py-4 text-center">
+            还没有人参与漂流，成为第一个！
+          </div>
+          <div v-else class="space-y-2">
+            <div
+              v-for="(el, idx) in (post.elements || [])"
+              :key="idx"
+              class="flex items-center justify-between p-3 rounded-xl transition-colors cursor-pointer"
+              :class="selectedDriftEl === idx ? 'bg-secondary/10 border border-secondary/30' : 'bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10'"
+              @click="selectedDriftEl = selectedDriftEl === (idx as number) ? -1 : (idx as number)"
+            >
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center flex-shrink-0">
+                  <span class="text-xs font-bold text-secondary">{{ (el.creatorName || '?')[0] }}</span>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-bold text-primary truncate">{{ el.creatorName || '匿名用户' }}</p>
+                  <p class="text-xs text-tertiary">添加了{{ el.type === 'text' ? '文字' : '贴纸' }}：<span class="text-primary/70 truncate">{{ el.type === 'text' ? (el.content || '').slice(0, 12) + (el.content?.length > 12 ? '…' : '') : '贴纸' }}</span></p>
+                </div>
+              </div>
+              <!-- 发布人可以删除任意元素 -->
+              <button
+                v-if="isOwner"
+                @click.stop="deleteDriftElement(idx as number)"
+                class="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-black/30 dark:text-white/30 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                title="删除此元素"
+              >
+                <Trash2 class="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          <!-- 添加漂流元素区域（所有人都能参与） -->
+          <div class="pt-3 space-y-2 border-t border-black/5 dark:border-white/5">
+            <p class="text-xs text-black/50 dark:text-white/50">参与漂流（每人限添加一个文字和一张贴纸）</p>
+            <div class="flex gap-2">
+              <button
+                @click="addDriftText"
+                :disabled="hasMyText"
+                class="flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-1 transition-opacity"
+                :class="hasMyText ? 'bg-black/10 dark:bg-white/10 text-black/30 dark:text-white/30 cursor-not-allowed' : 'bg-primary dark:bg-secondary text-white dark:text-black hover:opacity-90'"
+              >
+                <Type class="w-3.5 h-3.5" />
+                {{ hasMyText ? '已添加文字' : '添加文字' }}
+              </button>
+              <button
+                @click="showDriftStickerPicker = !showDriftStickerPicker"
+                :disabled="hasMySticker"
+                class="flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-1 transition-opacity"
+                :class="hasMySticker ? 'bg-black/10 dark:bg-white/10 text-black/30 dark:text-white/30 cursor-not-allowed' : 'bg-primary dark:bg-secondary text-white dark:text-black hover:opacity-90'"
+              >
+                <Smile class="w-3.5 h-3.5" />
+                {{ hasMySticker ? '已添加贴纸' : '添加贴纸' }}
+              </button>
+            </div>
+            <!-- 贴纸选择器 -->
+            <div v-if="showDriftStickerPicker && !hasMySticker" class="rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
+              <div class="flex gap-1 px-3 pt-2 pb-1 bg-black/5 dark:bg-white/5">
+                <button
+                  v-for="s in driftStickerSeries" :key="s.value"
+                  @click="driftStickerTab = s.value"
+                  class="px-2 py-1 rounded-lg text-xs font-semibold transition-colors"
+                  :class="driftStickerTab === s.value ? 'bg-secondary text-white' : 'text-black/50 dark:text-white/50 hover:bg-black/10'"
+                >{{ s.label }}</button>
+              </div>
+              <div class="p-2 grid grid-cols-4 gap-1.5 max-h-36 overflow-y-auto bg-white dark:bg-neutral">
+                <button
+                  v-for="(sticker, si) in driftStickerOptions" :key="si"
+                  @click="addDriftSticker(sticker)"
+                  class="rounded-lg bg-black/5 hover:bg-secondary/10 border-2 border-transparent hover:border-secondary transition-all flex items-center justify-center" style="height:52px"
+                >
+                  <img :src="sticker" class="w-full h-full object-contain p-1" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile Style Editor Panel (shown when an element is selected) -->
+        <div v-if="selectedElementIndex !== -1 && post.postcardType === 'drifting' && post.elements?.[selectedElementIndex]" class="rounded-2xl border border-black/10 dark:border-white/10 shadow-sm">
+          <div class="flex items-center justify-between px-4 py-3 bg-primary/5 dark:bg-white/5 border-b border-black/10 dark:border-white/10 rounded-t-2xl">
+            <h3 class="text-sm font-bold text-primary dark:text-white tracking-wide">
+              {{ post.elements[selectedElementIndex]?.type === 'text' ? '文字样式' : '贴纸样式' }}
+            </h3>
+            <button @click="selectedElementIndex = -1" class="w-6 h-6 rounded-full flex items-center justify-center text-black/30 dark:text-white/30 hover:text-black dark:hover:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-sm">✕</button>
+          </div>
+          <div class="p-4 bg-white dark:bg-neutral space-y-4">
+            <!-- Text style controls -->
+            <div v-if="post.elements[selectedElementIndex]?.type === 'text'" class="space-y-3">
+              <!-- Bold / Italic / Underline / Alignment -->
+              <div class="flex items-center gap-0.5 p-1 bg-black/5 dark:bg-white/5 rounded-xl flex-wrap">
+                <button @click="post.elements[selectedElementIndex].fontWeight = post.elements[selectedElementIndex].fontWeight === 'bold' ? 'normal' : 'bold'; saveDriftCard()"
+                  :class="post.elements[selectedElementIndex].fontWeight === 'bold' ? 'bg-secondary/20 text-secondary' : 'text-black/60 dark:text-white/60 hover:bg-secondary/10'"
+                  class="w-8 h-8 rounded-md flex items-center justify-center transition-colors font-bold text-sm">B</button>
+                <button @click="post.elements[selectedElementIndex].fontStyle = post.elements[selectedElementIndex].fontStyle === 'italic' ? 'normal' : 'italic'; saveDriftCard()"
+                  :class="post.elements[selectedElementIndex].fontStyle === 'italic' ? 'bg-secondary/20 text-secondary' : 'text-black/60 dark:text-white/60 hover:bg-secondary/10'"
+                  class="w-8 h-8 rounded-md flex items-center justify-center transition-colors italic text-sm">I</button>
+                <button @click="post.elements[selectedElementIndex].textDecoration = post.elements[selectedElementIndex].textDecoration === 'underline' ? 'none' : 'underline'; saveDriftCard()"
+                  :class="post.elements[selectedElementIndex].textDecoration === 'underline' ? 'bg-secondary/20 text-secondary' : 'text-black/60 dark:text-white/60 hover:bg-secondary/10'"
+                  class="w-8 h-8 rounded-md flex items-center justify-center transition-colors underline text-sm">U</button>
+                <div class="w-px h-6 bg-black/20 dark:bg-white/20 mx-1"></div>
+                <button @click="post.elements[selectedElementIndex].textAlign = 'left'; saveDriftCard()"
+                  :class="(post.elements[selectedElementIndex].textAlign || 'left') === 'left' ? 'bg-secondary/20 text-secondary' : 'text-black/60 dark:text-white/60 hover:bg-secondary/10'"
+                  class="w-8 h-8 rounded-md flex items-center justify-center transition-colors text-xs">≡←</button>
+                <button @click="post.elements[selectedElementIndex].textAlign = 'center'; saveDriftCard()"
+                  :class="post.elements[selectedElementIndex].textAlign === 'center' ? 'bg-secondary/20 text-secondary' : 'text-black/60 dark:text-white/60 hover:bg-secondary/10'"
+                  class="w-8 h-8 rounded-md flex items-center justify-center transition-colors text-xs">≡</button>
+                <button @click="post.elements[selectedElementIndex].textAlign = 'right'; saveDriftCard()"
+                  :class="post.elements[selectedElementIndex].textAlign === 'right' ? 'bg-secondary/20 text-secondary' : 'text-black/60 dark:text-white/60 hover:bg-secondary/10'"
+                  class="w-8 h-8 rounded-md flex items-center justify-center transition-colors text-xs">→≡</button>
+              </div>
+              <!-- Font Family + Font Size -->
+              <div class="flex items-center gap-2 flex-wrap">
+                <!-- Font Family Dropdown -->
+                <div id="drift-font-dropdown-mobile" class="relative flex-1">
+                  <button
+                    @click.stop="showFontDropdown = !showFontDropdown"
+                    class="w-full px-3 py-1.5 text-xs border border-black/15 dark:border-white/15 rounded-lg bg-black/5 dark:bg-white/5 text-black dark:text-white font-medium hover:bg-black/10 dark:hover:bg-white/10 transition-colors flex items-center justify-between gap-1.5"
+                  >
+                    <span>{{ driftFontDisplayName }}</span>
+                    <svg :class="showFontDropdown ? 'rotate-180' : ''" class="w-3 h-3 opacity-50 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                  </button>
+                  <div v-if="showFontDropdown" class="absolute left-0 top-full mt-1 w-48 bg-white dark:bg-neutral border border-black/10 dark:border-white/10 rounded-xl shadow-lg z-50 max-h-64 overflow-y-auto">
+                    <div class="px-3 py-2 border-b border-black/10 dark:border-white/10">
+                      <p class="text-xs font-bold text-secondary mb-2">中文字体</p>
+                      <button v-for="font in chineseFonts" :key="font.value"
+                        @click="post.elements[selectedElementIndex].fontFamily = font.value; showFontDropdown = false; saveDriftCard()"
+                        :class="post.elements[selectedElementIndex].fontFamily === font.value ? 'bg-secondary text-white' : 'hover:bg-secondary/10'"
+                        class="w-full text-left px-3 py-1.5 rounded-lg text-xs transition-colors mb-0.5"
+                        :style="{ fontFamily: font.value }"
+                      >{{ font.label }}</button>
+                    </div>
+                    <div class="px-3 py-2">
+                      <p class="text-xs font-bold text-secondary mb-2">英文字体</p>
+                      <button v-for="font in englishFonts" :key="font.value"
+                        @click="post.elements[selectedElementIndex].fontFamily = font.value; showFontDropdown = false; saveDriftCard()"
+                        :class="post.elements[selectedElementIndex].fontFamily === font.value ? 'bg-secondary text-white' : 'hover:bg-secondary/10'"
+                        class="w-full text-left px-3 py-1.5 rounded-lg text-xs transition-colors mb-0.5"
+                        :style="{ fontFamily: font.value }"
+                      >{{ font.label }}</button>
+                    </div>
+                  </div>
+                </div>
+                <!-- Font Size -->
+                <div class="flex items-center gap-1">
+                  <button @click="post.elements[selectedElementIndex].fontSize = Math.max(8, (post.elements[selectedElementIndex].fontSize || 16) - 2); saveDriftCard()"
+                    class="w-8 h-8 rounded-lg bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center text-xs font-bold text-black/60 dark:text-white/60">A-</button>
+                  <span class="text-xs font-semibold text-black/50 dark:text-white/50 w-6 text-center">{{ post.elements[selectedElementIndex].fontSize || 16 }}</span>
+                  <button @click="post.elements[selectedElementIndex].fontSize = Math.min(72, (post.elements[selectedElementIndex].fontSize || 16) + 2); saveDriftCard()"
+                    class="w-8 h-8 rounded-lg bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center text-xs font-bold text-black/60 dark:text-white/60">A+</button>
+                </div>
+              </div>
+              <!-- Color palette -->
+              <div class="flex gap-2 flex-wrap p-2 border border-dashed border-secondary/40 rounded-xl bg-white dark:bg-neutral">
+                <button
+                  v-for="color in ['#000000','#FF0000','#00B050','#0070C0','#FFC000','#7030A0','#FF6B6B','#4ECDC4']"
+                  :key="color"
+                  @click="post.elements[selectedElementIndex].color = color; saveDriftCard()"
+                  :class="post.elements[selectedElementIndex].color === color ? 'ring-2 ring-offset-2 ring-secondary scale-110' : ''"
+                  class="w-7 h-7 rounded-lg border-2 border-white/50 shadow transition-all hover:scale-110"
+                  :style="{ backgroundColor: color }"
+                ></button>
+                <label class="w-7 h-7 rounded-lg border-2 border-secondary cursor-pointer hover:scale-110 transition-all flex items-center justify-center bg-white dark:bg-neutral">
+                  <input type="color" :value="post.elements[selectedElementIndex].color || '#000000'"
+                    @input="post.elements[selectedElementIndex].color = ($event.target as HTMLInputElement).value; saveDriftCard()"
+                    class="absolute opacity-0 w-0 h-0" />
+                  <span class="text-base leading-none select-none">+</span>
+                </label>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -292,19 +470,19 @@
           }"
           :ref="el => { if (el) cardCanvasRefs[0] = el as HTMLElement }"
           >
-            <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral border border-black/10 dark:border-white/10 shadow-lg overflow-hidden">
+            <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral border border-black/10 dark:border-white/10 shadow-lg overflow-visible">
               <!-- Scale wrapper -->
               <div
                 class="absolute top-0 left-0 origin-top-left"
                 :style="getBackScaleStyle(post, 0)"
               >
                 <div
-                  class="relative flex p-5 bg-white dark:bg-neutral"
+                  class="relative flex p-5 bg-white dark:bg-neutral overflow-hidden"
                   :style="{ width: (post.canvasWidth || 600) + 'px', height: (post.canvasHeight || 400) + 'px' }"
-                  @click.self="selectedElementIndex = -1"
+                  @click="selectedElementIndex = -1"
                 >
                   <!-- Left Side - Message -->
-                  <div class="flex-1 flex flex-col pr-5 border-r border-black/20 dark:border-white/20 relative overflow-hidden">
+                  <div class="flex-1 flex flex-col pr-5 border-r border-black/20 dark:border-white/20 relative overflow-hidden" @click="selectedElementIndex = -1">
                     <h4 class="font-headline text-xl tracking-widest text-black/60 dark:text-white/60 mb-2">POSTCARD</h4>
                     <div class="relative flex-1">
                       <div class="flex flex-col gap-8 h-full pt-6 pb-2">
@@ -323,7 +501,7 @@
                   </div>
 
                   <!-- Right Side - Address & Stamp -->
-                  <div class="flex-1 flex flex-col pl-5 relative">
+                  <div class="flex-1 flex flex-col pl-5 relative" @click="selectedElementIndex = -1">
                     <div class="flex justify-end relative mb-4">
                       <div class="w-20 h-24 border-[2px] border-black/30 dark:border-white/30 flex items-center justify-center relative bg-black/5 dark:bg-white/5 flex-shrink-0" style="border-style: dashed;">
                         <span v-if="!post.stamp" class="text-xs font-bold text-black/40 dark:text-white/40">邮票</span>
@@ -386,7 +564,7 @@
                     lineHeight: '1.4',
                     display: 'inline-block',
                   }"
-                ></div>
+                >{{ el.content }}</div>
                 <!-- Text display -->
                 <div
                   v-else-if="el.type === 'text'"
@@ -432,11 +610,13 @@
                 </div>
 
                 <!-- Delete button (owner can delete any; others can only delete their own) -->
-                <div v-if="selectedElementIndex === (idx as number)" class="absolute top-0 -right-12 flex flex-col gap-2">
+                <div v-if="selectedElementIndex === (idx as number)" class="absolute top-0 -right-12 md:-right-12 -right-2 flex flex-col gap-2 z-50" @mousedown.stop @touchstart.stop>
                   <button
                     v-if="isOwner || el.creatorId === currentUserId"
                     @click.stop="deleteDriftElement(idx as number)"
-                    class="w-8 h-8 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-full flex items-center justify-center shadow-sm text-red-500 hover:text-red-600"
+                    @mousedown.stop
+                    @touchstart.stop
+                    class="w-8 h-8 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-full flex items-center justify-center shadow-sm text-red-500 hover:text-red-600 pointer-events-auto"
                     title="删除"
                   >
                     <Trash2 class="w-4 h-4" />
@@ -665,6 +845,28 @@
                       class="absolute opacity-0 w-0 h-0" />
                     <span class="text-base leading-none select-none">+</span>
                   </label>
+                </div>
+              </div>
+              <!-- Sticker replacement picker -->
+              <div v-else-if="post.elements[selectedElementIndex]?.type === 'sticker'" class="space-y-2">
+                <div class="flex gap-1">
+                  <button
+                    v-for="s in driftStickerSeries" :key="s.value"
+                    @click="driftStickerTab = s.value"
+                    class="px-2 py-1 rounded-lg text-xs font-semibold transition-colors"
+                    :class="driftStickerTab === s.value ? 'bg-secondary text-white' : 'bg-black/5 dark:bg-white/5 text-black/50 dark:text-white/50 hover:bg-black/10'"
+                  >{{ s.label }}</button>
+                </div>
+                <div class="grid grid-cols-4 gap-1.5 max-h-40 overflow-y-auto p-1">
+                  <button
+                    v-for="(sticker, si) in driftStickerOptions" :key="si"
+                    @click="post.elements[selectedElementIndex].content = sticker; saveDriftCard()"
+                    class="rounded-lg bg-black/5 hover:bg-secondary/10 border-2 transition-all flex items-center justify-center"
+                    :class="post.elements[selectedElementIndex].content === sticker ? 'border-secondary bg-secondary/10' : 'border-transparent hover:border-secondary/50'"
+                    style="height:52px"
+                  >
+                    <img :src="sticker" class="w-full h-full object-contain p-1" />
+                  </button>
                 </div>
               </div>
             </div>
