@@ -91,7 +91,7 @@
                   </div>
                   <div class="flex-1 flex flex-col pl-5 relative">
                     <div class="flex justify-end relative mb-4">
-                      <div v-if="card.stamp" class="absolute -top-1 -right-1 w-32 h-32 flex items-center justify-center">
+                      <div v-if="card.stamp" class="absolute -top-1 -right-1 w-32 h-32 flex items-center justify-center" style="filter: drop-shadow(2px 4px 6px rgba(230, 220, 200, 0.8));">
                         <img :src="card.stamp.image" class="w-full h-full object-cover" />
                       </div>
                       <div v-else class="w-20 h-24 border-[2px] border-dashed border-black/30 dark:border-white/30 flex items-center justify-center bg-black/5">

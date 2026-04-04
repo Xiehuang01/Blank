@@ -46,10 +46,10 @@
         </div>
 
         <!-- Postcard Back (Text side) -->
-        <div class="relative w-full" :style="{ aspectRatio: imageAspectRatio }"
+        <div class="relative w-full overflow-hidden" :style="{ aspectRatio: imageAspectRatio }"
           :ref="el => { if (el) mobileBackRef = el as HTMLElement }"
         >
-          <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral border border-black/10 dark:border-white/10 shadow-lg overflow-visible">
+          <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral border border-black/10 dark:border-white/10 shadow-lg overflow-hidden">
             <!-- Scale wrapper -->
             <div class="absolute top-0 left-0 origin-top-left" :style="getMobileBackScaleStyle()">
               <div
@@ -82,7 +82,7 @@
                 <div class="w-20 h-24 border-[2px] border-black/30 dark:border-white/30 flex items-center justify-center relative bg-black/5 dark:bg-white/5 flex-shrink-0" style="border-style: dashed;">
                   <span v-if="!post.stamp" class="text-xs font-bold text-black/40 dark:text-white/40">邮票</span>
                 </div>
-                <div v-if="post.stamp" class="absolute -top-4 -right-4 w-32 h-32 flex items-center justify-center pointer-events-none">
+                <div v-if="post.stamp" class="absolute -top-4 -right-4 w-32 h-32 flex items-center justify-center pointer-events-none" style="filter: drop-shadow(2px 4px 6px rgba(230, 220, 200, 0.8));">
                   <img :src="post.stamp.image" :alt="post.stamp.title" class="w-full h-full object-cover" />
                 </div>
               </div>
@@ -413,7 +413,7 @@
     </main>
 
     <!-- Mobile Footer Comment Input -->
-    <footer class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/90 backdrop-blur-sm border-t border-primary/10 px-4 py-3">
+    <footer class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-sm border-t border-primary/10 px-4 py-3">
       <div class="flex gap-2 items-center">
         <button
           @click="toggleLike"
@@ -464,13 +464,13 @@
           </div>
 
           <!-- Postcard Back (Text side) -->
-          <div class="relative" :style="{ 
+          <div class="relative overflow-hidden" :style="{
             aspectRatio: imageAspectRatio,
             width: post.aspectRatio === '2/3' ? 'calc(50% - 12px)' : '100%'
           }"
           :ref="el => { if (el) cardCanvasRefs[0] = el as HTMLElement }"
           >
-            <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral border border-black/10 dark:border-white/10 shadow-lg overflow-visible">
+            <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral border border-black/10 dark:border-white/10 shadow-lg overflow-hidden">
               <!-- Scale wrapper -->
               <div
                 class="absolute top-0 left-0 origin-top-left"
@@ -506,7 +506,7 @@
                       <div class="w-20 h-24 border-[2px] border-black/30 dark:border-white/30 flex items-center justify-center relative bg-black/5 dark:bg-white/5 flex-shrink-0" style="border-style: dashed;">
                         <span v-if="!post.stamp" class="text-xs font-bold text-black/40 dark:text-white/40">邮票</span>
                       </div>
-                      <div v-if="post.stamp" class="absolute -top-4 -right-4 w-32 h-32 flex items-center justify-center pointer-events-none">
+                      <div v-if="post.stamp" class="absolute -top-4 -right-4 w-32 h-32 flex items-center justify-center pointer-events-none" style="filter: drop-shadow(2px 4px 6px rgba(230, 220, 200, 0.8));">
                         <img :src="post.stamp.image" :alt="post.stamp.title" class="w-full h-full object-cover" />
                       </div>
                     </div>
