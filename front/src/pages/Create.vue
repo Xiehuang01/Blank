@@ -1170,6 +1170,7 @@ const stickerSeries = [
   { label: '动物', value: 'animal' },
   { label: '狗狗剪影', value: 'dog_silhouette' },
   { label: '涂鸦', value: 'graffiti' },
+  { label: '表情', value: 'expression' },
 ];
 const stickerSeriesOptions: Record<string, string[]> = {
   arrow: [
@@ -1245,6 +1246,32 @@ const stickerSeriesOptions: Record<string, string[]> = {
     new URL('../../../res/sticker/graffiti/涂鸦11.png', import.meta.url).href,
     new URL('../../../res/sticker/graffiti/涂鸦12.png', import.meta.url).href,
     new URL('../../../res/sticker/graffiti/涂鸦13.png', import.meta.url).href,
+  ],
+  expression: [
+    new URL('../../../res/sticker/expression/1.png', import.meta.url).href,
+    new URL('../../../res/sticker/expression/2.png', import.meta.url).href,
+    new URL('../../../res/sticker/expression/3.png', import.meta.url).href,
+    new URL('../../../res/sticker/expression/4.png', import.meta.url).href,
+    new URL('../../../res/sticker/expression/5.png', import.meta.url).href,
+    new URL('../../../res/sticker/expression/6.png', import.meta.url).href,
+    new URL('../../../res/sticker/expression/7.png', import.meta.url).href,
+    new URL('../../../res/sticker/expression/8.png', import.meta.url).href,
+    new URL('../../../res/sticker/expression/9.png', import.meta.url).href,
+    new URL('../../../res/sticker/expression/10.png', import.meta.url).href,
+    new URL('../../../res/sticker/expression/11.png', import.meta.url).href,
+    new URL('../../../res/sticker/expression/12.png', import.meta.url).href,
+    new URL('../../../res/sticker/expression/13.png', import.meta.url).href,
+    new URL('../../../res/sticker/expression/14.png', import.meta.url).href,
+    new URL('../../../res/sticker/expression/15.png', import.meta.url).href,
+    new URL('../../../res/sticker/expression/16.png', import.meta.url).href,
+    new URL('../../../res/sticker/expression/17.png', import.meta.url).href,
+    new URL('../../../res/sticker/expression/18.png', import.meta.url).href,
+    new URL('../../../res/sticker/expression/19.png', import.meta.url).href,
+    new URL('../../../res/sticker/expression/20.png', import.meta.url).href,
+    new URL('../../../res/sticker/expression/21.png', import.meta.url).href,
+    new URL('../../../res/sticker/expression/22.png', import.meta.url).href,
+    new URL('../../../res/sticker/expression/23.png', import.meta.url).href,
+    new URL('../../../res/sticker/expression/24.png', import.meta.url).href,
   ],
 };
 const stickerOptions = computed(() => stickerSeriesOptions[selectedStickerSeries.value] || []);

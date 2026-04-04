@@ -3,7 +3,9 @@
     "allow": [
       "Bash(npm run:*)",
       "Bash(node -e \"setTimeout\\(\\(\\) => process.exit\\(0\\), 1000\\);\")",
-      "Bash(grep -E \"^.*error.*$|✓ built\")"
+      "Bash(grep -E \"^.*error.*$|✓ built\")",
+      "Bash(npx vue-tsc:*)",
+      "Bash(npx vite:*)"
     ]
   }
 }
