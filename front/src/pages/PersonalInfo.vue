@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-background pb-24 md:pb-10">
-    <div class="mx-auto max-w-4xl px-4 py-6">
+  <div class="min-h-screen bg-background pb-24 md:pb-10 flex flex-col">
+    <div class="w-full max-w-4xl px-4 py-6 mx-auto md:my-auto">
       <div class="overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm dark:border-white/10 dark:bg-neutral md:shadow-2xl">
         <header class="sticky top-0 z-10 flex items-center justify-between border-b border-black/10 bg-white/95 px-4 py-4 backdrop-blur-sm dark:border-white/10 dark:bg-neutral/95 md:px-6">
           <div class="flex items-center gap-3">

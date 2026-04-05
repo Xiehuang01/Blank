@@ -73,9 +73,9 @@
                   />
                   <span class="text-tertiary">记住我</span>
                 </label>
-                <a href="#" class="text-secondary hover:text-secondary/80 transition-colors font-semibold">
+                <router-link to="/forgot-password" class="text-secondary hover:text-secondary/80 transition-colors font-semibold">
                   忘记密码？
-                </a>
+                </router-link>
               </div>
             </div>
 

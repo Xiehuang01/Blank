@@ -10,6 +10,7 @@ import Create from "../pages/Create.vue";
 import Outbox from "../pages/Outbox.vue";
 import Login from "../pages/Login.vue";
 import Register from "../pages/Register.vue";
+import ForgotPassword from "../pages/ForgotPassword.vue";
 import Settings from "../pages/Settings.vue";
 import PersonalInfo from "../pages/PersonalInfo.vue";
 import AccountManagement from "../pages/AccountManagement.vue";
@@ -20,6 +21,7 @@ const requiresAuth = { requiresAuth: true };
 export const routes: RouteRecordRaw[] = [
   { path: "/login", component: Login },
   { path: "/register", component: Register },
+  { path: "/forgot-password", component: ForgotPassword },
   { path: "/", component: Home, meta: { keepAlive: true } },
   { path: "/mail", component: Mail, meta: { keepAlive: true } },
   { path: "/shop", component: Shop },
