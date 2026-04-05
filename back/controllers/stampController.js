@@ -1,13 +1,28 @@
 const pool = require('../config/db');
 const { success, error } = require('../utils/response');
 
-const isSameLocalDate = (dateValue, targetDate = new Date()) => {
-  if (!dateValue) return false;
+/**
+ * 获取邮票系列
+ * GET /api/stamps/series
+ */
+const getStampSeries = async (_req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT id, name, description, sort_order
+      FROM stamp_series
+      ORDER BY sort_order ASC, id ASC
+    `);
 
-  const current = new Date(dateValue);
-  return current.getFullYear() === targetDate.getFullYear()
-    && current.getMonth() === targetDate.getMonth()
-    && current.getDate() === targetDate.getDate();
+    return success(res, rows.map((item) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      sortOrder: Number(item.sort_order || 0),
+    })));
+  } catch (err) {
+    console.error('获取邮票系列错误:', err);
+    return error(res, '获取邮票系列失败');
+  }
 };
 
 /**
@@ -30,7 +45,9 @@ const getStamps = async (req, res) => {
     let ownedMap = new Map();
     if (req.user?.id) {
       const [ownedRows] = await pool.query(
-        'SELECT stamp_id, quantity, purchased_at FROM user_stamps WHERE user_id = ?',
+        `SELECT stamp_id, quantity, purchased_at,
+                DATE(purchased_at) = CURDATE() AS purchased_today
+         FROM user_stamps WHERE user_id = ?`,
         [req.user.id]
       );
       ownedMap = new Map(ownedRows.map((item) => [item.stamp_id, item]));
@@ -39,7 +56,7 @@ const getStamps = async (req, res) => {
     const list = rows.map((s) => {
       const owned = ownedMap.get(s.id);
       const ownedQuantity = owned ? Number(owned.quantity || 0) : 0;
-      const purchasedToday = owned ? isSameLocalDate(owned.purchased_at) : false;
+      const purchasedToday = owned ? !!owned.purchased_today : false;
 
       return {
         id: s.id,
@@ -136,11 +153,11 @@ const purchaseStamp = async (req, res) => {
     }
 
     const [owned] = await connection.query(
-      'SELECT id, quantity, purchased_at FROM user_stamps WHERE user_id = ? AND stamp_id = ? FOR UPDATE',
+      'SELECT id, quantity, purchased_at, DATE(purchased_at) = CURDATE() AS purchased_today FROM user_stamps WHERE user_id = ? AND stamp_id = ? FOR UPDATE',
       [req.user.id, stampId]
     );
 
-    if (owned.length > 0 && isSameLocalDate(owned[0].purchased_at)) {
+    if (owned.length > 0 && owned[0].purchased_today) {
       await connection.rollback();
       return error(res, '这张邮票今天已经购买过了', 409);
     }
@@ -190,4 +207,4 @@ const purchaseStamp = async (req, res) => {
   }
 };
 
-module.exports = { getStamps, getMyStamps, purchaseStamp };
+module.exports = { getStampSeries, getStamps, getMyStamps, purchaseStamp };

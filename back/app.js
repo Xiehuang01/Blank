@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 
 const { errorHandler } = require('./middleware/errorHandler');
+const { ensureAppSchema } = require('./utils/schema');
 
 // 路由导入
 const authRoutes = require('./routes/auth');
@@ -15,6 +16,8 @@ const friendRoutes = require('./routes/friend');
 const checkinRoutes = require('./routes/checkin');
 const commentRoutes = require('./routes/comment');
 const aiRoutes = require('./routes/ai');
+const adminRoutes = require('./routes/admin');
+const notificationRoutes = require('./routes/notification');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -74,6 +77,8 @@ app.use('/api/friends', friendRoutes);
 app.use('/api/checkin', checkinRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // 健康检查
 app.get('/api/health', (req, res) => {
@@ -84,11 +89,22 @@ app.get('/api/health', (req, res) => {
 app.use(errorHandler);
 
 // ============ 启动服务 ============
-app.listen(PORT, () => {
-  console.log(`\n🚀 Blank Backend Server running on http://localhost:${PORT}`);
-  console.log(`📦 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`📂 Static res: http://localhost:${PORT}/res`);
-  console.log(`📂 Uploads: http://localhost:${PORT}/uploads\n`);
-});
+const startServer = async () => {
+  try {
+    await ensureAppSchema();
+
+    app.listen(PORT, () => {
+      console.log(`\n🚀 Blank Backend Server running on http://localhost:${PORT}`);
+      console.log(`📦 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`📂 Static res: http://localhost:${PORT}/res`);
+      console.log(`📂 Uploads: http://localhost:${PORT}/uploads\n`);
+    });
+  } catch (err) {
+    console.error('❌ 初始化数据库结构失败:', err);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 module.exports = app;

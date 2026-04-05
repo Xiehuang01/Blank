@@ -1,6 +1,9 @@
 const router = require('express').Router();
 const { auth, optionalAuth } = require('../middleware/auth');
-const { getStamps, getMyStamps, purchaseStamp } = require('../controllers/stampController');
+const { getStampSeries, getStamps, getMyStamps, purchaseStamp } = require('../controllers/stampController');
+
+// 获取邮票系列
+router.get('/series', getStampSeries);
 
 // 获取所有邮票
 router.get('/', optionalAuth, getStamps);

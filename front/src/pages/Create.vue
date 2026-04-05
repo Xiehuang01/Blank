@@ -42,8 +42,9 @@
           >
             <div class="relative w-full h-full group">
               <div class="absolute inset-0 rounded-none bg-white p-3 border border-black/10 shadow-lg overflow-hidden">
-                <div 
+                <div
                   class="w-full h-full relative bg-black/5 flex items-center justify-center rounded-sm cursor-move overflow-hidden group/imgarea"
+                  ref="frontImageContainerRef"
                   @mousedown="startDrag"
                   @touchstart.passive="startDrag"
                   @mouseenter="showImageControls = true"
@@ -1170,6 +1171,7 @@ import { useUser } from "../store/user";
 
 const showUploadOptions = ref(false);
 const postcardCanvasRef = ref<HTMLElement | null>(null);
+const frontImageContainerRef = ref<HTMLElement | null>(null);
 const editBackContainerRef = ref<HTMLElement | null>(null);
 const publishBackRef = ref<HTMLElement | null>(null);
 const postcardTitle = ref('');
@@ -1619,13 +1621,14 @@ const openGallery = () => {
 const handleImageUpload = (event: Event) => {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
-  
+
   if (file) {
     selectedImageFile.value = file;
     const reader = new FileReader();
     reader.onload = (e) => {
       selectedImage.value = e.target?.result as string;
       imageOffset.value = { x: 0, y: 0 };
+      imageScale.value = 1;
     };
     reader.readAsDataURL(file);
   }
@@ -2148,7 +2151,7 @@ const confirmPublish = async () => {
       aspectRatio: postcardAspectRatio.value,
     });
 
-    ElMessage.success(res.message || '发布成功');
+    ElMessage.success(res.message || '明信片发送成功，正在审核中');
     showPublishDialog.value = false;
     isPublishing.value = false;
     await loadMyStamps();

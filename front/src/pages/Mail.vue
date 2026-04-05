@@ -12,6 +12,14 @@
           <MailIcon class="w-5 h-5" />
           <span v-if="hasUnreadInbox" class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-background"></span>
         </button>
+        <button
+          @click="showNotificationPanel = !showNotificationPanel"
+          class="relative text-primary hover:bg-primary/5 p-2 rounded-full transition-colors"
+          title="审核通知"
+        >
+          <Bell class="w-5 h-5" />
+          <span v-if="unreadNotifCount > 0" class="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] bg-red-500 rounded-full border-2 border-background text-[10px] font-bold text-white flex items-center justify-center leading-none px-1">{{ unreadNotifCount > 99 ? '99+' : unreadNotifCount }}</span>
+        </button>
         <div class="relative flex-1 max-w-md">
           <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-tertiary w-4 h-4" />
           <input
@@ -38,6 +46,40 @@
         </button>
       </div>
     </header>
+
+    <!-- Notification Panel -->
+    <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 -translate-y-2" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 -translate-y-2">
+      <div v-if="showNotificationPanel" class="fixed inset-x-0 top-16 z-50 mx-auto max-w-md px-4">
+        <div class="rounded-2xl border border-black/10 bg-white dark:bg-neutral shadow-2xl overflow-hidden" @click.stop>
+          <div class="flex items-center justify-between px-4 py-3 border-b border-black/5 dark:border-white/5">
+            <h3 class="font-bold text-sm">审核通知</h3>
+            <div class="flex items-center gap-2">
+              <button v-if="unreadNotifCount > 0" @click="handleMarkAllRead" class="text-xs text-secondary font-bold hover:opacity-80">全部已读</button>
+              <button @click="showNotificationPanel = false" class="text-tertiary hover:text-primary p-1"><X class="w-4 h-4" /></button>
+            </div>
+          </div>
+          <div class="max-h-80 overflow-y-auto">
+            <div v-if="notifications.length === 0" class="py-10 text-center text-sm text-tertiary">暂无通知</div>
+            <div v-for="n in notifications" :key="n.id"
+              class="px-4 py-3 border-b border-black/5 dark:border-white/5 last:border-0 cursor-pointer hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+              :class="n.isRead ? 'opacity-60' : ''"
+              @click="handleMarkRead(n)"
+            >
+              <div class="flex items-start gap-2">
+                <span v-if="!n.isRead" class="mt-1.5 w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></span>
+                <span v-else class="mt-1.5 w-2 h-2 flex-shrink-0"></span>
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm font-bold">{{ n.title }}</p>
+                  <p class="text-xs text-tertiary mt-1 break-words">{{ n.content }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+    <!-- Click overlay to close notification panel -->
+    <div v-if="showNotificationPanel" class="fixed inset-0 z-40" @click="showNotificationPanel = false"></div>
 
     <main class="max-w-7xl mx-auto px-6 py-8" @click="clearSelectedCard">
       <div v-if="isLoading" class="w-full h-[60vh] flex items-center justify-center">
@@ -621,13 +663,15 @@ import {
   ArrowLeft,
   CalendarDays,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Bell
 } from "lucide-vue-next";
 import { ElMessage } from "element-plus";
 import { assetBaseURL } from "../utils/request.js";
 import { getInboxPostcards, getOutboxPostcards, batchDeletePostcards } from "../api/postcard.js";
 import { getFriends, sendFriendRequest, deleteFriend, getPendingRequests, acceptFriendRequest, rejectFriendRequest } from "../api/friend.js";
 import { searchUsers } from "../api/user.js";
+import { getNotifications, getUnreadCount, markAllRead, markRead } from "../api/notification.js";
 import { useUser } from "../store/user";
 
 import Loading from "../components/Loading.vue";
@@ -879,6 +923,9 @@ const toggleInboxMode = () => {
 
 const showFriendsList = ref(false);
 const showFilterPanel = ref(false);
+const showNotificationPanel = ref(false);
+const notifications = ref<any[]>([]);
+const unreadNotifCount = ref(0);
 const expandedFriendId = ref<number | null>(null);
 const searchQuery = ref("");
 const isAddingFriend = ref(false);
@@ -1016,10 +1063,35 @@ const closeFilterPanel = () => {
   showFilterPanel.value = false;
 };
 
+const loadNotifications = async () => {
+  try {
+    const [notifRes, countRes] = await Promise.all([getNotifications(), getUnreadCount()]);
+    notifications.value = notifRes.data || [];
+    unreadNotifCount.value = countRes.data?.count || 0;
+  } catch (e) { /* silent */ }
+};
+
+const handleMarkAllRead = async () => {
+  try {
+    await markAllRead();
+    notifications.value = notifications.value.map((n: any) => ({ ...n, isRead: true }));
+    unreadNotifCount.value = 0;
+  } catch (e) { /* silent */ }
+};
+
+const handleMarkRead = async (notif: any) => {
+  if (notif.isRead) return;
+  try {
+    await markRead(notif.id);
+    notif.isRead = true;
+    unreadNotifCount.value = Math.max(0, unreadNotifCount.value - 1);
+  } catch (e) { /* silent */ }
+};
+
 const refreshMailData = async () => {
   isLoading.value = true;
   try {
-    await Promise.all([loadMailbox(), loadFriends(), loadPendingRequests()]);
+    await Promise.all([loadMailbox(), loadFriends(), loadPendingRequests(), loadNotifications()]);
   } catch (err: any) {
     ElMessage.error(err?.data?.message || err?.message || '加载失败');
   } finally {

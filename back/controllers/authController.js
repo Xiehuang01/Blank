@@ -106,16 +106,16 @@ const register = async (req, res) => {
 
     // 插入用户
     const [result] = await pool.query(
-      `INSERT INTO users (uid, username, email, password_hash, avatar, vip_level, coins)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [uid, username, email, passwordHash, defaultAvatar, 'VIP 0', 100]
+      `INSERT INTO users (uid, username, email, identity, password_hash, avatar, vip_level, coins)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [uid, username, email, 'user', passwordHash, defaultAvatar, 'VIP 0', 100]
     );
 
     // 清除验证码
     await redis.del(`verify:${email}`);
 
     // 生成 token
-    const token = generateToken({ id: result.insertId, uid, username, email });
+    const token = generateToken({ id: result.insertId, uid, username, email, identity: 'user' });
 
     return success(res, {
       token,
@@ -125,6 +125,7 @@ const register = async (req, res) => {
         username,
         email,
         avatar: defaultAvatar,
+        identity: 'user',
         vipLevel: 'VIP 0',
         coins: 100,
       },
@@ -149,7 +150,7 @@ const login = async (req, res) => {
 
     // 查找用户
     const [users] = await pool.query(
-      'SELECT id, uid, username, email, password_hash, avatar, vip_level, coins FROM users WHERE email = ?',
+      'SELECT id, uid, username, email, identity, password_hash, avatar, vip_level, coins FROM users WHERE email = ?',
       [email]
     );
 
@@ -171,6 +172,7 @@ const login = async (req, res) => {
       uid: user.uid,
       username: user.username,
       email: user.email,
+      identity: user.identity,
     });
 
     return success(res, {
@@ -181,6 +183,7 @@ const login = async (req, res) => {
         username: user.username,
         email: user.email,
         avatar: user.avatar,
+        identity: user.identity,
         vipLevel: user.vip_level,
         coins: user.coins,
       },

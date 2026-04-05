@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const { success, error, paginate } = require('../utils/response');
+const { moderatePostcard } = require('../services/moderation');
 
 let ensureDeleteColumnsPromise = null;
 
@@ -66,7 +67,7 @@ const getDiscover = async (req, res) => {
 
     const [[{ total }]] = await pool.query(
       `SELECT COUNT(*) as total FROM postcards
-       WHERE is_public = 1 AND postcard_type = 'normal' AND status = 'sent'`
+       WHERE is_public = 1 AND postcard_type = 'normal' AND status = 'sent' AND sender_deleted = 0`
     );
 
     const [rows] = await pool.query(
@@ -77,7 +78,7 @@ const getDiscover = async (req, res) => {
               (SELECT COUNT(*) FROM likes WHERE postcard_id = p.id) as like_count
        FROM postcards p
        JOIN users u ON p.user_id = u.id
-       WHERE p.is_public = 1 AND p.postcard_type = 'normal' AND p.status = 'sent'
+       WHERE p.is_public = 1 AND p.postcard_type = 'normal' AND p.status = 'sent' AND p.sender_deleted = 0
        ORDER BY p.created_at DESC
        LIMIT ? OFFSET ?`,
       [pageSize, offset]
@@ -132,7 +133,7 @@ const getDrifting = async (req, res) => {
 
     const [[{ total }]] = await pool.query(
       `SELECT COUNT(*) as total FROM postcards
-       WHERE postcard_type = 'drifting' AND status = 'sent'`
+       WHERE postcard_type = 'drifting' AND status = 'sent' AND sender_deleted = 0`
     );
 
     const [rows] = await pool.query(
@@ -144,7 +145,7 @@ const getDrifting = async (req, res) => {
               (SELECT COUNT(*) FROM likes WHERE postcard_id = p.id) as like_count
        FROM postcards p
        JOIN users u ON p.user_id = u.id
-       WHERE p.postcard_type = 'drifting' AND p.status = 'sent'
+       WHERE p.postcard_type = 'drifting' AND p.status = 'sent' AND p.sender_deleted = 0
        ORDER BY p.created_at DESC
        LIMIT ? OFFSET ?`,
       [pageSize, offset]
@@ -334,7 +335,7 @@ const create = async (req, res) => {
         elements, canvas_width, canvas_height,
         image_offset_x, image_offset_y, image_scale, image_rotation,
         stamp_id, recipient_input, is_public, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'sent')`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'reviewing')`,
       [
         req.user.id,
         title || '',
@@ -359,10 +360,16 @@ const create = async (req, res) => {
 
     await connection.commit();
 
+    // Trigger AI moderation asynchronously (don't await — user shouldn't wait)
+    const postcardId = result.insertId;
+    moderatePostcard(postcardId).catch(err => {
+      console.error('Async moderation error for postcard', postcardId, err);
+    });
+
     return success(res, {
-      id: result.insertId,
+      id: postcardId,
       remainingStampQuantity: currentQuantity - 1,
-    }, '明信片发送成功', 201);
+    }, '明信片发送成功，正在审核中', 201);
   } catch (err) {
     if (connection) {
       await connection.rollback();

@@ -118,14 +118,14 @@
               <div class="mt-auto">
                 <button
                   @click="purchaseStamp(stamp)"
-                  :disabled="stamp.purchasedToday"
+                  :disabled="stamp.purchasedToday || purchasingSet.has(stamp.id)"
                   class="w-full py-1.5 px-2 text-xs sm:text-sm font-bold rounded-md transition-all duration-300 shadow-sm text-center"
-                  :class="stamp.purchasedToday
+                  :class="(stamp.purchasedToday || purchasingSet.has(stamp.id))
                     ? 'bg-black/5 dark:bg-white/5 text-tertiary cursor-not-allowed'
                     : 'bg-primary dark:bg-secondary hover:bg-primary/90 dark:hover:bg-secondary/90 active:scale-95'"
-                  :style="!stamp.purchasedToday ? (isDark ? { color: '#000' } : { color: '#fff' }) : undefined"
+                  :style="!(stamp.purchasedToday || purchasingSet.has(stamp.id)) ? (isDark ? { color: '#000' } : { color: '#fff' }) : undefined"
                 >
-                  {{ stamp.purchasedToday ? '今日已购' : '购入' }}
+                  {{ stamp.purchasedToday ? '今日已购' : (purchasingSet.has(stamp.id) ? '购买中...' : '购入') }}
                 </button>
               </div>
             </div>
@@ -155,12 +155,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, nextTick, onUnmounted } from "vue";
+import { ref, reactive, onMounted, watch, nextTick, onUnmounted } from "vue";
 import { Search, Archive } from "lucide-vue-next";
 import { ElMessage } from "element-plus";
 import { useRouter } from 'vue-router';
-import { getStamps, purchaseStamp as purchaseStampApi } from '../api/stamp.js';
+import { getStampSeries, getStamps, purchaseStamp as purchaseStampApi } from '../api/stamp.js';
 import { assetBaseURL } from '../utils/request.js';
+
 import { useUser } from '../store/user';
 import Loading from '../components/Loading.vue';
 
@@ -176,7 +177,7 @@ const isLoading = ref(true);
 
 
 // Tab state
-const tabs = ref(['全部', '四季', '猫狗', '天气', '心情']);
+const tabs = ref(['全部']);
 const activeTab = ref('全部');
 const tabContainerRef = ref<HTMLDivElement | null>(null);
 const activeTabRef = ref<HTMLButtonElement | null>(null);
@@ -216,6 +217,12 @@ watch(() => searchKeyword.value, () => {
   updateFilteredStamps();
 });
 
+watch(() => tabs.value.join('|'), async () => {
+  await nextTick();
+  updateTabClipPath();
+});
+
+
 onMounted(async () => {
   await nextTick();
   if (tabContainerRef.value) {
@@ -252,13 +259,6 @@ onUnmounted(() => {
   window.removeEventListener('touchend', handleTabTouchEnd);
 });
 
-const categoryMap: Record<string, string[]> = {
-  '四季': ['春', '夏', '秋', '冬'],
-  '猫狗': ['狗狗', '咪咪'],
-  '天气': ['晴天', '雨天'],
-  '心情': ['开心', '伤心'],
-};
-
 const resolveAssetUrl = (url?: string | null) => {
   if (!url) return '';
   if (/^(https?:)?\/\//.test(url) || url.startsWith('data:')) return url;
@@ -269,14 +269,7 @@ const updateFilteredStamps = () => {
   let nextStamps = [...allStamps.value];
 
   if (activeTab.value !== '全部') {
-    const keywords = categoryMap[activeTab.value] || [];
-    nextStamps = nextStamps.filter((stamp) => {
-      const content = [stamp.title, stamp.desc, stamp.seriesId]
-        .filter(Boolean)
-        .join(' ');
-
-      return stamp.seriesId === activeTab.value || keywords.some((keyword) => content.includes(keyword));
-    });
+    nextStamps = nextStamps.filter((stamp) => stamp.seriesId === activeTab.value);
   }
 
   const keyword = searchKeyword.value.trim().toLowerCase();
@@ -294,19 +287,32 @@ const updateFilteredStamps = () => {
   filteredStamps.value = nextStamps;
 };
 
-const loadStamps = async () => {
-  isLoading.value = true;
+const loadStamps = async (showLoading = true) => {
+  if (showLoading) isLoading.value = true;
   try {
-    const res = await getStamps();
-    allStamps.value = (res.data || []).map((stamp: any) => ({
+    const [stampRes, seriesRes] = await Promise.all([getStamps(), getStampSeries()]);
+
+    allStamps.value = (stampRes.data || []).map((stamp: any) => ({
       ...stamp,
       image: resolveAssetUrl(stamp.image),
     }));
+
+    tabs.value = [
+      '全部',
+      ...(seriesRes.data || [])
+        .map((series: any) => String(series.name || '').trim())
+        .filter(Boolean),
+    ];
+
+    if (!tabs.value.includes(activeTab.value)) {
+      activeTab.value = '全部';
+    }
     updateFilteredStamps();
   } finally {
-    isLoading.value = false;
+    if (showLoading) isLoading.value = false;
   }
 };
+
 
 
 const setActiveTab = (tab: string) => {
@@ -376,21 +382,35 @@ const handleTabTouchMove = (e: TouchEvent) => {
 };
 const handleTabTouchEnd = () => handleTabEnd();
 
+const purchasingSet = reactive(new Set<number>());
+
 const purchaseStamp = async (stamp: any) => {
-  if (stamp.purchasedToday) {
+  if (stamp.purchasedToday || purchasingSet.has(stamp.id)) {
     ElMessage.warning('这张邮票今天已经购买过了');
     return;
   }
 
+  purchasingSet.add(stamp.id);
   try {
     const res = await purchaseStampApi(stamp.id, 1);
     if (typeof res.data?.coins === 'number') {
       updateUser({ coins: res.data.coins });
     }
-    await loadStamps();
+    // 立即更新本地状态，防止按钮仍可点击
+    const target = allStamps.value.find((s: any) => s.id === stamp.id);
+    if (target) {
+      target.purchasedToday = true;
+      target.canPurchaseToday = false;
+      target.ownedQuantity = (target.ownedQuantity ?? 0) + 1;
+    }
+    updateFilteredStamps();
     ElMessage.success(res.message || '购入成功');
+    // 后台静默刷新完整数据
+    loadStamps(false).catch(() => {});
   } catch (err: any) {
     ElMessage.error(err?.data?.message || err?.message || '购买失败');
+  } finally {
+    purchasingSet.delete(stamp.id);
   }
 };
 </script>

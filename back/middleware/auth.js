@@ -1,5 +1,6 @@
 const { verifyToken } = require('../utils/jwt');
 const redis = require('../config/redis');
+const pool = require('../config/db');
 const { error } = require('../utils/response');
 
 /**
@@ -58,4 +59,26 @@ const optionalAuth = async (req, res, next) => {
   next();
 };
 
-module.exports = { auth, optionalAuth };
+const adminAuth = async (req, res, next) => {
+  try {
+    const [users] = await pool.query('SELECT id, identity FROM users WHERE id = ? LIMIT 1', [req.user?.id]);
+
+    if (users.length === 0) {
+      return error(res, '用户不存在', 404);
+    }
+
+    if (users[0].identity !== 'admin') {
+      return error(res, '无管理员权限', 403);
+    }
+
+    req.user = {
+      ...req.user,
+      identity: users[0].identity,
+    };
+    next();
+  } catch (err) {
+    return error(res, '管理员权限校验失败', 500);
+  }
+};
+
+module.exports = { auth, optionalAuth, adminAuth };

@@ -6,7 +6,8 @@
       "Bash(grep -E \"^.*error.*$|✓ built\")",
       "Bash(npx vue-tsc:*)",
       "Bash(npx vite:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(node -e ':*)"
     ]
   }
 }

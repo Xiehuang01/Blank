@@ -14,7 +14,7 @@
         :key="currentRoute.fullPath"
       />
     </router-view>
-    <BottomNav v-if="!['/login', '/register', '/forgot-password'].includes(route.path) && !route.path.startsWith('/post/')" />
+    <BottomNav v-if="!['/login', '/register', '/forgot-password', '/manager'].includes(route.path) && !route.path.startsWith('/post/')" />
   </div>
 </template>
 

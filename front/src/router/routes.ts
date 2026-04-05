@@ -15,8 +15,11 @@ import Settings from "../pages/Settings.vue";
 import PersonalInfo from "../pages/PersonalInfo.vue";
 import AccountManagement from "../pages/AccountManagement.vue";
 import CheckIn from "../pages/CheckIn.vue";
+import ManagerDashboard from "../pages/manager/ManagerDashboard.vue";
 
 const requiresAuth = { requiresAuth: true };
+const requiresAdmin = { requiresAuth: true, requiresAdmin: true };
+
 
 export const routes: RouteRecordRaw[] = [
   { path: "/login", component: Login },
@@ -35,6 +38,7 @@ export const routes: RouteRecordRaw[] = [
   { path: "/personal-info", component: PersonalInfo, meta: requiresAuth },
   { path: "/account-management", component: AccountManagement, meta: requiresAuth },
   { path: "/checkin", component: CheckIn, meta: requiresAuth },
+  { path: "/manager", component: ManagerDashboard, meta: requiresAdmin },
 ];
 
 

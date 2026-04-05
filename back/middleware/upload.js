@@ -24,6 +24,17 @@ const postcardStorage = multer.diskStorage({
   },
 });
 
+// 邮票图片上传配置
+const stampStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '..', process.env.UPLOAD_DIR || 'uploads', 'stamps'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `stamp_${uuidv4()}${ext}`);
+  },
+});
+
 // 文件过滤器（只允许图片）
 const imageFilter = (req, file, cb) => {
   const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -48,6 +59,12 @@ const uploadPostcard = multer({
   limits: { fileSize: maxSize },
 });
 
+const uploadStamp = multer({
+  storage: stampStorage,
+  fileFilter: imageFilter,
+  limits: { fileSize: maxSize },
+});
+
 // 确保上传目录存在
 const fs = require('fs');
 const ensureUploadDirs = () => {
@@ -55,6 +72,7 @@ const ensureUploadDirs = () => {
   const dirs = [
     path.join(baseDir, 'avatars'),
     path.join(baseDir, 'postcards'),
+    path.join(baseDir, 'stamps'),
   ];
   dirs.forEach(dir => {
     if (!fs.existsSync(dir)) {
@@ -64,4 +82,4 @@ const ensureUploadDirs = () => {
 };
 ensureUploadDirs();
 
-module.exports = { uploadAvatar, uploadPostcard };
+module.exports = { uploadAvatar, uploadPostcard, uploadStamp };

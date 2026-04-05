@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `uid` VARCHAR(10) NOT NULL COMMENT '7位随机唯一用户ID',
   `username` VARCHAR(50) NOT NULL COMMENT '用户名',
   `email` VARCHAR(100) NOT NULL COMMENT '邮箱',
+  `identity` ENUM('user', 'admin') NOT NULL DEFAULT 'user' COMMENT '用户身份',
   `password_hash` VARCHAR(255) NOT NULL COMMENT '密码哈希',
   `avatar` VARCHAR(500) DEFAULT '' COMMENT '头像URL',
   `vip_level` VARCHAR(20) DEFAULT 'VIP 0' COMMENT 'VIP等级',
@@ -31,6 +32,20 @@ CREATE TABLE IF NOT EXISTS `users` (
   UNIQUE KEY `uk_username` (`username`),
   KEY `idx_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
+
+-- ============================================================
+-- 邮票系列表
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `stamp_series` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(50) NOT NULL COMMENT '系列名称',
+  `description` VARCHAR(255) DEFAULT '' COMMENT '系列描述',
+  `sort_order` INT NOT NULL DEFAULT 0 COMMENT '排序值',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_stamp_series_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='邮票系列表';
 
 -- ============================================================
 -- 邮票表
@@ -171,6 +186,39 @@ CREATE TABLE IF NOT EXISTS `checkins` (
   UNIQUE KEY `uk_user_date` (`user_id`, `checkin_date`),
   CONSTRAINT `fk_checkin_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='签到表';
+
+-- ============================================================
+-- 会员激活码表
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `vip_activation_codes` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `code` VARCHAR(32) NOT NULL COMMENT '激活码',
+  `vip_level` VARCHAR(20) NOT NULL DEFAULT 'VIP 1' COMMENT '目标会员等级',
+  `valid_days` INT UNSIGNED NOT NULL DEFAULT 30 COMMENT '生效天数',
+  `status` ENUM('unused', 'used', 'disabled') NOT NULL DEFAULT 'unused' COMMENT '激活码状态',
+  `note` VARCHAR(255) DEFAULT '' COMMENT '备注',
+  `used_by` INT UNSIGNED DEFAULT NULL COMMENT '使用者ID',
+  `used_at` TIMESTAMP NULL DEFAULT NULL COMMENT '使用时间',
+  `created_by` INT UNSIGNED DEFAULT NULL COMMENT '创建人ID',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_vip_activation_code` (`code`),
+  KEY `idx_vip_activation_status` (`status`),
+  CONSTRAINT `fk_vip_activation_used_by` FOREIGN KEY (`used_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_vip_activation_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='会员激活码表';
+
+-- ============================================================
+-- 初始数据 - 邮票系列
+-- ============================================================
+INSERT INTO `stamp_series` (`id`, `name`, `description`, `sort_order`) VALUES
+(1, '四季', '四季更迭主题邮票', 1),
+(2, '猫狗', '猫狗陪伴主题邮票', 2),
+(3, '天气', '天气氛围主题邮票', 3),
+(4, '心情', '情绪表达主题邮票', 4)
+ON DUPLICATE KEY UPDATE
+  `description` = VALUES(`description`),
+  `sort_order` = VALUES(`sort_order`);
 
 -- ============================================================
 -- 初始数据 - 系统邮票（与前端 stamps.ts 对应）

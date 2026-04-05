@@ -10,6 +10,7 @@ export interface UserInfo {
   uid?: string;
   username?: string;
   email?: string;
+  identity?: string;
   avatar?: string;
   vipLevel?: string;
   coins?: number;

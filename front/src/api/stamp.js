@@ -1,6 +1,9 @@
 import request from '../utils/request.js';
 
+export const getStampSeries = () => request.get('/stamps/series');
+
 export const getStamps = (params = {}) => request.get('/stamps', { params });
+
 
 export const getMyStamps = () => request.get('/stamps/my');
 

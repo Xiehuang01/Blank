@@ -9,7 +9,7 @@ const { success, error } = require('../utils/response');
 const getProfile = async (req, res) => {
   try {
     const [users] = await pool.query(
-      `SELECT id, uid, username, email, avatar, vip_level, coins,
+      `SELECT id, uid, username, email, identity, avatar, vip_level, coins,
               gender, birthday, location, profile_visibility, created_at
        FROM users WHERE id = ?`,
       [req.user.id]
@@ -25,6 +25,7 @@ const getProfile = async (req, res) => {
       uid: user.uid,
       username: user.username,
       email: user.email,
+      identity: user.identity,
       avatar: user.avatar,
       vipLevel: user.vip_level,
       coins: user.coins,
