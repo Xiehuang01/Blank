@@ -1,322 +1,324 @@
 <template>
-  <div class="min-h-screen bg-background pb-24 md:pb-0">
-    <!-- 手机端 - 全屏覆盖 -->
-    <div class="md:hidden">
-      <!-- Header -->
-      <header class="sticky top-0 z-40 flex items-center w-full px-4 h-14 bg-background/90 backdrop-blur-sm border-b border-primary/10">
-        <button @click="$router.back()" class="text-primary hover:bg-primary/5 p-2 rounded-full transition-colors mr-2">
-          <ChevronLeft class="w-5 h-5" />
-        </button>
-        <h1 class="font-headline text-lg font-bold text-primary">个人资料</h1>
-      </header>
+  <div class="min-h-screen bg-background pb-24 md:pb-10">
+    <div class="mx-auto max-w-4xl px-4 py-6">
+      <div class="overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm dark:border-white/10 dark:bg-neutral md:shadow-2xl">
+        <header class="sticky top-0 z-10 flex items-center justify-between border-b border-black/10 bg-white/95 px-4 py-4 backdrop-blur-sm dark:border-white/10 dark:bg-neutral/95 md:px-6">
+          <div class="flex items-center gap-3">
+            <button
+              @click="router.back()"
+              class="flex h-9 w-9 items-center justify-center rounded-full text-primary transition-colors hover:bg-primary/5"
+            >
+              <ChevronLeft class="h-5 w-5" />
+            </button>
+            <div>
+              <h1 class="font-headline text-lg font-bold text-primary md:text-xl">个人资料</h1>
+              <p class="text-xs text-tertiary md:text-sm">同步你的真实账号资料与统计信息</p>
+            </div>
+          </div>
+          <button
+            @click="saveProfile"
+            :disabled="isLoading || isSaving"
+            class="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-secondary dark:text-black"
+          >
+            {{ isSaving ? '保存中...' : '保存修改' }}
+          </button>
+        </header>
 
-      <!-- Content -->
-      <main class="max-w-md mx-auto px-4 py-6 space-y-6">
-        <!-- 头像和基本信息 -->
-        <div class="bg-neutral rounded-2xl p-6 shadow-sm border border-black/5 dark:border-white/5">
-          <div class="flex items-center gap-4 mb-6">
-            <div class="relative group">
-              <div class="w-20 h-20 rounded-full overflow-hidden border-2 border-black/10 shadow-sm">
-                <img
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYArdRu7qlNp4cuo06XFR6gjYC0xtUePbpepRVZFPb60NLBx_VR9amuEGGGmcgoSJxZnTSvk-qC-pT40C1BcNky-vgDMQS81oXbUZ1ZhPGx8TyP5kDLnK2UxXs44i4R9b0C6J2F0AegR2bJ6baLYqRUydE5fXGJMLngQf9plW3-BdtpO6Gnq5BWbM5Y8_ZXBxCkBcu_AycBYRNspo0GmyLKNOwz7WDP8qJiBl97glqeE0pFejorxYMHYxFqX9mdXogSMmgx3TMR9IR"
-                  alt="Avatar"
-                  class="w-full h-full object-cover"
-                  referrerpolicy="no-referrer"
-                />
+        <div class="space-y-6 p-4 md:p-6">
+          <section class="flex flex-col gap-5 rounded-2xl border border-black/5 bg-neutral p-5 dark:border-white/5 md:flex-row md:items-center md:justify-between">
+            <div class="flex items-center gap-4">
+              <div class="relative">
+                <div class="h-20 w-20 overflow-hidden rounded-full border-2 border-black/10 shadow-sm md:h-24 md:w-24">
+                  <img
+                    :src="avatarUrl"
+                    alt="Avatar"
+                    class="h-full w-full object-cover"
+                    referrerpolicy="no-referrer"
+                  />
+                </div>
+                <button
+                  @click="triggerAvatarUpload"
+                  :disabled="isUploading"
+                  class="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-white shadow-md transition-transform hover:scale-110 disabled:cursor-not-allowed disabled:opacity-60 md:h-8 md:w-8"
+                >
+                  <Camera class="h-3 w-3 md:h-4 md:w-4" />
+                </button>
               </div>
-              <button class="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-secondary text-white flex items-center justify-center shadow-md hover:scale-110 transition-transform">
-                <Camera class="w-3 h-3" />
-              </button>
-            </div>
-            <div class="flex-1">
-              <h2 class="font-headline text-xl font-bold text-primary mb-1">苏木</h2>
-              <p class="text-sm text-tertiary">UID: 1024520</p>
-            </div>
-          </div>
-
-          <!-- 编辑按钮 -->
-          <button @click="focusNickname" class="w-full py-2.5 bg-primary dark:bg-secondary text-white dark:text-black font-bold rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
-            <PenLine class="w-4 h-4" />
-            编辑资料
-          </button>
-        </div>
-
-        <!-- 个人信息表单 -->
-        <div class="bg-neutral rounded-2xl p-6 shadow-sm border border-black/5 dark:border-white/5 space-y-4">
-          <div>
-            <label class="text-sm font-bold text-primary mb-2 block">昵称</label>
-            <input
-              ref="nicknameInput"
-              type="text"
-              value="苏木"
-              class="w-full px-3 py-2.5 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-secondary"
-            />
-          </div>
-
-          <div>
-            <label class="text-sm font-bold text-primary mb-2 block">邮箱</label>
-            <input
-              type="email"
-              value="sumuwood@example.com"
-              class="w-full px-3 py-2.5 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-secondary"
-            />
-          </div>
-
-          <div>
-            <label class="text-sm font-bold text-primary mb-2 block">性别</label>
-            <select class="w-full px-3 py-2.5 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-secondary">
-              <option>男</option>
-              <option>女</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="text-sm font-bold text-primary mb-2 block">生日</label>
-            <input
-              type="date"
-              class="w-full px-3 py-2.5 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-secondary"
-            />
-          </div>
-
-          <div>
-            <label class="text-sm font-bold text-primary mb-2 block">所在地</label>
-            <select class="w-full px-3 py-2.5 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-secondary">
-              <option value="">请选择地区</option>
-              <optgroup label="直辖市">
-                <option>北京</option>
-                <option>天津</option>
-                <option>上海</option>
-                <option>重庆</option>
-              </optgroup>
-              <optgroup label="省份">
-                <option>河北省</option>
-                <option>山西省</option>
-                <option>辽宁省</option>
-                <option>吉林省</option>
-                <option>黑龙江省</option>
-                <option>江苏省</option>
-                <option>浙江省</option>
-                <option>安徽省</option>
-                <option>福建省</option>
-                <option>江西省</option>
-                <option>山东省</option>
-                <option>河南省</option>
-                <option>湖北省</option>
-                <option>湖南省</option>
-                <option>广东省</option>
-                <option>海南省</option>
-                <option>四川省</option>
-                <option>贵州省</option>
-                <option>云南省</option>
-                <option>陕西省</option>
-                <option>甘肃省</option>
-                <option>青海省</option>
-                <option>台湾省</option>
-              </optgroup>
-              <optgroup label="自治区">
-                <option>内蒙古自治区</option>
-                <option>广西壮族自治区</option>
-                <option>西藏自治区</option>
-                <option>宁夏回族自治区</option>
-                <option>新疆维吾尔自治区</option>
-              </optgroup>
-              <optgroup label="特别行政区">
-                <option>香港特别行政区</option>
-                <option>澳门特别行政区</option>
-              </optgroup>
-            </select>
-          </div>
-        </div>
-
-        <!-- 统计信息 -->
-        <div class="grid grid-cols-3 gap-3">
-          <div class="bg-neutral rounded-xl p-4 text-center shadow-sm border border-black/5 dark:border-white/5">
-            <p class="text-2xl font-bold text-secondary mb-1">42</p>
-            <p class="text-xs text-tertiary">发送的明信片</p>
-          </div>
-          <div class="bg-neutral rounded-xl p-4 text-center shadow-sm border border-black/5 dark:border-white/5">
-            <p class="text-2xl font-bold text-secondary mb-1">128</p>
-            <p class="text-xs text-tertiary">收到的明信片</p>
-          </div>
-          <div class="bg-neutral rounded-xl p-4 text-center shadow-sm border border-black/5 dark:border-white/5">
-            <p class="text-2xl font-bold text-secondary mb-1">856</p>
-            <p class="text-xs text-tertiary">获得的点赞</p>
-          </div>
-        </div>
-
-        <!-- 保存按钮 -->
-        <button class="w-full py-3 bg-primary dark:bg-secondary text-white dark:text-black font-bold rounded-xl hover:opacity-90 transition-opacity">
-          保存修改
-        </button>
-      </main>
-    </div>
-
-    <!-- 电脑端 - 窗口模式 -->
-    <div class="hidden md:flex items-center justify-center min-h-screen p-4">
-      <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100]"></div>
-      <div class="relative bg-white dark:bg-neutral rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto z-[101]">
-        <!-- Header -->
-        <div class="sticky top-0 z-10 flex items-center justify-between px-6 py-4 bg-white dark:bg-neutral border-b border-black/10 dark:border-white/10">
-          <h1 class="font-headline text-xl font-bold text-primary">个人资料</h1>
-          <button @click="$router.back()" class="w-8 h-8 rounded-full flex items-center justify-center text-black/30 dark:text-white/30 hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
-            <X class="w-5 h-5" />
-          </button>
-        </div>
-
-        <!-- Content -->
-        <div class="p-6 space-y-6">
-          <!-- 头像和基本信息 -->
-          <div class="flex items-center gap-6">
-            <div class="relative group">
-              <div class="w-24 h-24 rounded-full overflow-hidden border-2 border-black/10 shadow-sm">
-                <img
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYArdRu7qlNp4cuo06XFR6gjYC0xtUePbpepRVZFPb60NLBx_VR9amuEGGGmcgoSJxZnTSvk-qC-pT40C1BcNky-vgDMQS81oXbUZ1ZhPGx8TyP5kDLnK2UxXs44i4R9b0C6J2F0AegR2bJ6baLYqRUydE5fXGJMLngQf9plW3-BdtpO6Gnq5BWbM5Y8_ZXBxCkBcu_AycBYRNspo0GmyLKNOwz7WDP8qJiBl97glqeE0pFejorxYMHYxFqX9mdXogSMmgx3TMR9IR"
-                  alt="Avatar"
-                  class="w-full h-full object-cover"
-                  referrerpolicy="no-referrer"
-                />
+              <div>
+                <h2 class="font-headline text-xl font-bold text-primary md:text-2xl">{{ displayName }}</h2>
+                <p class="mt-1 text-sm text-tertiary">UID: {{ displayUid }}</p>
+                <p class="mt-2 text-xs text-tertiary">{{ isUploading ? '头像上传中...' : '点击相机可上传新头像' }}</p>
               </div>
-              <button class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-secondary text-white flex items-center justify-center shadow-md hover:scale-110 transition-transform">
-                <Camera class="w-4 h-4" />
-              </button>
             </div>
-            <div>
-              <h2 class="font-headline text-2xl font-bold text-primary mb-2">苏木</h2>
-              <p class="text-sm text-tertiary mb-4">UID: 1024520</p>
-              <button @click="focusNickname" class="px-4 py-2 bg-primary dark:bg-secondary text-white dark:text-black font-bold rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2">
-                <PenLine class="w-4 h-4" />
-                编辑资料
-              </button>
-            </div>
-          </div>
+            <button
+              @click="focusNickname"
+              class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-white transition-opacity hover:opacity-90 dark:bg-secondary dark:text-black"
+            >
+              <PenLine class="h-4 w-4" />
+              编辑昵称
+            </button>
+          </section>
 
-          <!-- 个人信息表单 -->
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="text-sm font-bold text-primary mb-2 block">昵称</label>
-              <input
-                ref="nicknameInput"
-                type="text"
-                value="苏木"
-                class="w-full px-3 py-2 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-secondary"
-              />
+          <section class="grid gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(260px,1fr)]">
+            <div class="space-y-4 rounded-2xl border border-black/5 bg-neutral p-5 dark:border-white/5">
+              <div class="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label class="mb-2 block text-sm font-bold text-primary">昵称</label>
+                  <input
+                    ref="nicknameInput"
+                    v-model.trim="form.username"
+                    type="text"
+                    maxlength="20"
+                    class="w-full rounded-lg border border-black/10 bg-black/5 px-3 py-2.5 text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary dark:border-white/10 dark:bg-white/5 dark:focus:ring-secondary"
+                    placeholder="请输入昵称"
+                  />
+                </div>
+
+                <div>
+                  <label class="mb-2 block text-sm font-bold text-primary">邮箱</label>
+                  <input
+                    :value="form.email"
+                    type="email"
+                    readonly
+                    class="w-full cursor-not-allowed rounded-lg border border-black/10 bg-black/5 px-3 py-2.5 text-primary/70 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white/70"
+                  />
+                  <p class="mt-1 text-xs text-tertiary">当前仅支持展示，暂不支持前端改绑邮箱。</p>
+                </div>
+
+                <div>
+                  <label class="mb-2 block text-sm font-bold text-primary">性别</label>
+                  <select
+                    v-model="form.gender"
+                    class="w-full rounded-lg border border-black/10 bg-black/5 px-3 py-2.5 text-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-white/10 dark:bg-white/5 dark:focus:ring-secondary"
+                  >
+                    <option v-for="option in genderOptions" :key="option" :value="option">{{ option }}</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="mb-2 block text-sm font-bold text-primary">生日</label>
+                  <input
+                    v-model="form.birthday"
+                    type="date"
+                    class="w-full rounded-lg border border-black/10 bg-black/5 px-3 py-2.5 text-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-white/10 dark:bg-white/5 dark:focus:ring-secondary"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label class="mb-2 block text-sm font-bold text-primary">所在地</label>
+                <select
+                  v-model="form.location"
+                  class="w-full rounded-lg border border-black/10 bg-black/5 px-3 py-2.5 text-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-white/10 dark:bg-white/5 dark:focus:ring-secondary"
+                >
+                  <option value="">请选择地区</option>
+                  <optgroup
+                    v-for="group in locationGroups"
+                    :key="group.label"
+                    :label="group.label"
+                  >
+                    <option v-for="option in group.options" :key="option" :value="option">{{ option }}</option>
+                  </optgroup>
+                </select>
+              </div>
             </div>
 
-            <div>
-              <label class="text-sm font-bold text-primary mb-2 block">邮箱</label>
-              <input
-                type="email"
-                value="sumuwood@example.com"
-                class="w-full px-3 py-2 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-secondary"
-              />
-            </div>
+            <div class="space-y-4">
+              <div class="rounded-2xl border border-black/5 bg-neutral p-5 dark:border-white/5">
+                <p class="text-sm font-bold text-primary">账号概览</p>
+                <div class="mt-4 space-y-3 text-sm text-primary">
+                  <div class="flex items-center justify-between rounded-xl bg-black/5 px-4 py-3 dark:bg-white/5">
+                    <span class="text-tertiary">用户 UID</span>
+                    <span class="font-bold">{{ displayUid }}</span>
+                  </div>
+                  <div class="flex items-center justify-between rounded-xl bg-black/5 px-4 py-3 dark:bg-white/5">
+                    <span class="text-tertiary">邮分</span>
+                    <span class="font-bold">{{ userInfo?.coins ?? 0 }}</span>
+                  </div>
+                  <div class="flex items-center justify-between rounded-xl bg-black/5 px-4 py-3 dark:bg-white/5">
+                    <span class="text-tertiary">VIP</span>
+                    <span class="font-bold">{{ userInfo?.vipLevel || '--' }}</span>
+                  </div>
+                </div>
+              </div>
 
-            <div>
-              <label class="text-sm font-bold text-primary mb-2 block">性别</label>
-              <select class="w-full px-3 py-2 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-secondary">
-                <option>保密</option>
-                <option>男</option>
-                <option>女</option>
-              </select>
+              <div class="rounded-2xl border border-black/5 bg-neutral p-5 dark:border-white/5">
+                <p class="text-sm font-bold text-primary">数据统计</p>
+                <div class="mt-4 grid grid-cols-3 gap-3">
+                  <div class="rounded-xl bg-black/5 p-4 text-center dark:bg-white/5">
+                    <p class="text-2xl font-bold text-secondary">{{ stats.sent }}</p>
+                    <p class="mt-1 text-xs text-tertiary">发送的明信片</p>
+                  </div>
+                  <div class="rounded-xl bg-black/5 p-4 text-center dark:bg-white/5">
+                    <p class="text-2xl font-bold text-secondary">{{ stats.received }}</p>
+                    <p class="mt-1 text-xs text-tertiary">收到的明信片</p>
+                  </div>
+                  <div class="rounded-xl bg-black/5 p-4 text-center dark:bg-white/5">
+                    <p class="text-2xl font-bold text-secondary">{{ stats.likes }}</p>
+                    <p class="mt-1 text-xs text-tertiary">获得的点赞</p>
+                  </div>
+                </div>
+              </div>
             </div>
-
-            <div>
-              <label class="text-sm font-bold text-primary mb-2 block">生日</label>
-              <input
-                type="date"
-                class="w-full px-3 py-2 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-secondary"
-              />
-            </div>
-
-            <div class="col-span-2">
-              <label class="text-sm font-bold text-primary mb-2 block">所在地</label>
-              <select class="w-full px-3 py-2 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-secondary">
-                <option value="">请选择地区</option>
-                <optgroup label="直辖市">
-                  <option>北京</option>
-                  <option>天津</option>
-                  <option>上海</option>
-                  <option>重庆</option>
-                </optgroup>
-                <optgroup label="省份">
-                  <option>河北省</option>
-                  <option>山西省</option>
-                  <option>辽宁省</option>
-                  <option>吉林省</option>
-                  <option>黑龙江省</option>
-                  <option>江苏省</option>
-                  <option>浙江省</option>
-                  <option>安徽省</option>
-                  <option>福建省</option>
-                  <option>江西省</option>
-                  <option>山东省</option>
-                  <option>河南省</option>
-                  <option>湖北省</option>
-                  <option>湖南省</option>
-                  <option>广东省</option>
-                  <option>海南省</option>
-                  <option>四川省</option>
-                  <option>贵州省</option>
-                  <option>云南省</option>
-                  <option>陕西省</option>
-                  <option>甘肃省</option>
-                  <option>青海省</option>
-                  <option>台湾省</option>
-                </optgroup>
-                <optgroup label="自治区">
-                  <option>内蒙古自治区</option>
-                  <option>广西壮族自治区</option>
-                  <option>西藏自治区</option>
-                  <option>宁夏回族自治区</option>
-                  <option>新疆维吾尔自治区</option>
-                </optgroup>
-                <optgroup label="特别行政区">
-                  <option>香港特别行政区</option>
-                  <option>澳门特别行政区</option>
-                </optgroup>
-              </select>
-            </div>
-          </div>
-
-          <!-- 统计信息 -->
-          <div class="grid grid-cols-3 gap-4 p-4 bg-black/5 dark:bg-white/5 rounded-xl">
-            <div class="text-center">
-              <p class="text-2xl font-bold text-secondary mb-1">42</p>
-              <p class="text-xs text-tertiary">发送的明信片</p>
-            </div>
-            <div class="text-center">
-              <p class="text-2xl font-bold text-secondary mb-1">128</p>
-              <p class="text-xs text-tertiary">收到的明信片</p>
-            </div>
-            <div class="text-center">
-              <p class="text-2xl font-bold text-secondary mb-1">856</p>
-              <p class="text-xs text-tertiary">获得的点赞</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="sticky bottom-0 flex gap-3 px-6 py-4 bg-white dark:bg-neutral border-t border-black/10 dark:border-white/10">
-          <button @click="$router.back()" class="flex-1 py-2.5 rounded-lg border-2 border-black/10 dark:border-white/10 text-primary font-bold hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
-            取消
-          </button>
-          <button class="flex-1 py-2.5 rounded-lg bg-primary dark:bg-secondary text-white dark:text-black font-bold hover:opacity-90 transition-opacity">
-            保存修改
-          </button>
+          </section>
         </div>
       </div>
     </div>
+
+    <input
+      ref="avatarInput"
+      type="file"
+      accept="image/png,image/jpeg,image/gif,image/webp"
+      class="hidden"
+      @change="handleAvatarChange"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { ChevronLeft, Camera, PenLine, X } from "lucide-vue-next";
+import { computed, onMounted, ref } from 'vue';
+import { ChevronLeft, Camera, PenLine } from 'lucide-vue-next';
+import { ElMessage } from 'element-plus';
+import { useRouter } from 'vue-router';
+import { getProfile, getUserStats, updateProfile, uploadAvatar } from '../api/user.js';
+import { assetBaseURL } from '../utils/request.js';
+import { useUser } from '../store/user';
+
+const DEFAULT_AVATAR = 'https://lh3.googleusercontent.com/aida-public/AB6AXuBYArdRu7qlNp4cuo06XFR6gjYC0xtUePbpepRVZFPb60NLBx_VR9amuEGGGmcgoSJxZnTSvk-qC-pT40C1BcNky-vgDMQS81oXbUZ1ZhPGx8TyP5kDLnK2UxXs44i4R9b0C6J2F0AegR2bJ6baLYqRUydE5fXGJMLngQf9plW3-BdtpO6Gnq5BWbM5Y8_ZXBxCkBcu_AycBYRNspo0GmyLKNOwz7WDP8qJiBl97glqeE0pFejorxYMHYxFqX9mdXogSMmgx3TMR9IR';
+
+const router = useRouter();
+const { userInfo, updateUser } = useUser();
+
+const genderOptions = ['保密', '男', '女'];
+const locationGroups = [
+  { label: '直辖市', options: ['北京', '天津', '上海', '重庆'] },
+  {
+    label: '省份',
+    options: [
+      '河北省', '山西省', '辽宁省', '吉林省', '黑龙江省', '江苏省', '浙江省', '安徽省', '福建省', '江西省',
+      '山东省', '河南省', '湖北省', '湖南省', '广东省', '海南省', '四川省', '贵州省', '云南省', '陕西省',
+      '甘肃省', '青海省', '台湾省',
+    ],
+  },
+  { label: '自治区', options: ['内蒙古自治区', '广西壮族自治区', '西藏自治区', '宁夏回族自治区', '新疆维吾尔自治区'] },
+  { label: '特别行政区', options: ['香港特别行政区', '澳门特别行政区'] },
+];
 
 const nicknameInput = ref<HTMLInputElement | null>(null);
+const avatarInput = ref<HTMLInputElement | null>(null);
+const isLoading = ref(true);
+const isSaving = ref(false);
+const isUploading = ref(false);
+const stats = ref({ sent: 0, received: 0, likes: 0 });
+const form = ref({
+  username: '',
+  email: '',
+  gender: '保密',
+  birthday: '',
+  location: '',
+});
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  const responseMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+  const defaultMessage = error instanceof Error ? error.message : '';
+  return responseMessage || defaultMessage || fallback;
+};
+
+const normalizeDate = (value?: string | null) => (value ? String(value).slice(0, 10) : '');
+
+const resolveAssetUrl = (url?: string | null) => {
+  if (!url) return DEFAULT_AVATAR;
+  if (/^(https?:)?\/\//.test(url) || url.startsWith('data:')) return url;
+  return `${assetBaseURL}${url.startsWith('/') ? url : `/${url}`}`;
+};
+
+const avatarUrl = computed(() => resolveAssetUrl(userInfo.value?.avatar));
+const displayName = computed(() => form.value.username || userInfo.value?.username || 'Blank 用户');
+const displayUid = computed(() => userInfo.value?.uid || '--');
+
+const applyProfile = (profile: Record<string, any>) => {
+  form.value = {
+    username: profile.username || '',
+    email: profile.email || '',
+    gender: profile.gender || '保密',
+    birthday: normalizeDate(profile.birthday),
+    location: profile.location || '',
+  };
+  updateUser({
+    ...profile,
+    birthday: normalizeDate(profile.birthday),
+  });
+};
+
+const loadData = async () => {
+  isLoading.value = true;
+  try {
+    const [profileResult, statsResult] = await Promise.all([getProfile(), getUserStats()]);
+    applyProfile(profileResult.data || {});
+    stats.value = {
+      sent: statsResult.data?.sent ?? 0,
+      received: statsResult.data?.received ?? 0,
+      likes: statsResult.data?.likes ?? 0,
+    };
+  } catch (error) {
+    ElMessage.error(getErrorMessage(error, '获取个人资料失败'));
+  } finally {
+    isLoading.value = false;
+  }
+};
 
 const focusNickname = () => {
   nicknameInput.value?.focus();
 };
-</script>
 
+const triggerAvatarUpload = () => {
+  avatarInput.value?.click();
+};
+
+const handleAvatarChange = async (event: Event) => {
+  const file = (event.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+
+  isUploading.value = true;
+  try {
+    const result = await uploadAvatar(file);
+    updateUser({ avatar: result.data?.avatar || '' });
+    ElMessage.success(result.message || '头像更新成功');
+  } catch (error) {
+    ElMessage.error(getErrorMessage(error, '头像上传失败'));
+  } finally {
+    isUploading.value = false;
+    if (avatarInput.value) {
+      avatarInput.value.value = '';
+    }
+  }
+};
+
+const saveProfile = async () => {
+  if (!form.value.username.trim()) {
+    ElMessage.warning('请输入昵称');
+    return;
+  }
+
+  isSaving.value = true;
+  try {
+    const payload = {
+      username: form.value.username.trim(),
+      gender: form.value.gender,
+      birthday: form.value.birthday || null,
+      location: form.value.location,
+    };
+    const result = await updateProfile(payload);
+    updateUser(payload);
+    ElMessage.success(result.message || '资料更新成功');
+  } catch (error) {
+    ElMessage.error(getErrorMessage(error, '资料更新失败'));
+  } finally {
+    isSaving.value = false;
+  }
+};
+
+onMounted(() => {
+  loadData();
+});
+</script>

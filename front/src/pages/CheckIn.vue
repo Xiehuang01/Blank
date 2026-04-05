@@ -46,7 +46,7 @@
           </div>
 
           <button 
-            @click="doCheckIn" 
+            @click="handleCheckIn" 
             :disabled="hasCheckedIn(currentDate.getDate())"
             class="mt-8 w-full max-w-sm py-3.5 rounded-2xl font-bold transition-all"
             :class="hasCheckedIn(currentDate.getDate()) ? 'bg-black/10 dark:bg-white/10 text-tertiary cursor-not-allowed' : 'bg-secondary text-white hover:opacity-90 shadow-lg hover:shadow-xl hover:-translate-y-0.5'"
@@ -74,7 +74,7 @@
                 +10
               </div>
               <button 
-                @click="doCheckIn"
+                @click="handleCheckIn"
                 :disabled="hasCheckedIn(currentDate.getDate())"
                 class="px-4 py-1.5 rounded-full text-xs font-bold transition-colors"
                 :class="hasCheckedIn(currentDate.getDate()) ? 'bg-black/5 dark:bg-white/5 text-tertiary' : 'bg-primary text-white hover:bg-primary/90'"
@@ -91,7 +91,7 @@
             </div>
             <div class="flex-1">
               <h3 class="font-bold text-primary text-sm mb-1">发送明信片</h3>
-              <p class="text-xs text-tertiary">向好友或广场发送一张明信片</p>
+              <p class="text-xs text-tertiary">向好友或广场发送一张明信片{{ hasSentPostcardToday ? '，已完成可领取奖励' : '' }}</p>
             </div>
             <div class="flex flex-col items-end gap-2 shrink-0">
               <div class="flex items-center gap-1 text-primary font-bold text-sm">
@@ -99,10 +99,16 @@
                 +20
               </div>
               <button 
-                @click="$router.push('/create')"
-                class="px-4 py-1.5 rounded-full text-xs font-bold bg-primary text-white hover:bg-primary/90 transition-colors"
+                @click="handlePostcardTaskAction"
+                :disabled="hasClaimedPostcardReward || isClaimingPostcardReward"
+                class="px-4 py-1.5 rounded-full text-xs font-bold transition-colors"
+                :class="hasClaimedPostcardReward
+                  ? 'bg-black/5 dark:bg-white/5 text-tertiary cursor-not-allowed'
+                  : hasSentPostcardToday
+                    ? 'bg-secondary text-white hover:opacity-90'
+                    : 'bg-primary text-white hover:bg-primary/90'"
               >
-                去完成
+                {{ postcardTaskButtonText }}
               </button>
             </div>
           </div>
@@ -116,13 +122,18 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { ChevronLeft, CalendarCheck, Send, Coins } from 'lucide-vue-next';
 import { ElMessage } from 'element-plus';
-import { useRouter } from 'vue-router';
+import { getCheckinStatus, doCheckin, claimPostcardTaskReward } from '../api/checkin.js';
 import { useCheckIn } from '../store/checkin';
+import { useUser } from '../store/user';
+
 
 const router = useRouter();
-const { isCheckedInToday, doCheckIn: storeCheckIn } = useCheckIn();
+const { doCheckIn: syncCheckInState } = useCheckIn();
+const { updateUser } = useUser();
+
 
 const dayNames = ["日", "一", "二", "三", "四", "五", "六"];
 const currentDate = new Date();
@@ -133,33 +144,85 @@ const firstDayOfMonth = new Date(currentYear, currentDate.getMonth(), 1);
 const firstDayOfWeek = firstDayOfMonth.getDay();
 const daysInMonth = new Date(currentYear, currentDate.getMonth() + 1, 0).getDate();
 
-// 模拟签到数据
 const checkedInDays = ref<number[]>([]);
 const consecutiveDays = ref(0);
+const isCheckedInToday = ref(false);
+const hasSentPostcardToday = ref(false);
+const hasClaimedPostcardReward = ref(false);
+const isClaimingPostcardReward = ref(false);
 
-const isToday = (day: number) => {
-  return day === currentDate.getDate();
-};
+const postcardTaskButtonText = computed(() => {
+  if (hasClaimedPostcardReward.value) return '已领取';
+  if (isClaimingPostcardReward.value) return '领取中...';
+  if (hasSentPostcardToday.value) return '领取奖励';
+  return '去完成';
+});
+
+
+const isToday = (day: number) => day === currentDate.getDate();
 
 const hasCheckedIn = (day: number) => {
   if (isToday(day) && isCheckedInToday.value) return true;
   return checkedInDays.value.includes(day);
 };
 
-const doCheckIn = () => {
+const loadStatus = async () => {
+  try {
+    const res = await getCheckinStatus();
+    checkedInDays.value = res.data?.checkedDays || [];
+    consecutiveDays.value = res.data?.consecutiveDays || 0;
+    isCheckedInToday.value = !!res.data?.isCheckedInToday;
+    hasSentPostcardToday.value = !!res.data?.postcardTask?.hasSentPostcardToday;
+    hasClaimedPostcardReward.value = !!res.data?.postcardTask?.hasClaimedReward;
+  } catch (err: any) {
+    ElMessage.error(err?.data?.message || err?.message || '加载签到状态失败');
+  }
+};
+
+const handleCheckIn = async () => {
   const today = currentDate.getDate();
   if (hasCheckedIn(today)) return;
+  try {
+    const res = await doCheckin();
+    syncCheckInState();
+    isCheckedInToday.value = true;
+    if (!checkedInDays.value.includes(today)) {
+      checkedInDays.value.push(today);
+    }
+    consecutiveDays.value += 1;
+    if (typeof res.data?.totalCoins === 'number') {
+      updateUser({ coins: res.data.totalCoins });
+    }
+    ElMessage.success(res.message || '签到成功');
+  } catch (err: any) {
+    ElMessage.error(err?.data?.message || err?.message || '签到失败');
+  }
+};
 
-  checkedInDays.value.push(today);
-  consecutiveDays.value += 1;
-  storeCheckIn();
-  ElMessage.success('签到成功！获得 10 邮分');
+const handlePostcardTaskAction = async () => {
+  if (hasClaimedPostcardReward.value || isClaimingPostcardReward.value) return;
+
+  if (!hasSentPostcardToday.value) {
+    router.push('/create');
+    return;
+  }
+
+  try {
+    isClaimingPostcardReward.value = true;
+    const res = await claimPostcardTaskReward();
+    hasClaimedPostcardReward.value = true;
+    if (typeof res.data?.totalCoins === 'number') {
+      updateUser({ coins: res.data.totalCoins });
+    }
+    ElMessage.success(res.message || '领取奖励成功');
+  } catch (err: any) {
+    ElMessage.error(err?.data?.message || err?.message || '领取奖励失败');
+  } finally {
+    isClaimingPostcardReward.value = false;
+  }
 };
 
 onMounted(() => {
-  if (isCheckedInToday.value) {
-    checkedInDays.value.push(currentDate.getDate());
-    consecutiveDays.value = 1;
-  }
+  loadStatus();
 });
 </script>

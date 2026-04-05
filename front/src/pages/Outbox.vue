@@ -72,31 +72,44 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { ChevronLeft } from "lucide-vue-next";
+import { ElMessage } from "element-plus";
+import { getOutboxPostcards, deletePostcard } from "../api/postcard.js";
 
 type OutboxItem = {
   id: number;
   title?: string;
   recipient?: string;
+  recipientInput?: string;
   createdAt?: string;
+  status?: string;
   aiReviewStatus?: string;
   manualReviewStatus?: string;
 };
 
 const outboxList = ref<OutboxItem[]>([]);
 
-const loadOutbox = () => {
-  const stored = localStorage.getItem("userPostcards");
-  const list = stored ? JSON.parse(stored) : [];
-  outboxList.value = list.map((item: OutboxItem) => ({
-    ...item,
-    aiReviewStatus: item.aiReviewStatus || "通过",
-    manualReviewStatus: item.manualReviewStatus || "待审核",
-  }));
+const loadOutbox = async () => {
+  try {
+    const res = await getOutboxPostcards({ page: 1, pageSize: 100 });
+    outboxList.value = (res.data?.list || []).map((item: OutboxItem) => ({
+      ...item,
+      recipient: item.recipientInput,
+      aiReviewStatus: "通过",
+      manualReviewStatus: item.status === "sent" ? "通过" : "待审核",
+    }));
+  } catch (err: any) {
+    ElMessage.error(err?.data?.message || err?.message || "加载发件箱失败");
+  }
 };
 
-const removeMail = (id: number) => {
-  outboxList.value = outboxList.value.filter((item) => item.id !== id);
-  localStorage.setItem("userPostcards", JSON.stringify(outboxList.value));
+const removeMail = async (id: number) => {
+  try {
+    await deletePostcard(id);
+    outboxList.value = outboxList.value.filter((item) => item.id !== id);
+    ElMessage.success("删除成功");
+  } catch (err: any) {
+    ElMessage.error(err?.data?.message || err?.message || "删除失败");
+  }
 };
 
 const reviewPercent = (mail: OutboxItem) => {

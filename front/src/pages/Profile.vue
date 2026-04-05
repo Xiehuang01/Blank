@@ -63,7 +63,7 @@
       </section>
 
       <!-- 我的喜欢 -->
-      <section v-if="favorites.length > 0" class="space-y-4">
+      <section class="space-y-4">
         <div class="flex justify-between items-end">
           <h3
             class="font-headline text-lg font-bold text-primary border-l-4 border-secondary pl-3"
@@ -104,7 +104,7 @@
       </section>
 
       <!-- 我的邮票 -->
-      <section v-if="stamps.length > 0" class="space-y-4">
+      <section class="space-y-4">
         <div class="flex justify-between items-end">
           <h3
             class="font-headline text-lg font-bold text-primary border-l-4 border-secondary pl-3"
@@ -371,7 +371,7 @@
           </section>
 
           <!-- 我的邮票 -->
-          <section v-if="stamps.length > 0" class="bg-neutral rounded-2xl p-6 shadow-sm border border-black/5 dark:border-white/5">
+          <section class="bg-neutral rounded-2xl p-6 shadow-sm border border-black/5 dark:border-white/5">
             <div class="flex justify-between items-center mb-6">
               <h3 class="font-headline text-xl font-bold text-primary">我的邮票</h3>
               <button
@@ -465,63 +465,105 @@ import {
   CalendarCheck,
 } from "lucide-vue-next";
 import { ElMessage } from "element-plus";
+import { getProfile } from "../api/user.js";
+import { getFavoritePostcards } from "../api/postcard.js";
+import { getMyStamps } from "../api/stamp.js";
+import { assetBaseURL } from "../utils/request.js";
 import { useCheckIn } from "../store/checkin";
 import { useUser } from "../store/user";
 
+
+
+const DEFAULT_AVATAR = 'https://lh3.googleusercontent.com/aida-public/AB6AXuBYArdRu7qlNp4cuo06XFR6gjYC0xtUePbpepRVZFPb60NLBx_VR9amuEGGGmcgoSJxZnTSvk-qC-pT40C1BcNky-vgDMQS81oXbUZ1ZhPGx8TyP5kDLnK2UxXs44i4R9b0C6J2F0AegR2bJ6baLYqRUydE5fXGJMLngQf9plW3-BdtpO6Gnq5BWbM5Y8_ZXBxCkBcu_AycBYRNspo0GmyLKNOwz7WDP8qJiBl97glqeE0pFejorxYMHYxFqX9mdXogSMmgx3TMR9IR';
+
 const router = useRouter();
 const { isCheckedInToday } = useCheckIn();
-const { userInfo, isLoggedIn, logout } = useUser();
+const { userInfo, logout, updateUser } = useUser();
 
-// 检查登录状态
-onMounted(() => {
-  if (!isLoggedIn.value) {
-    router.push('/login');
+const getErrorMessage = (error: unknown, fallback: string) => {
+  const responseMessage = (error as { response?: { data?: { message?: string } } })
+    ?.response?.data?.message;
+  const defaultMessage = error instanceof Error ? error.message : "";
+  return responseMessage || defaultMessage || fallback;
+};
+
+const isUnauthorizedError = (error: unknown) => (
+  (error as { response?: { status?: number } })?.response?.status === 401
+);
+
+const loadProfile = async () => {
+  try {
+    const result = await getProfile();
+    updateUser(result.data);
+  } catch (error) {
+    if (!isUnauthorizedError(error)) {
+      ElMessage.error(getErrorMessage(error, '获取用户信息失败'));
+    }
   }
+};
+
+const favorites = ref<any[]>([]);
+const stamps = ref<any[]>([]);
+
+const loadFavoritesAndStamps = async () => {
+  try {
+    const [favoriteRes, stampRes] = await Promise.all([
+      getFavoritePostcards({ page: 1, pageSize: 8 }),
+      getMyStamps(),
+    ]);
+    favorites.value = (favoriteRes.data?.list || []).map((item: any) => ({
+      id: item.id,
+      src: resolveAssetUrl(item.image),
+    }));
+    stamps.value = (stampRes.data || []).slice(0, 8).map((item: any) => ({
+      id: item.id,
+      src: resolveAssetUrl(item.image),
+    }));
+  } catch (error) {
+    ElMessage.error(getErrorMessage(error, '加载喜欢/邮票失败'));
+  }
+};
+
+onMounted(() => {
+  loadProfile();
+  loadFavoritesAndStamps();
 });
 
-// 用户信息（从store获取或使用默认值）
+
+const resolveAssetUrl = (url?: string | null) => {
+  if (!url) return DEFAULT_AVATAR;
+  if (/^(https?:)?\/\//.test(url) || url.startsWith('data:')) {
+    return url;
+  }
+  return `${assetBaseURL}${url.startsWith('/') ? url : `/${url}`}`;
+};
+
 const displayUserInfo = computed(() => ({
-  uid: userInfo.value?.uid || '1024520',
-  username: userInfo.value?.username || '苏木',
+  uid: userInfo.value?.uid || '--',
+  username: userInfo.value?.username || 'Blank 用户',
   email: userInfo.value?.email || '',
-  avatar: userInfo.value?.avatar || 'https://lh3.googleusercontent.com/aida-public/AB6AXuBYArdRu7qlNp4cuo06XFR6gjYC0xtUePbpepRVZFPb60NLBx_VR9amuEGGGmcgoSJxZnTSvk-qC-pT40C1BcNky-vgDMQS81oXbUZ1ZhPGx8TyP5kDLnK2UxXs44i4R9b0C6J2F0AegR2bJ6baLYqRUydE5fXGJMLngQf9plW3-BdtpO6Gnq5BWbM5Y8_ZXBxCkBcu_AycBYRNspo0GmyLKNOwz7WDP8qJiBl97glqeE0pFejorxYMHYxFqX9mdXogSMmgx3TMR9IR',
-  vipLevel: userInfo.value?.vipLevel || 'VIP',
-  coins: userInfo.value?.coins || 850,
+  avatar: resolveAssetUrl(userInfo.value?.avatar),
+  vipLevel: userInfo.value?.vipLevel || '--',
+  coins: userInfo.value?.coins ?? 0,
 }));
 
-// 退出登录
+
 const showLogoutDialog = ref(false);
 
 const handleLogout = () => {
   showLogoutDialog.value = true;
 };
 
-const confirmLogout = () => {
+const confirmLogout = async () => {
   showLogoutDialog.value = false;
-  logout();
+  await logout();
   ElMessage.success('已退出登录');
   router.push('/login');
 };
 
 const isDarkMode = ref(document.documentElement.classList.contains("dark"));
 
-// 我的喜欢数据
-const favorites = ref([
-  { id: 1, src: "https://lh3.googleusercontent.com/aida-public/AB6AXuBMKuwdrzd0kycg5QbGFmMJMDT8RsE6UNc85oboGn-Tofw_7BqW1Fr1AxqgdIPVAOliVNVYW_xxX0D9w4teG8vu716EueLdlhtDZNMzx4AmtF6xpsxUovOnN9vxwxh4HShX2hixpG3URlodGZn0CCfMvapoqBDQoMNPiYZ7qRUDV_u5MqQexSdA1w6diNCYt21t14DqvZwE3JkN7udert8x6WNdDwaS9gdJzPKoMDZmPcvKSVzXPcgpoOY3CCfVKFU3sqia8imIUDUG" },
-  { id: 2, src: "https://lh3.googleusercontent.com/aida-public/AB6AXuD8esTrkcudCbjzxuyIIZl0OCZpj1YT0KrcsHLaFrj43bnf3Yyf1EG7V2yrCFBiQJK_VMmMd5xZhxjcmY85_K-f3XyDDmIxud0i4ZezXKMBuMwEqvSQtj3Siz08fk9w-dqNpBzh7L7aQUeOx5qtP7b7xOX0rbyi563zBqiOlcDN2Q9U5FKt-KltCVOYDRP7g3Ed3QL9fU9JY6-I1HARQriDG_92_H4iVMyiV6Lsnf7cEnK1_Dy0rY0plcdR2YAIPfEZgGmPRYvzw_V5" },
-  { id: 3, src: "https://lh3.googleusercontent.com/aida-public/AB6AXuA0i-x6RyD7D2rgu2L8AzwaNHZzBYtWuJj6TtriMJjqVRxLpFGpCq4NIH2Grin9XOy8Pd3vjY8zFfJ35c0h20F0IrFtD7y28Xd9NfXGoploNukwtK3NgoPGEa7VSOEBh4KD4kyXVIRQ0jWYVLO2kJHCx9n8kcXqOQdi-Nd68yzmGnwkZBGhLGX0_S9Cu8AfSXzjBlGzXqf8l2XI-wAwWqxhTz_RASrcIKtt1Bdh6wqEzNFbMHjXcTtyd41-AhHu91wpD4qb4WLcp1F2" },
-  { id: 4, src: "https://lh3.googleusercontent.com/aida-public/AB6AXuBnUhh60TiT7aekmcLcT4l_yIZOLue3dmhExmphjrn1fS3VZTrDAv2lbSz6059VL7VGYbj-rv9_i-a1MIdVEDnRSYMX2KMJHvlExgAM1Ve24Mpbi0OYM-RD0ZeF-iO7SG-b04WRIc1xMmC_aDQStq7yjMkkY2PTeqxfqehT_Lr2H3JDCZ48bzFj4pMkgu653P__1D9wlGCUu7oBr85cnBGBS5U3tk7iQ0IRtow3JTzH79CSEPytQNknDAx3BGxkfY6jR7U3m_ZfqidY" },
-  { id: 5, src: "https://lh3.googleusercontent.com/aida-public/AB6AXuACTQfqd5zXW2cKBxVnuuNO9i9sq9Pk5JxreFwtXeFdwc2pIGVpcU8BSfkdg66pV8mXppMTUSNe2TNBt-8TAoJ_2qqGJdzR_AFhAht55cKNTHZl4J9MiGOF0m0GQeEaxBa0yPxLxlEqKz087elMQkmKsxl-N_MVFnQRLbTNconhVSYMHMKpzscx-mjg_lrzPMKbISEr9Tkei_ZxplmcGlDa-zn-f5Au102bOzwcGfBXkE4OHYlcPjh2knYoakUw-Zw564zPDVLeUzRI" },
-]);
 
-// 我的邮票数据
-const stamps = ref([
-  { id: 1, src: "https://lh3.googleusercontent.com/aida-public/AB6AXuCCuA3ITyTjAAZHjpQdzaxoz_Fj7kS8s9bOqSMfo-b5rvYDRkx_lu9zS2SxSNHmBa21d22iOl1aI2XH0Wrh5eAYkrdMxSzPP-wxXFxoncAURrZUo0mhvigfEtR2T3YlGUj3dyvyRED-j2jrpg1X1Ua9HyJr8qCcJlehFYuuxoCubfWAImXJg3acTqnNozdo7U7MJ9DVEXr0Pb15BXDW8B9S1JPVIIIQbXZoW3A39xaIQyBXE3ZRs6yMdwpiVAFVgJfJSL-JlRnV4hjr" },
-  { id: 2, src: "https://lh3.googleusercontent.com/aida-public/AB6AXuAlKz4qb-d4igGDqny56-uA1vK6Ei_rPNv55pAdpWlJHIBu58t-qTJHmA3XeKv_eS9R_PuvsaV9HG5HeBsXPNRguMmGXQBHpvt9vzxvOzVGO5HIOmO2YFGjxR6IIjVLHLg6XtG8M6RyQWhjqd9TWs2_TDs4xSonm0vL4z6LkSlAE_OIVML9aeSKopbclE9UH1WB7_Lr5Olg_DqF_FUQV6VrKGXD0PGn-hudoUmxm0za9aPSZ-h-YLoRDGAdJqjA6Sg7P_mGf6DhbXWY" },
-  { id: 3, src: "https://lh3.googleusercontent.com/aida-public/AB6AXuA6-BNJlQ55PxdvY1UXD45Wie8kBG7J6JTVCn5qNwnfa6qOvYBt5nspqTv9Y2hLywxu9ukuz_JoJ7nGk5W1-1rDRNw8YlRnbehXubse9vZL6xRx7-DYugHhfAsOp6dW_MSzOo1dbooulIiKTED90ioKBf9Wp-pX1Zuf38IWZvJ5KxQuMj7BzvOzO_3_zQmmzbDOacECcpIb8DMfzWI9kmthoBMwnlH6oWk0zXJoXi5797Su8JUsS4_ENRqenDU_UI8Ke-IPS-p1tae5" },
-  { id: 4, src: "https://lh3.googleusercontent.com/aida-public/AB6AXuBpQB1UjhAO6vKRAmMCZ3S-ZXr4gDQlqg5p_W8s3VQpSmvRI8ZFWb77GoNBv1pQSFrp29yzGKO7ToSmCsWu9eNOaU_yX73rDlmxzzYR-EYGqNvFUE9GU6-pML47z4gssxtjKw_D_hu5YoklvsjsZ5dZrTS2IeRIP-gSHZcX3uPab0dieLB1NT001ypZsLjEHGBoDGCLhP1xeR5D_2qEjeG2fSwr4mRFlZdTvCOPQXRPk_odlghJSqkYkSEVqyTj6SUXh89WxKOTVryA" },
-  { id: 5, src: "https://lh3.googleusercontent.com/aida-public/AB6AXuBd6X2WJj88uA-1RVrxPORBU5AZOzg0nPJE0215heBs15OL-FE5V0Emhxn5a0nfklc9t6clO3mSiIjAFO0I0Mu6Y2NWyuafRtrW3L14crLdzu4cKDxHP18lUsiFqiPeocxG9WI6YO4O4sNEKukHmVSUdMlVnvlI-UWmX3fegWKNND6QcgHxDuYmLtaJ0Wtz_zWoy5sgdMRBUu-O97TbNR-8JnQ8bWqrJpMMyC0G6wyiLUlrmBrDU1-IrnmebQHtx7qpfUFYV-XhueBQ" },
-]);
 
 const toggleDarkMode = () => {
   isDarkMode.value = !isDarkMode.value;

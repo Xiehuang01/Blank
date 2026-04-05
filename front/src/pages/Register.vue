@@ -330,8 +330,12 @@
 import { ref, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import { Eye, EyeOff } from "lucide-vue-next";
+import { ElMessage } from "element-plus";
+import { sendVerifyCode, register as registerApi } from "../api/auth.js";
+import { useUser } from "../store/user";
 
 const router = useRouter();
+const { login } = useUser();
 
 const activeCard = ref(1);
 
@@ -344,7 +348,6 @@ const showConfirmPassword = ref(false);
 const agreeTerms = ref(false);
 const isLoading = ref(false);
 
-// Envelope animation state
 const showEnvelope = ref(false);
 const envelopePhase = ref<'entering' | 'sliding' | 'closing' | 'verifying' | 'done'>('entering');
 const verificationCode = ref('');
@@ -356,62 +359,63 @@ const bringToFront = (cardNum: number) => {
 
 const triggerEnvelopeAnimation = async () => {
   showEnvelope.value = true;
-  envelopePhase.value = 'entering';  // 信封在左侧屏幕外
-
-  // 等 DOM 挂载完成后再触发过渡
+  envelopePhase.value = 'entering';
   await nextTick();
   await new Promise(resolve => setTimeout(resolve, 50));
-  envelopePhase.value = 'sliding';   // 信封滑入中心，明信片从信封弹出
-
-  // 等信封滑入 + 明信片弹出动画完成
+  envelopePhase.value = 'sliding';
   await new Promise(resolve => setTimeout(resolve, 1500));
-  envelopePhase.value = 'closing';   // 明信片收回信封，封口合上
-
-  // 等合口动画完成
+  envelopePhase.value = 'closing';
   await new Promise(resolve => setTimeout(resolve, 900));
-  envelopePhase.value = 'verifying'; // 显示验证码表单
+  envelopePhase.value = 'verifying';
 };
 
 const handleRegister = async () => {
   if (!username.value || !email.value || !password.value || !confirmPassword.value) {
-    alert("请填写所有字段");
+    ElMessage.warning("请填写所有字段");
     return;
   }
-
   if (password.value !== confirmPassword.value) {
-    alert("两次输入的密码不一致");
+    ElMessage.warning("两次输入的密码不一致");
     return;
   }
-
   if (password.value.length < 6) {
-    alert("密码长度至少为 6 位");
+    ElMessage.warning("密码长度至少为 6 位");
     return;
   }
-
   if (!agreeTerms.value) return;
 
-  triggerEnvelopeAnimation();
+  isLoading.value = true;
+  try {
+    await sendVerifyCode(email.value);
+    ElMessage.success('验证码已发送');
+    await triggerEnvelopeAnimation();
+  } catch (error: any) {
+    ElMessage.error(error?.data?.message || error?.message || '验证码发送失败');
+  } finally {
+    isLoading.value = false;
+  }
 };
 
 const verifyAndComplete = async () => {
   if (verificationCode.value.length !== 6) return;
-
   isVerifying.value = true;
 
   try {
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const res = await registerApi({
+      username: username.value.trim(),
+      email: email.value.trim(),
+      password: password.value,
+      verifyCode: verificationCode.value,
+    });
 
-    localStorage.setItem("user", JSON.stringify({
-      username: username.value,
-      email: email.value,
-    }));
-
+    login(res.data?.userInfo || {}, res.data?.token);
     envelopePhase.value = 'done';
     await new Promise(resolve => setTimeout(resolve, 600));
     showEnvelope.value = false;
-    router.push("/");
-  } catch (error) {
-    alert("验证失败，请重试");
+    ElMessage.success(res.message || '注册成功');
+    router.push('/');
+  } catch (error: any) {
+    ElMessage.error(error?.data?.message || error?.message || '验证失败，请重试');
   } finally {
     isVerifying.value = false;
   }

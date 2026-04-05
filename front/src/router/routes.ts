@@ -15,21 +15,24 @@ import PersonalInfo from "../pages/PersonalInfo.vue";
 import AccountManagement from "../pages/AccountManagement.vue";
 import CheckIn from "../pages/CheckIn.vue";
 
+const requiresAuth = { requiresAuth: true };
+
 export const routes: RouteRecordRaw[] = [
   { path: "/login", component: Login },
   { path: "/register", component: Register },
-  { path: "/", component: Home },
-  { path: "/mail", component: Mail },
+  { path: "/", component: Home, meta: { keepAlive: true } },
+  { path: "/mail", component: Mail, meta: { keepAlive: true } },
   { path: "/shop", component: Shop },
-  { path: "/profile", component: Profile },
-  { path: "/my-stamps", component: MyStamps },
-  { path: "/favorites", component: Favorites },
+  { path: "/profile", component: Profile, meta: requiresAuth },
+  { path: "/my-stamps", component: MyStamps, meta: requiresAuth },
+  { path: "/favorites", component: Favorites, meta: requiresAuth },
   { path: "/post/:id", component: PostDetail },
-  { path: "/create", component: Create },
-  { path: "/outbox", component: Outbox },
-  { path: "/settings", component: Settings },
-  { path: "/personal-info", component: PersonalInfo },
-  { path: "/account-management", component: AccountManagement },
-  { path: "/checkin", component: CheckIn },
+  { path: "/create", component: Create, meta: requiresAuth },
+  { path: "/outbox", component: Outbox, meta: requiresAuth },
+  { path: "/settings", component: Settings, meta: requiresAuth },
+  { path: "/personal-info", component: PersonalInfo, meta: requiresAuth },
+  { path: "/account-management", component: AccountManagement, meta: requiresAuth },
+  { path: "/checkin", component: CheckIn, meta: requiresAuth },
 ];
+
 

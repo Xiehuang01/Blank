@@ -1,7 +1,7 @@
 <template>
-  <div class="relative flex flex-col items-center justify-center w-full h-screen bg-paper-bg font-sans select-none overflow-hidden">
+  <div class="relative flex flex-col items-center justify-center w-full h-screen bg-background/100 backdrop-blur-md font-sans select-none overflow-hidden">
     <!-- Container for the whole animation -->
-    <div class="relative w-full h-80 flex flex-col items-center justify-center animate-group-flow">
+    <div class="relative w-full h-40 flex flex-col items-center justify-center animate-group-flow scale-50 origin-center">
       
       <!-- Envelope Group -->
       <div class="relative w-64 h-44 flex items-center justify-center">
@@ -50,11 +50,11 @@
         </div>
 
         <!-- Envelope Back Layer (Interior Color) -->
-        <div class="absolute inset-0 bg-envelope-inner border border-gray-100 rounded-sm shadow-[0_4px_20px_rgba(0,0,0,0.02)] z-0"></div>
+        <div class="absolute inset-0 bg-[#d2c2aa] border border-gray-100 rounded-sm shadow-[0_4px_20px_rgba(0,0,0,0.02)] z-0"></div>
 
         <!-- Envelope Flap (Triangle pointing UP when open, flips DOWN to close) -->
         <div 
-          class="absolute top-0 left-0 w-full h-24 -translate-y-full z-5 animate-flap-sync"
+          class="absolute top-0 left-0 w-full h-24 -translate-y-full z-5 animate-flap-sync origin-bottom"
           :style="{ 
             clipPath: 'polygon(0 100%, 100% 100%, 50% 0)',
             backgroundColor: '#f7e7ce',

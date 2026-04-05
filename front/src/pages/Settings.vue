@@ -23,21 +23,6 @@
             <span :class="['absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform', isDark ? 'translate-x-5' : '']" />
           </button>
         </div>
-        <div class="flex items-center justify-between px-4 py-3.5">
-          <div class="flex items-center gap-3">
-            <Type class="w-4 h-4 text-tertiary" />
-            <span class="text-sm text-primary">字体大小</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <button @click="fontSize = Math.max(12, fontSize - 1)" class="w-7 h-7 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center text-primary hover:bg-black/10 transition-colors">
-              <Minus class="w-3 h-3" />
-            </button>
-            <span class="text-sm text-primary w-6 text-center">{{ fontSize }}</span>
-            <button @click="fontSize = Math.min(20, fontSize + 1)" class="w-7 h-7 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center text-primary hover:bg-black/10 transition-colors">
-              <Plus class="w-3 h-3" />
-            </button>
-          </div>
-        </div>
       </div>
 
       <!-- Notifications -->
@@ -93,10 +78,9 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
-import { ChevronLeft, ChevronRight, Moon, Sun, Type, Minus, Plus } from 'lucide-vue-next'
+import { ChevronLeft, ChevronRight, Moon, Sun } from 'lucide-vue-next'
 
 const isDark = ref(document.documentElement.classList.contains('dark'))
-const fontSize = ref(14)
 const whoCanWrite = ref('所有人')
 const showCollection = ref(true)
 

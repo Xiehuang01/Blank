@@ -16,7 +16,7 @@
       <div v-if="stamps.length === 0" class="flex items-center justify-center min-h-[60vh]">
         <div class="text-center">
           <Package class="w-12 h-12 text-tertiary mx-auto mb-4 opacity-50" />
-          <p class="text-tertiary font-body">还没有购入任何邮票</p>
+          <p class="text-tertiary font-body">暂无可用邮票，去商店补充吧</p>
         </div>
       </div>
       <div v-else class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-6">
@@ -46,15 +46,19 @@
               {{ stamp.desc }}
             </p>
             
-            <div class="flex items-baseline gap-1 mb-3">
+            <div class="flex items-baseline gap-1 mb-1">
               <span class="font-bold text-secondary text-sm sm:text-base">{{ stamp.price }}</span>
               <span class="text-[10px] text-tertiary">邮分</span>
             </div>
+            <div class="flex items-center justify-between text-[11px] text-tertiary mb-3">
+              <span>剩余数量</span>
+              <span class="font-bold text-primary">{{ stamp.quantity ?? 0 }} 张</span>
+            </div>
             
             <button
-              class="w-full py-1.5 px-2 text-xs sm:text-sm font-bold rounded-md transition-all duration-300 shadow-sm active:scale-95 text-center bg-black/5 dark:bg-white/5 text-tertiary cursor-default"
+              class="w-full py-1.5 px-2 text-xs sm:text-sm font-bold rounded-md transition-all duration-300 shadow-sm text-center bg-black/5 dark:bg-white/5 text-tertiary cursor-default"
             >
-              已拥有
+              {{ (stamp.quantity ?? 0) > 0 ? `可使用 ${stamp.quantity} 张` : '已无剩余' }}
             </button>
           </div>
         </div>
@@ -78,16 +82,34 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { ChevronLeft, Package } from "lucide-vue-next";
+import { ElMessage } from "element-plus";
+import { assetBaseURL } from "../utils/request.js";
+import { getMyStamps } from "../api/stamp.js";
 
 const selectedImage = ref<string | null>(null);
 const stamps = ref<any[]>([]);
 
+const resolveAssetUrl = (url?: string | null) => {
+  if (!url) return "";
+  if (/^(https?:)?\/\//.test(url) || url.startsWith("data:")) return url;
+  return `${assetBaseURL}${url.startsWith("/") ? url : `/${url}`}`;
+};
+
+const loadStamps = async () => {
+  try {
+    const res = await getMyStamps();
+    stamps.value = (res.data || [])
+      .filter((s: any) => Number(s.quantity || 0) > 0)
+      .map((s: any) => ({
+        ...s,
+        image: resolveAssetUrl(s.image),
+      }));
+  } catch (err: any) {
+    ElMessage.error(err?.data?.message || err?.message || "加载我的邮票失败");
+  }
+};
+
 onMounted(() => {
   loadStamps();
 });
-
-const loadStamps = () => {
-  const stored = localStorage.getItem('favorites');
-  stamps.value = stored ? JSON.parse(stored) : [];
-};
 </script>

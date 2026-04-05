@@ -155,6 +155,7 @@
                 <label class="text-xs font-semibold text-primary">用户名</label>
                 <input
                   v-model="registerForm.username"
+                  @keydown.enter="handleRegister"
                   type="text"
                   placeholder="选择用户名"
                   class="w-full px-2 md:px-3 py-1 md:py-1.5 border border-black/10 dark:border-white/10 rounded text-sm bg-white dark:bg-neutral text-black dark:text-white placeholder:text-tertiary focus:border-secondary focus:outline-none transition-colors"
@@ -166,6 +167,7 @@
                 <label class="text-xs font-semibold text-primary">邮箱</label>
                 <input
                   v-model="registerForm.email"
+                  @keydown.enter="handleRegister"
                   type="email"
                   placeholder="输入邮箱"
                   class="w-full px-2 md:px-3 py-1 md:py-1.5 border border-black/10 dark:border-white/10 rounded text-sm bg-white dark:bg-neutral text-black dark:text-white placeholder:text-tertiary focus:border-secondary focus:outline-none transition-colors"
@@ -178,6 +180,7 @@
                 <div class="relative">
                   <input
                     v-model="registerForm.password"
+                    @keydown.enter="handleRegister"
                     :type="showRegisterPassword ? 'text' : 'password'"
                     placeholder="设置密码"
                     class="w-full px-2 md:px-3 py-1 md:py-1.5 border border-black/10 dark:border-white/10 rounded text-sm bg-white dark:bg-neutral text-black dark:text-white placeholder:text-tertiary focus:border-secondary focus:outline-none transition-colors"
@@ -198,6 +201,7 @@
                 <div class="relative">
                   <input
                     v-model="registerForm.confirmPassword"
+                    @keydown.enter="handleRegister"
                     :type="showRegisterConfirm ? 'text' : 'password'"
                     placeholder="再次输入"
                     class="w-full px-2 md:px-3 py-1 md:py-1.5 border border-black/10 dark:border-white/10 rounded text-sm bg-white dark:bg-neutral text-black dark:text-white placeholder:text-tertiary focus:border-secondary focus:outline-none transition-colors"
@@ -221,9 +225,9 @@
                 />
                 <span class="text-xs leading-tight">
                   我已阅读并同意
-                  <a href="#" class="text-secondary hover:text-secondary/80 transition-colors font-semibold">用户协议</a>
+                  <a href="#" @click.prevent="" class="text-secondary hover:text-secondary/80 transition-colors font-semibold">用户协议</a>
                   和
-                  <a href="#" class="text-secondary hover:text-secondary/80 transition-colors font-semibold">隐私政策</a>
+                  <a href="#" @click.prevent="" class="text-secondary hover:text-secondary/80 transition-colors font-semibold">隐私政策</a>
                 </span>
               </label>
             </div>
@@ -417,11 +421,13 @@
 
 <script setup lang="ts">
 import { ref, nextTick, computed } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { Eye, EyeOff } from "lucide-vue-next";
 import { ElMessage } from "element-plus";
+import { login as loginApi, register as registerApi, sendVerifyCode } from "../api/auth.js";
 import { useUser } from "../store/user";
 
+const route = useRoute();
 const router = useRouter();
 const { login: loginUser } = useUser();
 
@@ -440,9 +446,22 @@ const isVerifying = ref(false);
 const codeDigits = ref<string[]>(['', '', '', '', '', '']);
 const codeInputs = ref<HTMLInputElement[]>([]);
 
+const getRedirectPath = () => (
+  typeof route.query.redirect === "string" ? route.query.redirect : "/"
+);
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  const responseMessage = (error as { response?: { data?: { message?: string } } })
+    ?.response?.data?.message;
+  const defaultMessage = error instanceof Error ? error.message : "";
+  return responseMessage || defaultMessage || fallback;
+};
+
 const onDigitInput = (e: Event, i: number) => {
-  const val = (e.target as HTMLInputElement).value.replace(/\D/g, '').slice(-1);
+  const target = e.target as HTMLInputElement;
+  const val = target.value.replace(/\D/g, '').slice(-1);
   codeDigits.value[i] = val;
+  target.value = val;
   if (val && i < 5) {
     nextTick(() => codeInputs.value[i + 1]?.focus());
   }
@@ -469,11 +488,9 @@ const envelopeWrapperStyle = computed(() => {
   if (envelopePhase.value === 'entering') {
     transform = 'translateX(-120vw) rotate(0deg)';
   } else if (envelopePhase.value === 'sending') {
-    // wind-up: tilt left first
     transform = 'translateX(-30px) rotate(-8deg)';
     transition = 'transform 0.35s cubic-bezier(0.4, 0, 1, 1)';
   } else if (envelopePhase.value === 'done') {
-    // shoot right
     transform = 'translateX(130vw) rotate(12deg)';
     transition = 'transform 0.55s cubic-bezier(0.4, 0, 0.6, 1)';
   }
@@ -487,54 +504,55 @@ const envelopeWrapperStyle = computed(() => {
 });
 
 const triggerEnvelopeAnimation = async () => {
-  // Shrink postcards out
   postcardsHidden.value = true;
 
-  await new Promise(resolve => setTimeout(resolve, 400));
+  await new Promise((resolve) => setTimeout(resolve, 400));
 
   showEnvelope.value = true;
   envelopePhase.value = 'entering';
 
   await nextTick();
-  await new Promise(resolve => setTimeout(resolve, 60));
-  envelopePhase.value = 'sliding';   // 信封滑入，明信片弹出
+  await new Promise((resolve) => setTimeout(resolve, 60));
+  envelopePhase.value = 'sliding';
 
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  envelopePhase.value = 'closing';   // 明信片开始收回信封（翻盖仍开着）
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+  envelopePhase.value = 'closing';
 
-  await new Promise(resolve => setTimeout(resolve, 600));  // 等明信片完全滑入
-  envelopePhase.value = 'sealing';   // 翻盖合上
+  await new Promise((resolve) => setTimeout(resolve, 600));
+  envelopePhase.value = 'sealing';
 
-  await new Promise(resolve => setTimeout(resolve, 850));  // 等翻盖动画完成
-  envelopePhase.value = 'verifying'; // 显示验证码
+  await new Promise((resolve) => setTimeout(resolve, 850));
+  envelopePhase.value = 'verifying';
 };
 
 const verifyAndComplete = async () => {
-  if (codeDigits.value.join('').length !== 6) return;
+  const verifyCode = codeDigits.value.join('');
+  if (verifyCode.length !== 6) {
+    return;
+  }
+
   isVerifying.value = true;
   try {
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // 使用user store保存用户信息
-    loginUser({
-      uid: Math.floor(Math.random() * 9000000 + 1000000).toString(), // 生成随机UID
+    const result = await registerApi({
       username: registerForm.value.username,
       email: registerForm.value.email,
-      avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBYArdRu7qlNp4cuo06XFR6gjYC0xtUePbpepRVZFPb60NLBx_VR9amuEGGGmcgoSJxZnTSvk-qC-pT40C1BcNky-vgDMQS81oXbUZ1ZhPGx8TyP5kDLnK2UxXs44i4R9b0C6J2F0AegR2bJ6baLYqRUydE5fXGJMLngQf9plW3-BdtpO6Gnq5BWbM5Y8_ZXBxCkBcu_AycBYRNspo0GmyLKNOwz7WDP8qJiBl97glqeE0pFejorxYMHYxFqX9mdXogSMmgx3TMR9IR',
-      vipLevel: 'FREE',
-      coins: 100, // 新用户赠送100邮分
-      rememberMe: false,
+      password: registerForm.value.password,
+      verifyCode,
     });
-    
-    // Wind-up lean left
+
+    loginUser({
+      ...result.data.userInfo,
+      rememberMe: false,
+    }, result.data.token);
+
+    ElMessage.success(result.message || '注册成功');
     envelopePhase.value = 'sending';
-    await new Promise(resolve => setTimeout(resolve, 380));
-    // Shoot right
+    await new Promise((resolve) => setTimeout(resolve, 380));
     envelopePhase.value = 'done';
-    await new Promise(resolve => setTimeout(resolve, 600));
-    router.push('/');
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    router.push(getRedirectPath());
   } catch (error) {
-    ElMessage.error('验证失败，请重试');
+    ElMessage.error(getErrorMessage(error, '验证失败，请重试'));
     isVerifying.value = false;
   }
 };
@@ -567,23 +585,20 @@ const handleLogin = async () => {
   isLoading.value = true;
 
   try {
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // 使用user store保存用户信息
-    loginUser({
-      uid: '1024520', // 模拟用户ID
-      username: '苏木', // 模拟用户名
+    const result = await loginApi({
       email: loginForm.value.email,
-      avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBYArdRu7qlNp4cuo06XFR6gjYC0xtUePbpepRVZFPb60NLBx_VR9amuEGGGmcgoSJxZnTSvk-qC-pT40C1BcNky-vgDMQS81oXbUZ1ZhPGx8TyP5kDLnK2UxXs44i4R9b0C6J2F0AegR2bJ6baLYqRUydE5fXGJMLngQf9plW3-BdtpO6Gnq5BWbM5Y8_ZXBxCkBcu_AycBYRNspo0GmyLKNOwz7WDP8qJiBl97glqeE0pFejorxYMHYxFqX9mdXogSMmgx3TMR9IR',
-      vipLevel: 'VIP',
-      coins: 850,
-      rememberMe: loginForm.value.rememberMe,
+      password: loginForm.value.password,
     });
 
-    ElMessage.success("登录成功！");
-    router.push("/");
+    loginUser({
+      ...result.data.userInfo,
+      rememberMe: loginForm.value.rememberMe,
+    }, result.data.token);
+
+    ElMessage.success(result.message || "登录成功！");
+    router.push(getRedirectPath());
   } catch (error) {
-    ElMessage.error("登录失败，请重试");
+    ElMessage.error(getErrorMessage(error, "登录失败，请重试"));
   } finally {
     isLoading.value = false;
   }
@@ -605,6 +620,17 @@ const handleRegister = async () => {
     return;
   }
 
-  triggerEnvelopeAnimation();
+  isLoading.value = true;
+  try {
+    await sendVerifyCode(registerForm.value.email);
+    codeDigits.value = ['', '', '', '', '', ''];
+    ElMessage.success('验证码已发送，请查收邮箱');
+    await triggerEnvelopeAnimation();
+  } catch (error) {
+    ElMessage.error(getErrorMessage(error, '验证码发送失败，请稍后重试'));
+  } finally {
+    isLoading.value = false;
+  }
 };
 </script>
+

@@ -61,44 +61,44 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { ChevronLeft, Heart } from "lucide-vue-next";
+import { ElMessage } from "element-plus";
+import { assetBaseURL } from "../utils/request.js";
+import { getFavoritePostcards, togglePostcardLike } from "../api/postcard.js";
 
 const favorites = ref<any[]>([]);
 
-// 示例明信片的基础点赞数
-const baseLikesMap: Record<number, number> = {
-  1: 342,
-  2: 128,
-  3: 856,
-  4: 42,
-  5: 215,
-  6: 567,
-  7: 89,
-  8: 1024,
+const resolveAssetUrl = (url?: string | null) => {
+  if (!url) return "";
+  if (/^(https?:)?\/\//.test(url) || url.startsWith("data:")) return url;
+  return `${assetBaseURL}${url.startsWith("/") ? url : `/${url}`}`;
 };
+
+const loadFavorites = async () => {
+  try {
+    const res = await getFavoritePostcards({ page: 1, pageSize: 100 });
+    favorites.value = (res.data?.list || []).map((item: any) => ({
+      ...item,
+      image: resolveAssetUrl(item.image),
+      location: item.createdAt ? new Date(item.createdAt).toLocaleDateString("zh-CN") : "",
+      aspect: item.aspectRatio === "2/3" ? "aspect-[2/3]" : "aspect-[3/2]",
+    }));
+  } catch (err: any) {
+    ElMessage.error(err?.data?.message || err?.message || "加载收藏失败");
+  }
+};
+
+const removeFavorite = async (id: number | string) => {
+  try {
+    await togglePostcardLike(id);
+    favorites.value = favorites.value.filter((p) => String(p.id) !== String(id));
+  } catch (err: any) {
+    ElMessage.error(err?.data?.message || err?.message || "取消收藏失败");
+  }
+};
+
+const getLikeCount = (post: any): number => post.likeCount || 0;
 
 onMounted(() => {
   loadFavorites();
 });
-
-const loadFavorites = () => {
-  const stored = localStorage.getItem('likedPostcards');
-  favorites.value = stored ? JSON.parse(stored) : [];
-};
-
-const removeFavorite = (id: number | string) => {
-  favorites.value = favorites.value.filter(p => String(p.id) !== String(id));
-  localStorage.setItem('likedPostcards', JSON.stringify(favorites.value));
-};
-
-const getLikeCount = (post: any): number => {
-  // 用户明信片（基础点赞为 0）+ 被点赞次数
-  const baseLikes = baseLikesMap[post.id] || 0;
-  // 计算 likedPostcards 中该明信片被点赞的次数
-  const stored = localStorage.getItem('likedPostcards');
-  if (stored) {
-    const liked = JSON.parse(stored);
-    return baseLikes + liked.filter((p: any) => String(p.id) === String(post.id)).length;
-  }
-  return baseLikes;
-};
 </script>

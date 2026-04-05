@@ -41,7 +41,7 @@
             }"
           >
             <div class="relative w-full h-full group">
-              <div class="absolute inset-0 rounded-none bg-white dark:bg-neutral p-3 border border-black/10 dark:border-white/10 shadow-lg overflow-hidden">
+              <div class="absolute inset-0 rounded-none bg-white p-3 border border-black/10 shadow-lg overflow-hidden">
                 <div 
                   class="w-full h-full relative bg-black/5 flex items-center justify-center rounded-sm cursor-move overflow-hidden group/imgarea"
                   @mousedown="startDrag"
@@ -94,7 +94,7 @@
                         class="w-14 h-14 rounded-full bg-primary text-white dark:text-black font-bold shadow-lg hover:scale-110 transition-transform flex items-center justify-center"
                         title="相册"
                       >
-                        <Image class="w-6 h-6" />
+                        <ImageIcon class="w-6 h-6" />
                       </button>
                     </div>
                   </transition>
@@ -152,31 +152,31 @@
               transition: 'transform 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.45s ease, z-index 0s 0.22s',
             }"
           >
-            <div class="relative w-full h-full group" ref="editBackContainerRef" @click="selectedElementIndex = -1; showStickerPicker = false; showStampSelector = false">
+            <div class="relative w-full h-full group overflow-hidden" ref="editBackContainerRef" @click="selectedElementIndex = -1; showStickerPicker = false; showStampSelector = false">
               <div
-                class="absolute inset-0 rounded-none bg-white dark:bg-neutral border border-black/10 dark:border-white/10 shadow-lg overflow-visible"
+                class="absolute inset-0 rounded-none bg-white border border-black/10 shadow-lg overflow-hidden"
               >
                 <!-- Scale wrapper: render at fixed reference size, scale to fit container -->
                 <div class="absolute top-0 left-0 origin-top-left" :style="getEditBackScaleStyle()">
                   <div
-                    class="flex p-5 bg-white dark:bg-neutral overflow-hidden"
+                    class="flex p-5 bg-white overflow-hidden"
                     :style="{ width: backRefWidth + 'px', height: backRefHeight + 'px' }"
                   >
                 <!-- Left Side - Message -->
-                <div class="flex-1 flex flex-col pr-5 border-r border-black/20 dark:border-white/20 relative overflow-hidden">
-                  <h4 class="font-headline text-xl tracking-widest text-black/60 dark:text-white/60 mb-2">POSTCARD</h4>
+                <div class="flex-1 flex flex-col pr-5 border-r border-black/20 relative overflow-hidden">
+                  <h4 class="font-headline text-xl tracking-widest text-black/60 mb-2">POSTCARD</h4>
                   <div class="relative flex-1">
                     <div class="flex flex-col gap-8 h-full pt-6 pb-2">
-                      <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                      <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                      <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                      <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                      <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                      <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                      <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                      <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                      <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                      <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                      <div class="w-full h-[1px] bg-black/10"></div>
+                      <div class="w-full h-[1px] bg-black/10"></div>
+                      <div class="w-full h-[1px] bg-black/10"></div>
+                      <div class="w-full h-[1px] bg-black/10"></div>
+                      <div class="w-full h-[1px] bg-black/10"></div>
+                      <div class="w-full h-[1px] bg-black/10"></div>
+                      <div class="w-full h-[1px] bg-black/10"></div>
+                      <div class="w-full h-[1px] bg-black/10"></div>
+                      <div class="w-full h-[1px] bg-black/10"></div>
+                      <div class="w-full h-[1px] bg-black/10"></div>
                     </div>
                   </div>
                 </div>
@@ -187,11 +187,11 @@
                     <!-- Stamp -->
                     <button
                       @click.stop="toggleStampSelector"
-                      class="w-20 h-24 border-[2px] border-black/30 dark:border-white/30 flex items-center justify-center relative bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer flex-shrink-0"
+                      class="w-20 h-24 border-[2px] border-black/30 flex items-center justify-center relative bg-black/5 hover:bg-black/10 transition-colors cursor-pointer flex-shrink-0"
                       style="border-style: dashed;"
                       title="点击选择邮票"
                     >
-                      <span v-if="!selectedStamp" class="text-xs font-bold text-black/40 dark:text-white/40">邮票</span>
+                      <span v-if="!selectedStamp" class="text-xs font-bold text-black/40">邮票</span>
                     </button>
                     <!-- Stamp Image Container -->
                     <div v-if="selectedStamp" class="absolute -top-3 -right-3 w-32 h-32 flex items-center justify-center cursor-pointer" style="filter: drop-shadow(2px 4px 6px rgba(230, 220, 200, 0.8));" @click.stop="toggleStampSelector">
@@ -204,15 +204,15 @@
                   </div>
                   <div class="flex-1 flex flex-col justify-end gap-4 pb-2">
                     <div class="flex items-end gap-3">
-                      <span class="text-xs text-black/60 dark:text-white/60 font-body">to:</span>
-                      <div class="flex-1 h-[1px] bg-black/20 dark:bg-white/20"></div>
+                      <span class="text-xs text-black/60 font-body">to:</span>
+                      <div class="flex-1 h-[1px] bg-black/20"></div>
                     </div>
-                    <div class="w-full h-[1px] bg-black/20 dark:bg-white/20 mt-3"></div>
+                    <div class="w-full h-[1px] bg-black/20 mt-3"></div>
                     <div class="flex items-end gap-3">
-                      <span class="text-xs text-black/60 dark:text-white/60 font-body">from:</span>
-                      <div class="flex-1 h-[1px] bg-black/20 dark:bg-white/20"></div>
+                      <span class="text-xs text-black/60 font-body">from:</span>
+                      <div class="flex-1 h-[1px] bg-black/20"></div>
                     </div>
-                    <div class="w-full h-[1px] bg-black/20 dark:bg-white/20"></div>
+                    <div class="w-full h-[1px] bg-black/20"></div>
                   </div>
                 </div>
                   </div>
@@ -248,9 +248,9 @@
                   <!-- Text Input - Only show when selected -->
                   <div
                     v-if="element.type === 'text' && selectedElementIndex === index"
-                    :ref="el => { if (el) textEditRefs[index] = el as HTMLElement }"
+                    :ref="el => setTextEditRef(el, index, element.content)"
                     contenteditable="true"
-                    @input="element.content = ($event.target as HTMLElement).innerText"
+                    @input="handleTextInput($event, index)"
                     @click.stop
                     @mousedown.stop
                     @touchstart.stop
@@ -266,7 +266,7 @@
                       lineHeight: '1.4',
                       display: 'inline-block',
                     }"
-                  >{{ element.content }}</div>
+                  ></div>
                   <!-- Text Display - Show when not selected -->
                   <div
                     v-else-if="element.type === 'text'"
@@ -296,21 +296,21 @@
                   <!-- Rotate Handle - Only show when selected -->
                   <div
                     v-if="selectedElementIndex === index"
-                    class="absolute -top-10 left-1/2 -translate-x-1/2 w-6 h-6 bg-white dark:bg-neutral border border-primary dark:border-white rounded-full flex items-center justify-center cursor-crosshair shadow-sm"
+                    class="absolute -top-10 left-1/2 -translate-x-1/2 w-6 h-6 bg-white border border-primary rounded-full flex items-center justify-center cursor-crosshair shadow-sm"
                     @mousedown.stop="startElementRotate($event, index)"
                     @touchstart.stop="startElementRotate($event, index)"
                   >
-                    <RotateCw class="w-3 h-3 text-primary dark:text-white" />
+                    <RotateCw class="w-3 h-3 text-primary" />
                   </div>
 
                   <!-- Scale Handle - Only show when selected -->
                   <div
                     v-if="selectedElementIndex === index"
-                    class="absolute -bottom-3 -right-3 w-6 h-6 bg-white dark:bg-neutral border border-primary dark:border-white rounded-full flex items-center justify-center cursor-se-resize shadow-sm"
+                    class="absolute -bottom-3 -right-3 w-6 h-6 bg-white border border-primary rounded-full flex items-center justify-center cursor-se-resize shadow-sm"
                     @mousedown.stop="startElementResize($event, index)"
                     @touchstart.stop="startElementResize($event, index)"
                   >
-                    <div class="w-2 h-2 bg-primary dark:bg-white rounded-full"></div>
+                    <div class="w-2 h-2 bg-primary rounded-full"></div>
                   </div>
 
                   <!-- Action Buttons (Right Side) - Only show when selected -->
@@ -322,16 +322,16 @@
                   >
                     <!-- Show creator info if available -->
                     <div v-if="element.creatorName" class="absolute -right-2 top-0 -translate-y-full pb-2">
-                      <div class="bg-black/80 dark:bg-white/80 text-white dark:text-black text-[10px] px-2 py-1 rounded whitespace-nowrap whitespace-nowrap shadow-sm">
+                      <div class="bg-black/80 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap shadow-sm">
                         由 {{ element.creatorName }} 添加
-                        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-black/80 dark:border-t-white/80"></div>
+                        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-black/80"></div>
                       </div>
                     </div>
                     <button
                       @click.stop="moveElementUp"
                       @mousedown.stop
                       @touchstart.stop
-                      class="w-8 h-8 bg-white dark:bg-neutral border border-black/10 dark:border-white/10 rounded-full flex items-center justify-center shadow-sm text-tertiary hover:text-primary dark:hover:text-white pointer-events-auto"
+                      class="w-8 h-8 bg-white border border-black/10 rounded-full flex items-center justify-center shadow-sm text-tertiary hover:text-primary pointer-events-auto"
                       title="上移一层"
                     >
                       <ArrowUp class="w-4 h-4" />
@@ -340,7 +340,7 @@
                       @click.stop="moveElementDown"
                       @mousedown.stop
                       @touchstart.stop
-                      class="w-8 h-8 bg-white dark:bg-neutral border border-black/10 dark:border-white/10 rounded-full flex items-center justify-center shadow-sm text-tertiary hover:text-primary dark:hover:text-white pointer-events-auto"
+                      class="w-8 h-8 bg-white border border-black/10 rounded-full flex items-center justify-center shadow-sm text-tertiary hover:text-primary pointer-events-auto"
                       title="下移一层"
                     >
                       <ArrowDown class="w-4 h-4" />
@@ -349,7 +349,7 @@
                       @click.stop="deleteElement"
                       @mousedown.stop
                       @touchstart.stop
-                      class="w-8 h-8 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-full flex items-center justify-center shadow-sm text-red-500 hover:text-red-600 dark:text-red-400 pointer-events-auto"
+                      class="w-8 h-8 bg-red-50 border border-red-200 rounded-full flex items-center justify-center shadow-sm text-red-500 hover:text-red-600 pointer-events-auto"
                       title="删除"
                     >
                       <Trash2 class="w-4 h-4" />
@@ -383,7 +383,7 @@
             <!-- 反面 label -->
             <span
               class="relative z-10 flex-1 text-center text-xs font-bold tracking-wide transition-colors duration-300 py-1"
-              :class="!showFront ? 'text-white' : 'text-black/40 dark:text-white/40'"
+              :class="!showFront ? 'text-white dark:text-neutral' : 'text-black/40 dark:text-white/40'"
             >反面</span>
           </button>
 
@@ -408,7 +408,7 @@
             <!-- 2:3 label -->
             <span
               class="relative z-10 flex-1 text-center text-xs font-bold tracking-wide transition-colors duration-300 py-1"
-              :class="postcardAspectRatio === '2/3' ? 'text-white' : 'text-black/40 dark:text-white/40'"
+              :class="postcardAspectRatio === '2/3' ? 'text-white dark:text-neutral' : 'text-black/40 dark:text-white/40'"
             >2:3</span>
           </button>
         </div>
@@ -500,7 +500,7 @@
                 :key="series.value"
                 @click="selectedStickerSeries = series.value"
                 class="px-3 py-1 rounded-lg text-xs font-semibold transition-colors"
-                :class="selectedStickerSeries === series.value ? 'bg-secondary text-white' : 'bg-black/5 dark:bg-white/5 text-black/50 dark:text-white/50 hover:bg-black/10 dark:hover:bg-white/10'"
+                :class="selectedStickerSeries === series.value ? 'bg-secondary text-white dark:text-neutral' : 'bg-black/5 dark:bg-white/5 text-black/50 dark:text-white/50 hover:bg-black/10 dark:hover:bg-white/10'"
               >{{ series.label }}</button>
                     </div>
             <!-- Grid: 3 cols, max 3 rows (9 items visible), rest scrollable -->
@@ -521,7 +521,105 @@
 
           <!-- AI Agent Panel -->
           <div v-if="selectedElementIndex !== -1 && interactiveElements[selectedElementIndex]?.type === 'text' && showAiAgent" class="space-y-3 p-4 bg-white dark:bg-neutral rounded-2xl border-2 border-secondary">
+            <!-- Panel Header -->
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-bold text-secondary tracking-wide flex items-center gap-2">
+                <Sparkles class="w-4 h-4" />
+                AI 智能助手
+                <span class="text-xs font-normal text-tertiary">（润色/自定义 5 邮分，图片分析 10 邮分）</span>
+              </h3>
+              <button @click="showAiAgent = false" class="w-6 h-6 rounded-full flex items-center justify-center text-black/30 dark:text-white/30 hover:text-black dark:hover:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-sm">✕</button>
+            </div>
+
+            <!-- AI Functions -->
+            <div class="space-y-2">
+              <!-- 一键润色 -->
+              <button
+                @click="handlePolishText"
+                :disabled="aiLoading"
+                class="w-full flex items-center gap-3 px-4 py-3 bg-primary/5 hover:bg-primary/10 rounded-xl transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Wand2 class="w-5 h-5 text-primary" />
                 </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary">一键润色文字</div>
+                  <div class="text-xs text-tertiary truncate">智能优化当前文本，让文字更优美（消耗 5 邮分）</div>
+                </div>
+                <div v-if="aiLoading" class="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                <Sparkles v-else class="w-4 h-4 text-secondary" />
+              </button>
+
+              <!-- 分析图片生成文案 -->
+              <button
+                @click="handleGenerateFromImage"
+                :disabled="aiLoading || !selectedImage"
+                class="w-full flex items-center gap-3 px-4 py-3 bg-primary/5 hover:bg-primary/10 rounded-xl transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div class="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center shrink-0">
+                  <ImageIcon class="w-5 h-5 text-secondary" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary">分析图片生成文案（10 邮分）</div>
+                  <div class="text-xs text-tertiary truncate">
+                    {{ selectedImage ? '根据明信片正面图片生成诗意文案（消耗 10 邮分）' : '请先上传明信片正面图片' }}
+                  </div>
+                </div>
+                <div v-if="aiLoading" class="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                <Sparkles v-else class="w-4 h-4 text-secondary" />
+              </button>
+
+              <!-- 自定义要求 -->
+              <div class="space-y-2">
+                <button
+                  @click="showAiCustomInput = !showAiCustomInput"
+                  :disabled="aiLoading"
+                  class="w-full flex items-center gap-3 px-4 py-3 bg-primary/5 hover:bg-primary/10 rounded-xl transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <div class="w-10 h-10 rounded-lg bg-tertiary/10 flex items-center justify-center shrink-0">
+                    <MessageSquare class="w-5 h-5 text-tertiary" />
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-sm font-semibold text-primary">自定义要求</div>
+                    <div class="text-xs text-tertiary truncate">输入具体需求，AI 按需求修改文字（消耗 5 邮分）</div>
+                  </div>
+                  <ChevronRight class="w-4 h-4 text-tertiary transition-transform" :class="showAiCustomInput ? 'rotate-90' : ''" />
+                </button>
+
+                <!-- 自定义输入框 -->
+                <Transition
+                  enter-active-class="transition-all duration-200 ease-out"
+                  enter-from-class="opacity-0 -translate-y-2"
+                  enter-to-class="opacity-100 translate-y-0"
+                  leave-active-class="transition-all duration-150 ease-in"
+                  leave-from-class="opacity-100 translate-y-0"
+                  leave-to-class="opacity-0 -translate-y-2"
+                >
+                  <div v-if="showAiCustomInput" class="space-y-2 px-2">
+                    <textarea
+                      v-model="aiCustomPrompt"
+                      placeholder="例如：改成更浪漫的语气 / 翻译成英文 / 写得简洁一些..."
+                      class="w-full px-3 py-2 text-sm border border-black/10 dark:border-white/10 rounded-lg bg-black/5 dark:bg-white/5 text-primary resize-none focus:outline-none focus:ring-2 focus:ring-secondary/50"
+                      rows="2"
+                    ></textarea>
+                    <button
+                      @click="handleCustomModify"
+                      :disabled="aiLoading || !aiCustomPrompt.trim()"
+                      class="w-full py-2 bg-secondary text-white dark:text-neutral text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      <div v-if="aiLoading" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span>{{ aiLoading ? '处理中...' : '提交需求（5 邮分）' }}</span>
+                    </button>
+                  </div>
+                </Transition>
+              </div>
+            </div>
+
+            <!-- Tips -->
+            <div class="text-xs text-tertiary bg-black/5 dark:bg-white/5 rounded-lg px-3 py-2">
+              💡 提示：AI 会直接修改当前选中的文字内容，建议先保存好原文备份。
+            </div>
+          </div>
 
           <!-- Combined Style & Picker Panel -->
           <div v-if="selectedElementIndex !== -1" class="rounded-2xl border border-black/10 dark:border-white/10 shadow-sm">
@@ -630,7 +728,7 @@
                       <p class="text-xs font-bold text-secondary mb-2">中文字体</p>
                       <button v-for="font in chineseFonts" :key="font.value"
                         @click="interactiveElements[selectedElementIndex].fontFamily = font.value; showFontDropdown = false"
-                        :class="interactiveElements[selectedElementIndex].fontFamily === font.value ? 'bg-secondary text-white' : 'hover:bg-secondary/10'"
+                        :class="interactiveElements[selectedElementIndex].fontFamily === font.value ? 'bg-secondary text-white dark:text-neutral' : 'text-black dark:text-white hover:bg-secondary/10'"
                         class="w-full text-left px-3 py-1.5 rounded-lg text-xs transition-colors mb-0.5"
                         :style="{ fontFamily: font.value }"
                       >{{ font.label }}</button>
@@ -639,7 +737,7 @@
                       <p class="text-xs font-bold text-secondary mb-2">英文字体</p>
                       <button v-for="font in englishFonts" :key="font.value"
                         @click="interactiveElements[selectedElementIndex].fontFamily = font.value; showFontDropdown = false"
-                        :class="interactiveElements[selectedElementIndex].fontFamily === font.value ? 'bg-secondary text-white' : 'hover:bg-secondary/10'"
+                        :class="interactiveElements[selectedElementIndex].fontFamily === font.value ? 'bg-secondary text-white dark:text-neutral' : 'text-black dark:text-white hover:bg-secondary/10'"
                         class="w-full text-left px-3 py-1.5 rounded-lg text-xs transition-colors mb-0.5"
                         :style="{ fontFamily: font.value }"
                       >{{ font.label }}</button>
@@ -683,8 +781,8 @@
                       :value="interactiveElements[selectedElementIndex].color || '#000000'"
                         @input="interactiveElements[selectedElementIndex].color = ($event.target as HTMLInputElement).value"
                         class="absolute opacity-0 w-0 h-0"
-                        @focus="showCustomColorPicker = true"
-                        @blur="showCustomColorPicker = false"
+                        @focus="showColorPicker = true"
+                        @blur="showColorPicker = false"
                         ref="colorPickerInput"
                       />
                       <span class="text-base leading-none select-none" @click="($refs.colorPickerInput as HTMLInputElement)?.click()">+</span>
@@ -714,7 +812,7 @@
                   :key="series.value"
                   @click="selectedStickerSeries = series.value"
                   class="px-3 py-1 rounded-lg text-xs font-semibold transition-colors"
-                  :class="selectedStickerSeries === series.value ? 'bg-secondary text-white' : 'bg-black/5 dark:bg-white/5 text-black/50 dark:text-white/50 hover:bg-black/10 dark:hover:bg-white/10'"
+                  :class="selectedStickerSeries === series.value ? 'bg-secondary text-white dark:text-neutral' : 'bg-black/5 dark:bg-white/5 text-black/50 dark:text-white/50 hover:bg-black/10 dark:hover:bg-white/10'"
                 >{{ series.label }}</button>
               </div>
               <div class="grid grid-cols-3 gap-2 overflow-y-auto" style="max-height: 210px;">
@@ -742,24 +840,29 @@
               <button @click="showStampSelector = false" class="w-6 h-6 rounded-full flex items-center justify-center text-black/30 dark:text-white/30 hover:text-black dark:hover:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-sm">✕</button>
             </div>
             <div class="p-3 bg-white dark:bg-neutral">
-              <p v-if="myStamps.length === 0" class="text-xs text-black/40 dark:text-white/40 text-center py-8">还没有购入邮票，请先去商店购买</p>
-              <div v-else class="grid grid-cols-3 gap-2 max-h-72 overflow-y-auto">
-              <button
-                v-for="stamp in myStamps"
-                :key="stamp.id"
-                @click="selectStamp(stamp)"
-                class="group relative rounded-xl border-2 transition-all duration-200 flex items-center justify-center bg-black/5 dark:bg-white/5 aspect-square"
-                :class="selectedStamp?.id === stamp.id ? 'border-secondary shadow-md' : 'border-transparent hover:border-secondary/50'"
-              >
-                <img :src="stamp.image" :alt="stamp.title" class="w-full h-full object-contain p-1.5 group-hover:scale-105 transition-transform duration-200" />
-                <div class="absolute bottom-0 left-0 right-0 px-1 py-1">
-                  <p class="text-xs font-semibold truncate text-black/70 dark:text-white/70 text-center bg-white/50 dark:bg-black/50 backdrop-blur-sm rounded">{{ stamp.title }}</p>
+              <p v-if="myStamps.length === 0" class="text-xs text-black/40 dark:text-white/40 text-center py-8">暂无可用邮票，请先去商店补充</p>
+              <template v-else>
+                <div class="grid grid-cols-3 gap-2 max-h-72 overflow-y-auto">
+                  <button
+                    v-for="stamp in myStamps"
+                    :key="stamp.id"
+                    @click="selectStamp(stamp)"
+                    class="group relative rounded-xl border-2 transition-all duration-200 flex items-center justify-center bg-black/5 dark:bg-white/5 aspect-square"
+                    :class="selectedStamp?.id === stamp.id ? 'border-secondary shadow-md' : 'border-transparent hover:border-secondary/50'"
+                  >
+                    <img :src="stamp.image" :alt="stamp.title" class="w-full h-full object-contain p-1.5 group-hover:scale-105 transition-transform duration-200" />
+                    <div class="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-white/80 dark:bg-black/60 text-primary backdrop-blur-sm">
+                      剩余 {{ stamp.quantity ?? 0 }}
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 px-1 py-1">
+                      <p class="text-xs font-semibold truncate text-black/70 dark:text-white/70 text-center bg-white/50 dark:bg-black/50 backdrop-blur-sm rounded">{{ stamp.title }}</p>
+                    </div>
+                    <div v-if="selectedStamp?.id === stamp.id" class="absolute top-1.5 right-1.5 w-5 h-5 bg-secondary rounded-full flex items-center justify-center shadow">
+                      <Check class="w-3 h-3 text-white" />
+                    </div>
+                  </button>
                 </div>
-                <div v-if="selectedStamp?.id === stamp.id" class="absolute top-1.5 right-1.5 w-5 h-5 bg-secondary rounded-full flex items-center justify-center shadow">
-                  <Check class="w-3 h-3 text-white" />
-                </div>
-              </button>
-            </div>
+              </template>
             </div>
           </div>
 
@@ -793,6 +896,31 @@
                 >
                   <Users class="w-5 h-5" />
                 </button>
+              </div>
+
+              <div v-if="showFriendSelector" class="rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 p-2 space-y-2">
+                <input
+                  v-model.trim="friendSearchKeyword"
+                  type="text"
+                  placeholder="搜索好友昵称/UID"
+                  class="w-full px-3 py-2 text-sm border border-black/10 dark:border-white/10 rounded-lg bg-white/80 dark:bg-neutral/70 text-black dark:text-white placeholder-black/40 dark:placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-secondary"
+                />
+
+                <div v-if="filteredFriendOptions.length > 0" class="max-h-44 overflow-y-auto space-y-1">
+                  <button
+                    v-for="friend in filteredFriendOptions"
+                    :key="friend.id"
+                    @click="selectFriendRecipient(friend)"
+                    class="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-left"
+                  >
+                    <img :src="friend.avatar" :alt="friend.username" class="w-7 h-7 rounded-full object-cover" />
+                    <div class="min-w-0">
+                      <p class="text-xs font-semibold text-primary dark:text-white truncate">{{ friend.username }}</p>
+                      <p class="text-[11px] text-black/50 dark:text-white/50 truncate">UID: {{ friend.uid }}</p>
+                    </div>
+                  </button>
+                </div>
+                <p v-else class="text-xs text-black/45 dark:text-white/45 text-center py-2">没有匹配的好友</p>
               </div>
             </div>
 
@@ -906,7 +1034,7 @@
               <!-- Back (text side) -->
               <div
                 :class="[
-                  'absolute inset-0 bg-white dark:bg-neutral border border-black/10 dark:border-white/10 transition-all duration-500 shadow-inner overflow-hidden',
+                  'absolute inset-0 bg-white border border-black/10 transition-all duration-500 shadow-inner overflow-hidden',
                   publishFlipped ? 'translate-x-3 translate-y-3 rotate-1 shadow-md z-0' : '-translate-x-3 -translate-y-3 -rotate-1 shadow-xl z-10'
                 ]"
                 ref="publishBackRef"
@@ -917,24 +1045,24 @@
                   :style="getPublishBackScaleStyle()"
                 >
                   <div
-                    class="flex p-5 bg-white dark:bg-neutral"
+                    class="flex p-5 bg-white"
                     :style="{ width: publishBackRefWidth + 'px', height: publishBackRefHeight + 'px' }"
                   >
                     <!-- Left Side -->
-                    <div class="flex-1 flex flex-col pr-5 border-r border-black/20 dark:border-white/20 overflow-hidden relative">
-                      <h4 class="font-headline text-xl tracking-widest text-black/60 dark:text-white/60 mb-2">POSTCARD</h4>
+                    <div class="flex-1 flex flex-col pr-5 border-r border-black/20 overflow-hidden relative">
+                      <h4 class="font-headline text-xl tracking-widest text-black/60 mb-2">POSTCARD</h4>
                       <div class="relative flex-1">
                         <div class="flex flex-col gap-8 h-full pt-6 pb-2">
-                          <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                          <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                          <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                          <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                          <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                          <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                          <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                          <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                          <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
-                          <div class="w-full h-[1px] bg-black/10 dark:bg-white/10"></div>
+                          <div class="w-full h-[1px] bg-black/10"></div>
+                          <div class="w-full h-[1px] bg-black/10"></div>
+                          <div class="w-full h-[1px] bg-black/10"></div>
+                          <div class="w-full h-[1px] bg-black/10"></div>
+                          <div class="w-full h-[1px] bg-black/10"></div>
+                          <div class="w-full h-[1px] bg-black/10"></div>
+                          <div class="w-full h-[1px] bg-black/10"></div>
+                          <div class="w-full h-[1px] bg-black/10"></div>
+                          <div class="w-full h-[1px] bg-black/10"></div>
+                          <div class="w-full h-[1px] bg-black/10"></div>
                         </div>
                       </div>
                     </div>
@@ -944,7 +1072,7 @@
                         <div v-if="selectedStamp" class="absolute -top-4 -right-4 w-32 h-32 flex items-center justify-center" style="filter: drop-shadow(2px 4px 6px rgba(230, 220, 200, 0.8));">
                           <img :src="selectedStamp.image" class="w-full h-full object-cover" />
                         </div>
-                        <div v-else class="w-20 h-24 border-[2px] border-dashed border-black/30 dark:border-white/30 flex items-center justify-center bg-black/5">
+                        <div v-else class="w-20 h-24 border-[2px] border-dashed border-black/30 flex items-center justify-center bg-black/5">
                           <span class="text-xs font-bold text-black/40">邮票</span>
                         </div>
                       </div>
@@ -978,7 +1106,7 @@
               <!-- Front (image side) -->
               <div
                 :class="[
-                  'absolute inset-0 bg-white dark:bg-neutral p-2 transition-all duration-500',
+                  'absolute inset-0 bg-white p-2 transition-all duration-500',
                   publishFlipped ? '-translate-x-3 -translate-y-3 -rotate-1 shadow-xl z-10' : 'translate-x-3 translate-y-3 rotate-1 shadow-md z-0'
                 ]"
               >
@@ -1000,8 +1128,9 @@
             >再改改</button>
             <button
               @click="confirmPublish"
-              class="flex-1 py-3 rounded-xl bg-primary dark:bg-secondary text-white dark:text-black text-sm font-bold hover:opacity-90 transition-opacity"
-            >确认发布</button>
+              :disabled="isPublishing"
+              class="flex-1 py-3 rounded-xl bg-primary dark:bg-secondary text-white dark:text-black text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
+            >{{ isPublishing ? '发布中...' : '确认发布' }}</button>
           </div>
         </div>
       </div>
@@ -1030,7 +1159,14 @@
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
-import { ChevronLeft, Camera, Image, Check, Type, Smile, Bold, Italic, Palette, Trash2, ArrowUp, ArrowDown, RotateCw, Sparkles, Underline, Strikethrough, AlignLeft, AlignCenter, AlignRight, Users, HelpCircle } from "lucide-vue-next";
+import { ChevronLeft, Camera, Image as ImageIcon, Check, Type, Smile, Bold, Italic, Palette, Trash2, ArrowUp, ArrowDown, RotateCw, Sparkles, Underline, Strikethrough, AlignLeft, AlignCenter, AlignRight, Users, HelpCircle, Wand2, MessageSquare, ChevronRight } from "lucide-vue-next";
+import { assetBaseURL } from "../utils/request.js";
+import { getMyStamps } from "../api/stamp.js";
+import { createPostcard, uploadPostcardImage } from "../api/postcard.js";
+import { getFriends } from "../api/friend.js";
+import { polishText, generateFromImage, customModify } from "../api/ai.js";
+import { useUser } from "../store/user";
+
 
 const showUploadOptions = ref(false);
 const postcardCanvasRef = ref<HTMLElement | null>(null);
@@ -1040,8 +1176,24 @@ const postcardTitle = ref('');
 const recipientInput = ref('');
 const isPublicToSquare = ref(false);
 const showFriendSelector = ref(false);
+const friendSearchKeyword = ref('');
+const friendOptions = ref<any[]>([]);
 const postcardType = ref('normal'); // 'normal' | 'drifting'
 const showDriftHelpDialog = ref(false);
+
+const filteredFriendOptions = computed(() => {
+  const keyword = friendSearchKeyword.value.trim().toLowerCase();
+  if (!keyword) return friendOptions.value;
+
+  return friendOptions.value.filter((friend) => {
+    const content = [friend.username, friend.uid]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+
+    return content.includes(keyword);
+  });
+});
 
 const containerSize = ref({ width: 0, height: 0 });
 const publishContainerSize = ref({ width: 0, height: 0 });
@@ -1050,6 +1202,7 @@ let publishResizeObserver: ResizeObserver | null = null;
 
   onMounted(() => {
   loadMyStamps();
+  loadFriends();
 
   // ResizeObserver for edit back container
   if (editBackContainerRef.value) {
@@ -1150,18 +1303,26 @@ const showStampSelector = ref(false);
 const stampSelectorRef = ref<HTMLElement | null>(null);
 const showStickerPicker = ref(false);
 const showAiAgent = ref(false);
+const aiLoading = ref(false);
+const aiCustomPrompt = ref('');
+const showAiCustomInput = ref(false);
 const showResetDialog = ref(false);
 const showPublishDialog = ref(false);
+const isPublishing = ref(false);
 const publishFlipped = ref(false);
 const router = useRouter();
+const { userInfo } = useUser();
 const showColorPicker = ref(false);
+
 const showFontDropdown = ref(false);
 const toolbarTooltip = ref<string | null>(null);
 const showFront = ref(true); // true=正面, false=反面
 const postcardAspectRatio = ref('3/2'); // 明信片比例
 const textEditRefs = ref<Record<number, HTMLElement>>({});
 const selectedImage = ref<string | null>(null);
+const selectedImageFile = ref<File | null>(null);
 const cameraInput = ref<HTMLInputElement>();
+
 const galleryInput = ref<HTMLInputElement>();
 const imageOffset = ref({ x: 0, y: 0 });
 const imageScale = ref(1);
@@ -1183,104 +1344,114 @@ const stickerSeries = [
 ];
 const stickerSeriesOptions: Record<string, string[]> = {
   arrow: [
-    '/stickers/arrow/BgSub_1.png',
-    '/stickers/arrow/BgSub_2.png',
-    '/stickers/arrow/BgSub_3.png',
-    '/stickers/arrow/BgSub_4.png',
-    '/stickers/arrow/BgSub_5.png',
-    '/stickers/arrow/BgSub_6 (1).png',
-    '/stickers/arrow/BgSub_6 (2).png',
-    '/stickers/arrow/BgSub_6 (3).png',
-    '/stickers/arrow/BgSub_6 (4).png',
-    '/stickers/arrow/BgSub_6 (5).png',
-    '/stickers/arrow/BgSub_6 (6).png',
-    '/stickers/arrow/BgSub_6 (7).png',
-    '/stickers/arrow/BgSub_6 (8).png',
-    '/stickers/arrow/BgSub_6 (9).png',
-    '/stickers/arrow/BgSub_6 (10).png',
-    '/stickers/arrow/BgSub_6 (11).png',
-    '/stickers/arrow/BgSub_6 (12).png',
-    '/stickers/arrow/BgSub_6 (13).png',
-    '/stickers/arrow/BgSub_6 (14).png',
-    '/stickers/arrow/BgSub_6 (15).png',
+    '/stickers/arrow/1.png',
+    '/stickers/arrow/2.png',
+    '/stickers/arrow/3.png',
+    '/stickers/arrow/4.png',
+    '/stickers/arrow/5.png',
+    '/stickers/arrow/6.png',
+    '/stickers/arrow/7.png',
+    '/stickers/arrow/8.png',
+    '/stickers/arrow/9.png',
+    '/stickers/arrow/10.png',
+    '/stickers/arrow/11.png',
+    '/stickers/arrow/12.png',
+    '/stickers/arrow/13.png',
+    '/stickers/arrow/14.png',
+    '/stickers/arrow/15.png',
+    '/stickers/arrow/16.png',
+    '/stickers/arrow/17.png',
+    '/stickers/arrow/18.png',
+    '/stickers/arrow/19.png',
+    '/stickers/arrow/20.png',
+    '/stickers/arrow/21.png',
+    '/stickers/arrow/22.png',
+    '/stickers/arrow/23.png',
+    '/stickers/arrow/24.png',
+    '/stickers/arrow/25.png',
+    '/stickers/arrow/26.png',
+    '/stickers/arrow/27.png',
+    '/stickers/arrow/28.png',
+    '/stickers/arrow/29.png',
+    '/stickers/arrow/30.png',
   ],
   animal: [
-    new URL('../../../res/sticker/animal/企鹅.png', import.meta.url).href,
-    new URL('../../../res/sticker/animal/刺猬.png', import.meta.url).href,
-    new URL('../../../res/sticker/animal/小兔.png', import.meta.url).href,
-    new URL('../../../res/sticker/animal/小熊.png', import.meta.url).href,
-    new URL('../../../res/sticker/animal/小牛.png', import.meta.url).href,
-    new URL('../../../res/sticker/animal/小狗.png', import.meta.url).href,
-    new URL('../../../res/sticker/animal/小猪.png', import.meta.url).href,
-    new URL('../../../res/sticker/animal/小猫.png', import.meta.url).href,
-    new URL('../../../res/sticker/animal/小猴.png', import.meta.url).href,
-    new URL('../../../res/sticker/animal/小羊.png', import.meta.url).href,
-    new URL('../../../res/sticker/animal/小虎.png', import.meta.url).href,
-    new URL('../../../res/sticker/animal/小蛇.png', import.meta.url).href,
-    new URL('../../../res/sticker/animal/小马.png', import.meta.url).href,
-    new URL('../../../res/sticker/animal/小鸡.png', import.meta.url).href,
-    new URL('../../../res/sticker/animal/小鹿.png', import.meta.url).href,
-    new URL('../../../res/sticker/animal/小鼠.png', import.meta.url).href,
-    new URL('../../../res/sticker/animal/小龙.png', import.meta.url).href,
-    new URL('../../../res/sticker/animal/松鼠.png', import.meta.url).href,
-    new URL('../../../res/sticker/animal/树懒.png', import.meta.url).href,
-    new URL('../../../res/sticker/animal/狐狸.png', import.meta.url).href,
-    new URL('../../../res/sticker/animal/独角兽.png', import.meta.url).href,
-    new URL('../../../res/sticker/animal/考拉.png', import.meta.url).href,
-    new URL('../../../res/sticker/animal/鹦鹉.png', import.meta.url).href,
-    new URL('../../../res/sticker/animal/小象.png', import.meta.url).href,
+    '/stickers/animal/企鹅.png',
+    '/stickers/animal/刺猬.png',
+    '/stickers/animal/小兔.png',
+    '/stickers/animal/小熊.png',
+    '/stickers/animal/小牛.png',
+    '/stickers/animal/小狗.png',
+    '/stickers/animal/小猪.png',
+    '/stickers/animal/小猫.png',
+    '/stickers/animal/小猴.png',
+    '/stickers/animal/小羊.png',
+    '/stickers/animal/小虎.png',
+    '/stickers/animal/小蛇.png',
+    '/stickers/animal/小马.png',
+    '/stickers/animal/小鸡.png',
+    '/stickers/animal/小鹿.png',
+    '/stickers/animal/小鼠.png',
+    '/stickers/animal/小龙.png',
+    '/stickers/animal/松鼠.png',
+    '/stickers/animal/树懒.png',
+    '/stickers/animal/狐狸.png',
+    '/stickers/animal/独角兽.png',
+    '/stickers/animal/考拉.png',
+    '/stickers/animal/鹦鹉.png',
+    '/stickers/animal/小象.png',
   ],
   dog_silhouette: [
-    new URL('../../../res/sticker/dog_silhouette/1.png', import.meta.url).href,
-    new URL('../../../res/sticker/dog_silhouette/2.png', import.meta.url).href,
-    new URL('../../../res/sticker/dog_silhouette/3.png', import.meta.url).href,
-    new URL('../../../res/sticker/dog_silhouette/4.png', import.meta.url).href,
-    new URL('../../../res/sticker/dog_silhouette/5.png', import.meta.url).href,
-    new URL('../../../res/sticker/dog_silhouette/6.png', import.meta.url).href,
-    new URL('../../../res/sticker/dog_silhouette/7.png', import.meta.url).href,
-    new URL('../../../res/sticker/dog_silhouette/8.png', import.meta.url).href,
-    new URL('../../../res/sticker/dog_silhouette/9.png', import.meta.url).href,
+    '/stickers/dog_silhouette/1.png',
+    '/stickers/dog_silhouette/2.png',
+    '/stickers/dog_silhouette/3.png',
+    '/stickers/dog_silhouette/4.png',
+    '/stickers/dog_silhouette/5.png',
+    '/stickers/dog_silhouette/6.png',
+    '/stickers/dog_silhouette/7.png',
+    '/stickers/dog_silhouette/8.png',
+    '/stickers/dog_silhouette/9.png',
   ],
   graffiti: [
-    new URL('../../../res/sticker/graffiti/涂鸦1.png', import.meta.url).href,
-    new URL('../../../res/sticker/graffiti/涂鸦2.png', import.meta.url).href,
-    new URL('../../../res/sticker/graffiti/涂鸦3.png', import.meta.url).href,
-    new URL('../../../res/sticker/graffiti/涂鸦4.png', import.meta.url).href,
-    new URL('../../../res/sticker/graffiti/涂鸦5.png', import.meta.url).href,
-    new URL('../../../res/sticker/graffiti/涂鸦6.png', import.meta.url).href,
-    new URL('../../../res/sticker/graffiti/涂鸦7.png', import.meta.url).href,
-    new URL('../../../res/sticker/graffiti/涂鸦8.png', import.meta.url).href,
-    new URL('../../../res/sticker/graffiti/涂鸦9.png', import.meta.url).href,
-    new URL('../../../res/sticker/graffiti/涂鸦10.png', import.meta.url).href,
-    new URL('../../../res/sticker/graffiti/涂鸦11.png', import.meta.url).href,
-    new URL('../../../res/sticker/graffiti/涂鸦12.png', import.meta.url).href,
-    new URL('../../../res/sticker/graffiti/涂鸦13.png', import.meta.url).href,
+    '/stickers/graffiti/涂鸦1.png',
+    '/stickers/graffiti/涂鸦2.png',
+    '/stickers/graffiti/涂鸦3.png',
+    '/stickers/graffiti/涂鸦4.png',
+    '/stickers/graffiti/涂鸦5.png',
+    '/stickers/graffiti/涂鸦6.png',
+    '/stickers/graffiti/涂鸦7.png',
+    '/stickers/graffiti/涂鸦8.png',
+    '/stickers/graffiti/涂鸦9.png',
+    '/stickers/graffiti/涂鸦10.png',
+    '/stickers/graffiti/涂鸦11.png',
+    '/stickers/graffiti/涂鸦12.png',
+    '/stickers/graffiti/涂鸦13.png',
   ],
   expression: [
-    new URL('../../../res/sticker/expression/1.png', import.meta.url).href,
-    new URL('../../../res/sticker/expression/2.png', import.meta.url).href,
-    new URL('../../../res/sticker/expression/3.png', import.meta.url).href,
-    new URL('../../../res/sticker/expression/4.png', import.meta.url).href,
-    new URL('../../../res/sticker/expression/5.png', import.meta.url).href,
-    new URL('../../../res/sticker/expression/6.png', import.meta.url).href,
-    new URL('../../../res/sticker/expression/7.png', import.meta.url).href,
-    new URL('../../../res/sticker/expression/8.png', import.meta.url).href,
-    new URL('../../../res/sticker/expression/9.png', import.meta.url).href,
-    new URL('../../../res/sticker/expression/10.png', import.meta.url).href,
-    new URL('../../../res/sticker/expression/11.png', import.meta.url).href,
-    new URL('../../../res/sticker/expression/12.png', import.meta.url).href,
-    new URL('../../../res/sticker/expression/13.png', import.meta.url).href,
-    new URL('../../../res/sticker/expression/14.png', import.meta.url).href,
-    new URL('../../../res/sticker/expression/15.png', import.meta.url).href,
-    new URL('../../../res/sticker/expression/16.png', import.meta.url).href,
-    new URL('../../../res/sticker/expression/17.png', import.meta.url).href,
-    new URL('../../../res/sticker/expression/18.png', import.meta.url).href,
-    new URL('../../../res/sticker/expression/19.png', import.meta.url).href,
-    new URL('../../../res/sticker/expression/20.png', import.meta.url).href,
-    new URL('../../../res/sticker/expression/21.png', import.meta.url).href,
-    new URL('../../../res/sticker/expression/22.png', import.meta.url).href,
-    new URL('../../../res/sticker/expression/23.png', import.meta.url).href,
-    new URL('../../../res/sticker/expression/24.png', import.meta.url).href,
+    '/stickers/expression/1.png',
+    '/stickers/expression/2.png',
+    '/stickers/expression/3.png',
+    '/stickers/expression/4.png',
+    '/stickers/expression/5.png',
+    '/stickers/expression/6.png',
+    '/stickers/expression/7.png',
+    '/stickers/expression/8.png',
+    '/stickers/expression/9.png',
+    '/stickers/expression/10.png',
+    '/stickers/expression/11.png',
+    '/stickers/expression/12.png',
+    '/stickers/expression/13.png',
+    '/stickers/expression/14.png',
+    '/stickers/expression/15.png',
+    '/stickers/expression/16.png',
+    '/stickers/expression/17.png',
+    '/stickers/expression/18.png',
+    '/stickers/expression/19.png',
+    '/stickers/expression/20.png',
+    '/stickers/expression/21.png',
+    '/stickers/expression/22.png',
+    '/stickers/expression/23.png',
+    '/stickers/expression/24.png',
   ],
 };
 const stickerOptions = computed(() => stickerSeriesOptions[selectedStickerSeries.value] || []);
@@ -1328,28 +1499,52 @@ let currentElementIndex = -1;
 let resizeStartData = { width: 0, height: 0, startX: 0, startY: 0, x: 0, y: 0 };
 let rotateStartData = { rotation: 0, startX: 0, startY: 0 };
 
+const placeCaretAtEnd = (el: HTMLElement) => {
+  const range = document.createRange();
+  const sel = window.getSelection();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  sel?.removeAllRanges();
+  sel?.addRange(range);
+};
+
+const setTextEditRef = (el: any, index: number, content: string) => {
+  const textEl = ((el && '$el' in el) ? el.$el : el) as HTMLElement | null;
+  if (!textEl) {
+    delete textEditRefs.value[index];
+    return;
+  }
+
+  textEditRefs.value[index] = textEl;
+
+  if (document.activeElement !== textEl && textEl.innerText !== content) {
+    textEl.innerText = content || '';
+  }
+};
+
+const handleTextInput = (event: Event, index: number) => {
+  const target = event.target as HTMLElement;
+  const currentElement = interactiveElements.value[index];
+  if (!currentElement || currentElement.type !== 'text') return;
+  currentElement.content = target.innerText;
+};
+
 // 监听选中元素变化，初始化文字内容和光标
 watch(selectedElementIndex, async (newIndex) => {
   if (newIndex === -1) return;
   const el = interactiveElements.value[newIndex];
   if (!el || el.type !== 'text') return;
+
   await nextTick();
   const div = textEditRefs.value[newIndex];
   if (!div) return;
-  // 只在内容不同时设置，避免打断正在输入
+
   if (div.innerText !== el.content) {
     div.innerText = el.content || '';
   }
+
   div.focus();
-  // 光标移到末尾
-  const range = document.createRange();
-  const sel = window.getSelection();
-  if (div.childNodes.length > 0) {
-    range.selectNodeContents(div);
-    range.collapse(false);
-    sel?.removeAllRanges();
-    sel?.addRange(range);
-  }
+  placeCaretAtEnd(div);
 });
 
 onMounted(() => {
@@ -1365,9 +1560,50 @@ onMounted(() => {
   });
 });
 
-const loadMyStamps = () => {
-  const stored = localStorage.getItem('favorites');
-  myStamps.value = stored ? JSON.parse(stored) : [];
+const resolveAssetUrl = (url?: string | null) => {
+  if (!url) return "";
+  if (/^(https?:)?\/\//.test(url) || url.startsWith('data:')) return url;
+  return `${assetBaseURL}${url.startsWith('/') ? url : `/${url}`}`;
+};
+
+const loadMyStamps = async () => {
+  try {
+    const res = await getMyStamps();
+    const nextStamps = (res.data || [])
+      .filter((item: any) => Number(item.quantity || 0) > 0)
+      .map((item: any) => ({
+        ...item,
+        image: resolveAssetUrl(item.image),
+      }));
+
+    myStamps.value = nextStamps;
+
+    if (selectedStamp.value) {
+      selectedStamp.value = nextStamps.find((item: any) => item.id === selectedStamp.value.id) || null;
+    }
+  } catch (err: any) {
+    ElMessage.error(err?.data?.message || err?.message || '加载我的邮票失败');
+  }
+};
+
+const loadFriends = async () => {
+  try {
+    const res = await getFriends();
+    friendOptions.value = (res.data || []).map((item: any) => ({
+      id: item.id,
+      uid: item.uid,
+      username: item.username,
+      avatar: resolveAssetUrl(item.avatar),
+    }));
+  } catch (err: any) {
+    friendOptions.value = [];
+  }
+};
+
+const selectFriendRecipient = (friend: any) => {
+  recipientInput.value = friend.uid;
+  friendSearchKeyword.value = '';
+  showFriendSelector.value = false;
 };
 
 const openCamera = () => {
@@ -1385,6 +1621,7 @@ const handleImageUpload = (event: Event) => {
   const file = input.files?.[0];
   
   if (file) {
+    selectedImageFile.value = file;
     const reader = new FileReader();
     reader.onload = (e) => {
       selectedImage.value = e.target?.result as string;
@@ -1397,9 +1634,7 @@ const handleImageUpload = (event: Event) => {
 const startDrag = (e: MouseEvent | TouchEvent) => {
   if (!selectedImage.value) return;
   
-  if (e instanceof TouchEvent) {
-    e.preventDefault();
-  }
+  preventIfCancelable(e);
   
   isDragging.value = true;
   const clientX = e instanceof MouseEvent ? e.clientX : e.touches[0].clientX;
@@ -1410,9 +1645,7 @@ const startDrag = (e: MouseEvent | TouchEvent) => {
   const handleMove = (moveEvent: MouseEvent | TouchEvent) => {
     if (!isDragging.value) return;
     
-    if (moveEvent instanceof TouchEvent) {
-      moveEvent.preventDefault();
-    }
+    preventIfCancelable(moveEvent);
     
     const moveClientX = moveEvent instanceof MouseEvent ? moveEvent.clientX : moveEvent.touches[0].clientX;
     const moveClientY = moveEvent instanceof MouseEvent ? moveEvent.clientY : moveEvent.touches[0].clientY;
@@ -1477,18 +1710,6 @@ const addTextElement = () => {
   });
   nextTick(() => {
     selectedElementIndex.value = newIndex;
-    const el = textEditRefs.value[newIndex];
-    if (el) {
-      el.innerText = '输入文字';
-      el.focus();
-      // 将光标移到末尾
-      const range = document.createRange();
-      const sel = window.getSelection();
-      range.selectNodeContents(el);
-      range.collapse(false);
-      sel?.removeAllRanges();
-      sel?.addRange(range);
-    }
   });
 };
 
@@ -1518,30 +1739,43 @@ const addStickerElement = (stickerUrl: string) => {
   });
 };
 
+const preventIfCancelable = (event: Event) => {
+  if (event.cancelable) {
+    event.preventDefault();
+  }
+};
+
 const startElementDrag = (e: MouseEvent | TouchEvent, index: number) => {
-  e.preventDefault();
+  preventIfCancelable(e);
   e.stopPropagation();
-  
+
   selectedElementIndex.value = index;
   currentElementIndex = index;
-  
+
   const clientX = e instanceof MouseEvent ? e.clientX : e.touches[0].clientX;
   const clientY = e instanceof MouseEvent ? e.clientY : e.touches[0].clientY;
-  
+
   dragStart.value = { x: clientX, y: clientY };
   const element = interactiveElements.value[index];
   const startX = element.x;
   const startY = element.y;
-  
+
+  // Compute the CSS scale so screen-pixel deltas map to reference-canvas coordinates
+  const srcW = backRefWidth.value;
+  const srcH = backRefHeight.value;
+  const dstW = containerSize.value.width || srcW;
+  const dstH = containerSize.value.height || srcH;
+  const scale = Math.min(dstW / srcW, dstH / srcH);
+
   const handleMove = (moveEvent: MouseEvent | TouchEvent) => {
-    moveEvent.preventDefault();
-    
+    preventIfCancelable(moveEvent);
+
     const moveClientX = moveEvent instanceof MouseEvent ? moveEvent.clientX : moveEvent.touches[0].clientX;
     const moveClientY = moveEvent instanceof MouseEvent ? moveEvent.clientY : moveEvent.touches[0].clientY;
-    
-    const dx = moveClientX - dragStart.value.x;
-    const dy = moveClientY - dragStart.value.y;
-    
+
+    const dx = (moveClientX - dragStart.value.x) / scale;
+    const dy = (moveClientY - dragStart.value.y) / scale;
+
     element.x = startX + dx;
     element.y = startY + dy;
   };
@@ -1560,7 +1794,7 @@ const startElementDrag = (e: MouseEvent | TouchEvent, index: number) => {
 };
 
 const startElementResize = (e: MouseEvent | TouchEvent, index: number) => {
-  e.preventDefault();
+  preventIfCancelable(e);
   e.stopPropagation();
   
   const clientX = e instanceof MouseEvent ? e.clientX : e.touches[0].clientX;
@@ -1569,7 +1803,7 @@ const startElementResize = (e: MouseEvent | TouchEvent, index: number) => {
   const initialScale = element.scale || 1;
   
   const handleMove = (moveEvent: MouseEvent | TouchEvent) => {
-    moveEvent.preventDefault();
+    preventIfCancelable(moveEvent);
     
     const moveClientX = moveEvent instanceof MouseEvent ? moveEvent.clientX : moveEvent.touches[0].clientX;
     const dx = moveClientX - clientX;
@@ -1594,9 +1828,7 @@ const startElementResize = (e: MouseEvent | TouchEvent, index: number) => {
 };
 
 const startElementRotate = (e: MouseEvent | TouchEvent, index: number) => {
-  if (e instanceof TouchEvent) {
-    e.preventDefault();
-  }
+  preventIfCancelable(e);
   
   currentElementIndex = index;
   const clientX = e instanceof MouseEvent ? e.clientX : e.touches[0].clientX;
@@ -1625,9 +1857,7 @@ const startElementRotate = (e: MouseEvent | TouchEvent, index: number) => {
   };
   
   const handleMove = (moveEvent: MouseEvent | TouchEvent) => {
-    if (moveEvent instanceof TouchEvent) {
-      moveEvent.preventDefault();
-    }
+    preventIfCancelable(moveEvent);
     
     const moveClientX = moveEvent instanceof MouseEvent ? moveEvent.clientX : moveEvent.touches[0].clientX;
     const moveClientY = moveEvent instanceof MouseEvent ? moveEvent.clientY : moveEvent.touches[0].clientY;
@@ -1677,6 +1907,11 @@ const toggleStampSelector = async () => {
 };
 
 const selectStamp = (stamp: any) => {
+  if ((stamp.quantity ?? 0) <= 0) {
+    ElMessage.warning('这张邮票已经没有剩余了');
+    return;
+  }
+
   selectedStamp.value = stamp;
   showStampSelector.value = false;
 };
@@ -1824,6 +2059,7 @@ const moveElementDown = () => {
 
 const resetUpload = () => {
   selectedImage.value = null;
+  selectedImageFile.value = null;
   imageOffset.value = { x: 0, y: 0 };
   imageScale.value = 1;
   imageRotation.value = 0;
@@ -1836,6 +2072,8 @@ const resetUpload = () => {
   selectedElementIndex.value = -1;
   postcardTitle.value = '';
   recipientInput.value = '';
+  friendSearchKeyword.value = '';
+  showFriendSelector.value = false;
   isPublicToSquare.value = false;
 };
 
@@ -1848,6 +2086,14 @@ const publishPostcard = () => {
     ElMessage.warning("请先选择邮票");
     return;
   }
+  if ((selectedStamp.value.quantity ?? 0) <= 0) {
+    ElMessage.warning("当前选中的邮票已经没有剩余了");
+    return;
+  }
+  if (postcardType.value === 'normal' && !recipientInput.value.trim()) {
+    ElMessage.warning('普通明信片请填写收件人UID或邮箱');
+    return;
+  }
   showPublishDialog.value = true;
   publishFlipped.value = false;
 };
@@ -1856,41 +2102,186 @@ const goToOutbox = () => {
   router.push('/outbox');
 };
 
-const confirmPublish = () => {
-  // 保存到 localStorage
-  const stored = localStorage.getItem('userPostcards');
-  const existing = stored ? JSON.parse(stored) : [];
-  const canvasEl = postcardCanvasRef.value;
-  const canvasWidth = canvasEl ? canvasEl.offsetWidth : 600;
-  const canvasHeight = canvasEl ? canvasEl.offsetHeight : 400;
-  const newCard = {
-    id: Date.now(),
-    title: postcardTitle.value || '无标题明信片',
-    recipient: recipientInput.value,
-    isPublic: postcardType.value === 'drifting' ? true : isPublicToSquare.value,
-    postcardType: postcardType.value,
-    image: selectedImage.value,
-    imageOffset: { ...imageOffset.value },
-    imageScale: imageScale.value,
-    imageRotation: imageRotation.value,
-    elements: interactiveElements.value.map(el => ({
-      ...el,
-      creatorId: '1024520', // 使用当前用户UID
-      creatorName: '苏木' // 使用当前用户名
-    })),
-    stamp: selectedStamp.value,
-    aiReviewStatus: '通过',
-    manualReviewStatus: '待审核',
-    createdAt: new Date().toISOString(),
-    canvasWidth,
-    canvasHeight,
-    aspectRatio: postcardAspectRatio.value,
-  };
-  existing.unshift(newCard);
-  localStorage.setItem('userPostcards', JSON.stringify(existing));
-  showPublishDialog.value = false;
-  resetUpload();
-  router.push('/mail');
+const confirmPublish = async () => {
+  if (isPublishing.value) return;
+
+  if (!selectedImageFile.value) {
+    ElMessage.warning('请先上传图片');
+    return;
+  }
+
+  if (postcardType.value === 'normal' && !recipientInput.value.trim()) {
+    ElMessage.warning('普通明信片请填写收件人UID或邮箱');
+    return;
+  }
+
+  const canvasWidth = backRefWidth.value;
+  const canvasHeight = backRefHeight.value;
+
+  isPublishing.value = true;
+
+  try {
+    const uploadRes = await uploadPostcardImage(selectedImageFile.value);
+    const imageUrl = uploadRes.data?.imageUrl;
+    if (!imageUrl) {
+      throw new Error('图片上传失败');
+    }
+
+    const res: any = await createPostcard({
+      title: postcardTitle.value || '无标题明信片',
+      recipientInput: recipientInput.value,
+      isPublic: postcardType.value === 'drifting' ? true : isPublicToSquare.value,
+      postcardType: postcardType.value,
+      imageUrl,
+      imageOffsetX: imageOffset.value.x,
+      imageOffsetY: imageOffset.value.y,
+      imageScale: imageScale.value,
+      imageRotation: imageRotation.value,
+      elements: interactiveElements.value.map((el) => ({
+        ...el,
+        creatorId: userInfo.value?.id,
+        creatorName: userInfo.value?.username || '我',
+      })),
+      stampId: selectedStamp.value?.id,
+      canvasWidth,
+      canvasHeight,
+      aspectRatio: postcardAspectRatio.value,
+    });
+
+    ElMessage.success(res.message || '发布成功');
+    showPublishDialog.value = false;
+    isPublishing.value = false;
+    await loadMyStamps();
+    resetUpload();
+    router.push('/mail');
+  } catch (err: any) {
+    isPublishing.value = false;
+    ElMessage.error(err?.data?.message || err?.message || '发布失败');
+  }
+};
+
+// ==================== AI 智能体功能 ====================
+
+const getAiErrorMessage = (err: any, fallback: string) => {
+  const raw = String(err?.data?.message || err?.message || '').trim();
+  if (!raw) return fallback;
+
+  if (raw.includes('邮分不足')) return '邮分不足，请先去签到或商店获取邮分';
+  if (raw.includes('AI服务鉴权失败')) return 'AI服务配置异常，请联系管理员';
+  if (raw.includes('AI服务当前繁忙')) return 'AI服务当前繁忙，请稍后重试';
+  if (raw.includes('AI模型配置错误')) return 'AI模型配置错误，请联系管理员';
+  if (raw.includes('图片格式不支持')) return '图片格式不支持，请重新上传后再试';
+  if (raw.includes('图片无法被AI读取')) return '图片无法被AI读取，请更换图片或重新上传后再试';
+
+  return raw;
+};
+
+/**
+ * 一键润色文字
+ */
+const handlePolishText = async () => {
+  if (selectedElementIndex.value === -1) return;
+  const element = interactiveElements.value[selectedElementIndex.value];
+  if (!element || element.type !== 'text') {
+    ElMessage.warning('请先选择一个文字元素');
+    return;
+  }
+  if (!element.content || element.content.trim().length === 0) {
+    ElMessage.warning('请先输入一些文字');
+    return;
+  }
+
+  aiLoading.value = true;
+  try {
+    const res: any = await polishText(element.content);
+    element.content = res.data?.result || element.content;
+    ElMessage.success(`润色成功，已消耗 ${res.data?.cost || 5} 邮分`);
+    // 更新文本编辑框的内容
+    const textEditRef = textEditRefs.value[selectedElementIndex.value];
+    if (textEditRef) {
+      textEditRef.innerText = element.content;
+    }
+  } catch (err: any) {
+    ElMessage.error(getAiErrorMessage(err, '润色失败，请稍后重试'));
+  } finally {
+    aiLoading.value = false;
+  }
+};
+
+/**
+ * 分析图片生成文案
+ */
+const handleGenerateFromImage = async () => {
+  if (!selectedImage.value) {
+    ElMessage.warning('请先上传明信片正面图片');
+    return;
+  }
+  if (selectedElementIndex.value === -1) {
+    ElMessage.warning('请先选择一个文字元素');
+    return;
+  }
+  const element = interactiveElements.value[selectedElementIndex.value];
+  if (!element || element.type !== 'text') {
+    ElMessage.warning('请先选择一个文字元素');
+    return;
+  }
+
+  aiLoading.value = true;
+  try {
+    const res: any = await generateFromImage(selectedImage.value);
+    element.content = res.data?.result || '';
+    ElMessage.success(`生成成功，已消耗 ${res.data?.cost || 10} 邮分`);
+    // 更新文本编辑框的内容
+    const textEditRef = textEditRefs.value[selectedElementIndex.value];
+    if (textEditRef) {
+      textEditRef.innerText = element.content;
+    }
+  } catch (err: any) {
+    ElMessage.error(getAiErrorMessage(err, '生成失败，请稍后重试'));
+  } finally {
+    aiLoading.value = false;
+  }
+};
+
+/**
+ * 自定义要求修改文字
+ */
+const handleCustomModify = async () => {
+  if (!aiCustomPrompt.value.trim()) {
+    ElMessage.warning('请输入修改要求');
+    return;
+  }
+  if (selectedElementIndex.value === -1) {
+    ElMessage.warning('请先选择一个文字元素');
+    return;
+  }
+  const element = interactiveElements.value[selectedElementIndex.value];
+  if (!element || element.type !== 'text') {
+    ElMessage.warning('请先选择一个文字元素');
+    return;
+  }
+  if (!element.content || element.content.trim().length === 0) {
+    ElMessage.warning('请先输入一些文字');
+    return;
+  }
+
+  aiLoading.value = true;
+  try {
+    const res: any = await customModify(element.content, aiCustomPrompt.value);
+    element.content = res.data?.result || element.content;
+    ElMessage.success(`修改成功，已消耗 ${res.data?.cost || 5} 邮分`);
+    // 更新文本编辑框的内容
+    const textEditRef = textEditRefs.value[selectedElementIndex.value];
+    if (textEditRef) {
+      textEditRef.innerText = element.content;
+    }
+    aiCustomPrompt.value = '';
+    showAiCustomInput.value = false;
+  } catch (err: any) {
+    ElMessage.error(getAiErrorMessage(err, '修改失败，请稍后重试'));
+  } finally {
+    aiLoading.value = false;
+  }
 };
 </script>
 
