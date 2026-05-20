@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Environment files with secrets
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.claude
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build output
+dist/
+build/
+
+# 分工的md文档
+分工的md文档/
+
+# Logs
+*.log
+npm-debug.log*
+
+#md
+CLAUDE.md

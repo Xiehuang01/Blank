@@ -1,0 +1,109 @@
+import { ref, computed } from 'vue';
+import { getToken, removeToken, setToken } from '../utils/request.js';
+import { logout as apiLogout } from '../api/auth.js';
+
+const USER_STORAGE_KEY = 'user';
+
+// 用户信息接口
+export interface UserInfo {
+  id?: number;
+  uid?: string;
+  username?: string;
+  email?: string;
+  identity?: string;
+  avatar?: string;
+  vipLevel?: string;
+  vipPlanKey?: string | null;
+  vipExpiresAt?: string | null;
+  coins?: number;
+  gender?: string;
+  birthday?: string;
+  location?: string;
+  profileVisibility?: string;
+  createdAt?: string;
+  rememberMe?: boolean;
+}
+
+// 用户状态
+const userInfo = ref<UserInfo | null>(null);
+const isLoggedIn = computed(() => !!userInfo.value && !!getToken());
+
+const clearLocalAuthState = () => {
+  userInfo.value = null;
+  localStorage.removeItem(USER_STORAGE_KEY);
+  removeToken();
+};
+
+// 初始化用户信息（从localStorage读取）
+const initUser = () => {
+  const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+  const token = getToken();
+
+  if (!storedUser || !token) {
+    clearLocalAuthState();
+    return;
+  }
+
+  try {
+    userInfo.value = JSON.parse(storedUser);
+  } catch (error) {
+    console.error('Failed to parse user info:', error);
+    clearLocalAuthState();
+  }
+};
+
+const stripSensitive = (user: UserInfo): UserInfo => {
+  const { email, ...safe } = user;
+  return safe;
+};
+
+// 登录（保存 token + 用户信息）
+const login = (user: UserInfo, token?: string) => {
+  if (token) {
+    setToken(token);
+  }
+  userInfo.value = user;
+  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(stripSensitive(user)));
+};
+
+// 退出登录
+const logout = async () => {
+  try {
+    if (getToken()) {
+      await apiLogout();
+    }
+  } catch (err) {
+    console.warn('Logout API error:', err);
+  } finally {
+    clearLocalAuthState();
+  }
+};
+
+// 更新用户信息
+const updateUser = (updates: Partial<UserInfo>) => {
+  userInfo.value = {
+    ...(userInfo.value || {}),
+    ...updates,
+  } as UserInfo;
+  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(stripSensitive(userInfo.value as UserInfo)));
+};
+
+const clearUser = () => {
+  clearLocalAuthState();
+};
+
+// 导出用户store
+export const useUser = () => {
+  if (userInfo.value === null) {
+    initUser();
+  }
+
+  return {
+    userInfo,
+    isLoggedIn,
+    login,
+    logout,
+    updateUser,
+    clearUser,
+  };
+};

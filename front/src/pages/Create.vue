@@ -1,0 +1,2785 @@
+<template>
+  <div class="min-h-screen bg-background pb-24" @click="selectedElementIndex = -1">
+    <header
+      class="sticky top-0 z-40 flex items-center justify-between w-full px-4 h-16 bg-background/90 backdrop-blur-sm border-b border-primary/10"
+    >
+      <div class="flex items-center gap-4">
+        <button
+          @click="$router.back()"
+          class="text-primary hover:text-secondary transition-colors"
+        >
+          <ChevronLeft class="w-6 h-6" />
+        </button>
+        <h1 class="font-headline text-xl font-bold text-primary">创建明信片</h1>
+      </div>
+      <button
+        @click="goToOutbox"
+        class="text-sm font-bold text-primary hover:text-secondary transition-colors"
+      >
+        发件箱
+      </button>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 pt-6">
+      <div class="grid grid-cols-1 lg:gap-8 lg:items-start" :class="postcardAspectRatio === '3/2' ? 'lg:grid-cols-2' : 'lg:grid-cols-[1fr_1.5fr]'">
+        <!-- Left Column - Postcard Preview -->
+        <div class="lg:sticky lg:top-20 lg:self-start" :class="postcardAspectRatio === '2/3' ? 'max-w-sm' : ''">
+        <!-- Stacked Postcard Preview -->
+        <div class="relative w-full transition-all duration-500" :style="{ 'aspect-ratio': postcardAspectRatio }">
+          <div class="relative w-full h-full" ref="postcardCanvasRef">
+
+          <!-- Postcard Front (Image) -->
+          <div
+            class="absolute inset-0"
+            :style="{
+              transform: showFront
+                ? 'translate(-6px, -6px) scale(1)'
+                : 'translate(-6px, -6px) scale(0.96) translateY(4px)',
+              zIndex: showFront ? 10 : 5,
+              opacity: showFront ? 1 : 0.6,
+              transition: 'transform 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.45s ease, z-index 0s 0.22s',
+            }"
+          >
+            <div class="relative w-full h-full group">
+              <div class="absolute inset-0 rounded-none bg-white p-3 border border-black/10 shadow-lg overflow-hidden">
+                <div
+                  class="w-full h-full relative bg-black/5 flex items-center justify-center rounded-sm cursor-move overflow-hidden group/imgarea"
+                  ref="frontImageContainerRef"
+                  @mousedown="startDrag"
+                  @touchstart.passive="startDrag"
+                  @mouseenter="showImageControls = true"
+                  @mouseleave="showImageControls = false"
+                  @click.self="selectedImage && (showUploadOptions = !showUploadOptions)"
+                >
+                  <img
+                    v-if="selectedImage"
+                    :src="selectedImage"
+                    alt="Preview"
+                    draggable="false"
+                    @dragstart.prevent
+                    class="w-full h-full object-cover select-none"
+                    :style="{ transform: `translate(${imageOffset.x}px, ${imageOffset.y}px) scale(${imageScale}) rotate(${imageRotation}deg)` }"
+                  />
+                  <div v-else class="text-tertiary text-center">
+                    <p class="text-sm">点击+号添加图片</p>
+                  </div>
+
+                  <!-- Upload Button - Show when no image, hovered, or showUploadOptions -->
+                  <button
+                    v-if="!selectedImage || showUploadOptions"
+                    @click.stop="showUploadOptions = !showUploadOptions"
+                    class="absolute bottom-4 right-4 w-14 h-14 rounded-full bg-secondary text-white dark:text-black font-bold shadow-lg hover:scale-110 transition-transform flex items-center justify-center text-2xl z-10 pointer-events-auto"
+                  >
+                    +
+                  </button>
+                  <button
+                    v-else-if="selectedImage"
+                    @click.stop="showUploadOptions = !showUploadOptions"
+                    class="absolute bottom-4 right-4 w-14 h-14 rounded-full bg-secondary text-white dark:text-black font-bold shadow-lg hover:scale-110 transition-transform flex items-center justify-center text-2xl z-10 pointer-events-auto opacity-0 group-hover/imgarea:opacity-100 transition-opacity duration-200"
+                  >
+                    +
+                  </button>
+
+                  <!-- Floating Action Buttons -->
+                  <transition name="fade">
+                    <div v-if="showUploadOptions" class="absolute bottom-20 right-4 flex flex-col gap-3 z-20">
+                      <button
+                        @click.stop="openCamera"
+                        class="w-14 h-14 rounded-full bg-primary text-white dark:text-black font-bold shadow-lg hover:scale-110 transition-transform flex items-center justify-center"
+                        title="拍照"
+                      >
+                        <Camera class="w-6 h-6" />
+                      </button>
+                      <button
+                        @click.stop="openGallery"
+                        class="w-14 h-14 rounded-full bg-primary text-white dark:text-black font-bold shadow-lg hover:scale-110 transition-transform flex items-center justify-center"
+                        title="相册"
+                      >
+                        <ImageIcon class="w-6 h-6" />
+                      </button>
+                    </div>
+                  </transition>
+
+                  <!-- Image Controls: 竖立在明信片内部左侧 -->
+                  <transition name="fade">
+                    <div
+                      v-if="selectedImage && showImageControls"
+                      class="absolute top-1/2 -translate-y-1/2 left-2 z-20 flex flex-col items-center gap-3 py-3 px-2 rounded-2xl bg-white/90 dark:bg-neutral/90 backdrop-blur-sm border border-black/10 dark:border-white/10 shadow-lg"
+                      @mouseenter="showImageControls = true"
+                      @mouseleave="showImageControls = false"
+                      @mousedown.stop
+                    >
+                      <div class="flex flex-col items-center gap-1">
+                        <span class="text-primary/60 dark:text-white/60"><svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35M11 8v6M8 11h6"/></svg></span>
+                        <div class="relative w-4 cursor-pointer select-none" style="height: 80px;" @mousedown.stop="startScaleDragV">
+                          <div class="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-1 rounded-full bg-black/15 dark:bg-white/15">
+                            <div class="absolute bottom-0 left-0 right-0 rounded-full bg-primary dark:bg-secondary transition-none" :style="{ height: ((imageScale - 0.5) / 2.5 * 100) + '%' }"></div>
+                            <div class="absolute left-1/2 -translate-x-1/2 w-2.5 h-0.5 bg-primary/40 dark:bg-black/40 rounded-full" :style="{ bottom: ((1 - 0.5) / 2.5 * 100) + '%' }"></div>
+                          </div>
+                          <div class="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-white shadow-md border border-black/10 transition-none" :style="{ top: (100 - (imageScale - 0.5) / 2.5 * 100) + '%' }"></div>
+                        </div>
+                        <span class="text-primary/50 dark:text-white/50 text-[9px] tabular-nums">{{ Math.round(imageScale * 100) }}%</span>
+                      </div>
+                      <div class="w-5 h-px bg-black/10 dark:bg-white/10"></div>
+                      <div class="flex flex-col items-center gap-1">
+                        <span class="text-primary/60 dark:text-black/70"><svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38"/></svg></span>
+                        <div class="relative w-4 cursor-pointer select-none" style="height: 80px;" @mousedown.stop="startRotateDragV">
+                          <div class="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-1 rounded-full bg-black/15 dark:bg-white/15">
+                            <div class="absolute left-0 right-0 rounded-full bg-primary dark:bg-secondary transition-none" :style="imageRotation >= 0 ? { top: '50%', height: (imageRotation / 180 * 50) + '%' } : { bottom: '50%', height: (-imageRotation / 180 * 50) + '%' }"></div>
+                            <div class="absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-2.5 h-0.5 bg-primary/60 dark:bg-white/60 rounded-full"></div>
+                            <div class="absolute top-1/4 left-1/2 -translate-x-1/2 w-2 h-px bg-black/20 dark:bg-white/20"></div>
+                            <div class="absolute top-3/4 left-1/2 -translate-x-1/2 w-2 h-px bg-black/20 dark:bg-white/20"></div>
+                          </div>
+                          <div class="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-white shadow-md border border-black/10 transition-none" :style="{ top: (50 + imageRotation / 180 * 50) + '%' }"></div>
+                        </div>
+                        <span class="text-primary/50 dark:text-black/70 text-[9px] tabular-nums">{{ imageRotation > 0 ? '+' : '' }}{{ Math.round(imageRotation) }}°</span>
+                      </div>
+                    </div>
+                  </transition>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Postcard Back (Text side) -->
+          <div
+            class="absolute inset-0"
+            :style="{
+              transform: showFront
+                ? 'translate(6px, 6px) scale(0.96) translateY(4px)'
+                : 'translate(6px, 6px) scale(1)',
+              zIndex: showFront ? 5 : 10,
+              opacity: showFront ? 0.6 : 1,
+              transition: 'transform 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.45s ease, z-index 0s 0.22s',
+            }"
+          >
+            <div class="relative w-full h-full group overflow-hidden" ref="editBackContainerRef" @click="selectedElementIndex = -1; showStickerPicker = false; showStampSelector = false">
+              <div
+                class="absolute inset-0 rounded-none bg-white border border-black/10 shadow-lg overflow-hidden"
+              >
+                <!-- Scale wrapper: render at fixed reference size, scale to fit container -->
+                <div class="absolute top-0 left-0 origin-top-left" :style="getEditBackScaleStyle()">
+                  <div
+                    class="flex p-5 bg-white overflow-hidden"
+                    :style="{ width: backRefWidth + 'px', height: backRefHeight + 'px' }"
+                  >
+                <!-- Left Side - Message -->
+                <div class="flex-1 flex flex-col pr-5 border-r border-black/20 relative overflow-hidden">
+                  <h4 class="font-headline text-xl tracking-widest text-black/60 mb-2">POSTCARD</h4>
+                  <div class="relative flex-1">
+                    <div class="flex flex-col gap-8 h-full pt-6 pb-2">
+                      <div class="w-full h-[1px] bg-black/10"></div>
+                      <div class="w-full h-[1px] bg-black/10"></div>
+                      <div class="w-full h-[1px] bg-black/10"></div>
+                      <div class="w-full h-[1px] bg-black/10"></div>
+                      <div class="w-full h-[1px] bg-black/10"></div>
+                      <div class="w-full h-[1px] bg-black/10"></div>
+                      <div class="w-full h-[1px] bg-black/10"></div>
+                      <div class="w-full h-[1px] bg-black/10"></div>
+                      <div class="w-full h-[1px] bg-black/10"></div>
+                      <div class="w-full h-[1px] bg-black/10"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Right Side - Address & Stamp -->
+                <div class="flex-1 flex flex-col pl-5 relative">
+                  <div class="flex justify-end relative mb-4">
+                    <!-- Stamp -->
+                    <button
+                      @click.stop="toggleStampSelector"
+                      class="w-20 h-24 border-[2px] border-black/30 flex items-center justify-center relative bg-black/5 hover:bg-black/10 transition-colors cursor-pointer flex-shrink-0"
+                      style="border-style: dashed;"
+                      title="点击选择邮票"
+                    >
+                      <span v-if="!selectedStamp" class="text-xs font-bold text-black/40">邮票</span>
+                    </button>
+                    <!-- Stamp Image Container -->
+                    <div v-if="selectedStamp" class="absolute -top-3 -right-3 w-32 h-32 flex items-center justify-center cursor-pointer" style="filter: drop-shadow(2px 4px 6px rgba(230, 220, 200, 0.8));" @click.stop="toggleStampSelector">
+                      <img
+                        :src="selectedStamp.image"
+                        :alt="selectedStamp.title"
+                        class="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                  <div class="flex-1 flex flex-col justify-end gap-4 pb-2">
+                    <div class="flex items-end gap-3">
+                      <span class="text-xs text-black/60 font-body">to:</span>
+                      <div class="flex-1 h-[1px] bg-black/20"></div>
+                    </div>
+                    <div class="w-full h-[1px] bg-black/20 mt-3"></div>
+                    <div class="flex items-end gap-3">
+                      <span class="text-xs text-black/60 font-body">from:</span>
+                      <div class="flex-1 h-[1px] bg-black/20"></div>
+                    </div>
+                    <div class="w-full h-[1px] bg-black/20"></div>
+                  </div>
+                </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Interactive Elements - Positioned relative to the postcard container -->
+              <div
+                v-for="(element, index) in interactiveElements"
+                :key="`element-${index}-${interactiveElements.length}`"
+                class="absolute inline-block"
+                :style="{
+                  left: element.x + 'px',
+                  top: element.y + 'px',
+                  transform: `rotate(${element.rotation}deg) scale(${element.scale || 1})`,
+                  width: element.type === 'text' ? 'auto' : element.width + 'px',
+                  height: element.type === 'text' ? 'auto' : element.height + 'px',
+                  minWidth: element.type === 'text' ? '50px' : undefined,
+                  zIndex: index + 10,
+                  transformOrigin: 'top left'
+                }"
+                @mousedown.stop="startElementDrag($event, index)"
+                @touchstart.stop="startElementDrag($event, index)"
+                @click.stop="selectedElementIndex = index; showStickerPicker = false; showStampSelector = false"
+              >
+                <!-- Content Wrapper -->
+                <div
+                  :class="[
+                    'relative group',
+                    selectedElementIndex === index ? 'ring-2 ring-primary dark:ring-white ring-dashed' : ''
+                  ]"
+                >
+                  <!-- Text Input - Only show when selected -->
+                  <div
+                    v-if="element.type === 'text' && selectedElementIndex === index"
+                    :ref="el => setTextEditRef(el, index, element.content)"
+                    contenteditable="true"
+                    @input="handleTextInput($event, index)"
+                    @click.stop
+                    @mousedown.stop
+                    @touchstart.stop
+                    class="bg-transparent border-none p-1 focus:outline-none min-w-[50px] min-h-[24px] whitespace-pre-wrap break-words"
+                    :style="{
+                      fontFamily: element.fontFamily || 'Arial',
+                      fontSize: (element.fontSize || 16) + 'px',
+                      fontWeight: element.fontWeight || 'normal',
+                      fontStyle: element.fontStyle || 'normal',
+                      color: element.color || '#000000',
+                      textDecoration: element.textDecoration || 'none',
+                      textAlign: element.textAlign || 'left',
+                      lineHeight: '1.4',
+                      display: 'inline-block',
+                    }"
+                  ></div>
+                  <!-- Text Display - Show when not selected -->
+                  <div
+                    v-else-if="element.type === 'text'"
+                    class="w-full h-full p-1 pointer-events-none overflow-hidden"
+                    :style="{
+                      fontFamily: element.fontFamily || 'Arial',
+                      fontSize: (element.fontSize || 16) + 'px',
+                      fontWeight: element.fontWeight || 'normal',
+                      fontStyle: element.fontStyle || 'normal',
+                      color: element.color || '#000000',
+                      textDecoration: element.textDecoration || 'none',
+                      textAlign: element.textAlign || 'left',
+                      whiteSpace: 'pre-wrap',
+                      wordWrap: 'break-word',
+                      display: 'block'
+                    }"
+                  >
+                    {{ element.content }}
+                  </div>
+                  <!-- Sticker Image -->
+                  <img
+                    v-else-if="element.type === 'sticker'"
+                    :src="element.content"
+                    class="w-full h-full object-contain pointer-events-none"
+                  />
+
+                  <!-- Rotate Handle - Only show when selected -->
+                  <div
+                    v-if="selectedElementIndex === index"
+                    class="absolute -top-10 left-1/2 -translate-x-1/2 w-6 h-6 bg-white border border-primary rounded-full flex items-center justify-center cursor-crosshair shadow-sm"
+                    @mousedown.stop="startElementRotate($event, index)"
+                    @touchstart.stop="startElementRotate($event, index)"
+                  >
+                    <RotateCw class="w-3 h-3 text-primary dark:text-black" />
+                  </div>
+
+                  <!-- Scale Handle - Only show when selected -->
+                  <div
+                    v-if="selectedElementIndex === index"
+                    class="absolute -bottom-3 -right-3 w-6 h-6 bg-white border border-primary rounded-full flex items-center justify-center cursor-se-resize shadow-sm"
+                    @mousedown.stop="startElementResize($event, index)"
+                    @touchstart.stop="startElementResize($event, index)"
+                  >
+                    <div class="w-2 h-2 bg-primary dark:bg-black rounded-full"></div>
+                  </div>
+
+                  <!-- Action Buttons (Right Side) - Only show when selected -->
+                  <div
+                    v-if="selectedElementIndex === index"
+                    class="absolute top-0 -right-12 md:-right-12 -right-2 flex flex-col gap-2 z-50"
+                    @mousedown.stop
+                    @touchstart.stop
+                  >
+                    <!-- Show creator info if available -->
+                    <div v-if="element.creatorName" class="absolute -right-2 top-0 -translate-y-full pb-2">
+                      <div class="bg-black/80 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap shadow-sm">
+                        由 {{ element.creatorName }} 添加
+                        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-black/80"></div>
+                      </div>
+                    </div>
+                    <button
+                      @click.stop="moveElementUp"
+                      @mousedown.stop
+                      @touchstart.stop
+                      class="w-8 h-8 bg-white border border-black/10 rounded-full flex items-center justify-center shadow-sm text-tertiary hover:text-primary pointer-events-auto"
+                      title="上移一层"
+                    >
+                      <ArrowUp class="w-4 h-4" />
+                    </button>
+                    <button
+                      @click.stop="moveElementDown"
+                      @mousedown.stop
+                      @touchstart.stop
+                      class="w-8 h-8 bg-white border border-black/10 rounded-full flex items-center justify-center shadow-sm text-tertiary hover:text-primary pointer-events-auto"
+                      title="下移一层"
+                    >
+                      <ArrowDown class="w-4 h-4" />
+                    </button>
+                    <button
+                      @click.stop="deleteElement"
+                      @mousedown.stop
+                      @touchstart.stop
+                      class="w-8 h-8 bg-red-50 border border-red-200 rounded-full flex items-center justify-center shadow-sm text-red-500 hover:text-red-600 pointer-events-auto"
+                      title="删除"
+                    >
+                      <Trash2 class="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          </div><!-- end stacked wrapper -->
+        </div><!-- end stacked container -->
+
+        <!-- Front/Back Toggle + Aspect Ratio Toggle - below postcard -->
+        <div class="flex items-center justify-center gap-4 mt-4">
+          <button
+            @click="showFront = !showFront"
+            class="relative flex items-center gap-1 px-1 py-1 rounded-full border-2 transition-all duration-500 focus:outline-none select-none"
+            :class="showFront ? 'bg-white dark:bg-neutral border-black/15 dark:border-white/15' : 'bg-secondary/10 border-secondary/40'"
+            style="width: 148px;"
+          >
+            <!-- Sliding pill indicator -->
+            <span
+              class="absolute top-1 bottom-1 w-[66px] rounded-full shadow-md transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+              :class="showFront ? 'left-1 bg-primary dark:bg-white' : 'left-[75px] bg-secondary'"
+            ></span>
+            <!-- 正面 label -->
+            <span
+              class="relative z-10 flex-1 text-center text-xs font-bold tracking-wide transition-colors duration-300 py-1"
+              :class="showFront ? 'text-white dark:text-neutral' : 'text-black/40 dark:text-white/40'"
+            >正面</span>
+            <!-- 反面 label -->
+            <span
+              class="relative z-10 flex-1 text-center text-xs font-bold tracking-wide transition-colors duration-300 py-1"
+              :class="!showFront ? 'text-white dark:text-neutral' : 'text-black/40 dark:text-white/40'"
+            >反面</span>
+          </button>
+
+          <!-- Aspect Ratio Toggle -->
+          <button
+            @click="toggleAspectRatio"
+            class="relative flex items-center gap-1 px-1 py-1 rounded-full border-2 transition-all duration-500 focus:outline-none select-none"
+            :class="postcardAspectRatio === '3/2' ? 'bg-white dark:bg-neutral border-black/15 dark:border-white/15' : 'bg-secondary/10 border-secondary/40'"
+            style="width: 148px;"
+            title="切换明信片比例"
+          >
+            <!-- Sliding pill indicator -->
+            <span
+              class="absolute top-1 bottom-1 w-[66px] rounded-full shadow-md transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+              :class="postcardAspectRatio === '3/2' ? 'left-1 bg-primary dark:bg-white' : 'left-[75px] bg-secondary'"
+            ></span>
+            <!-- 3:2 label -->
+            <span
+              class="relative z-10 flex-1 text-center text-xs font-bold tracking-wide transition-colors duration-300 py-1"
+              :class="postcardAspectRatio === '3/2' ? 'text-white dark:text-neutral' : 'text-black/40 dark:text-white/40'"
+            >3:2</span>
+            <!-- 2:3 label -->
+            <span
+              class="relative z-10 flex-1 text-center text-xs font-bold tracking-wide transition-colors duration-300 py-1"
+              :class="postcardAspectRatio === '2/3' ? 'text-white dark:text-neutral' : 'text-black/40 dark:text-white/40'"
+            >2:3</span>
+          </button>
+        </div>
+
+        </div><!-- end sticky left column -->
+
+        <!-- Right Column - Stamp Selection & Actions -->
+        <div class="space-y-6" @click.stop>
+          <!-- Postcard Type Selection -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="font-headline text-lg font-bold text-primary">明信片类型</h3>
+              <button
+                v-if="postcardType === 'drifting'"
+                @click="showDriftHelpDialog = true"
+                class="text-primary/60 hover:text-primary transition-colors flex items-center justify-center p-1"
+                title="漂流明信片规则"
+              >
+                <HelpCircle class="w-5 h-5" />
+              </button>
+            </div>
+            <div class="flex bg-black/5 dark:bg-white/5 p-1 rounded-xl">
+              <button
+                @click="postcardType = 'normal'"
+                class="flex-1 py-2 text-sm font-bold rounded-lg transition-all duration-300"
+                :class="postcardType === 'normal' ? 'bg-white dark:bg-neutral shadow-sm text-primary dark:text-white' : 'text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white'"
+              >
+                普通明信片
+              </button>
+              <button
+                @click="postcardType = 'drifting'"
+                class="flex-1 py-2 text-sm font-bold rounded-lg transition-all duration-300"
+                :class="postcardType === 'drifting' ? 'bg-white dark:bg-neutral shadow-sm text-primary dark:text-white' : 'text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white'"
+              >
+                漂流传递
+              </button>
+            </div>
+          </div>
+
+          <!-- Add Elements Buttons -->
+          <div class="space-y-3">
+            <h3 class="font-headline text-lg font-bold text-primary">添加元素</h3>
+            <div class="flex gap-2">
+              <button
+                @click.prevent="addTextElement(); showStickerPicker = false; showStampSelector = false;"
+                type="button"
+                class="flex-1 py-2 px-2 bg-primary dark:bg-secondary text-white dark:text-black font-bold rounded-lg hover:opacity-90 transition-opacity text-xs flex items-center justify-center gap-1"
+                title="添加文字"
+              >
+                <Type class="w-4 h-4" />
+                <span>文字</span>
+              </button>
+              <button
+                @click.prevent="showStickerPicker = !showStickerPicker; showStampSelector = false; selectedElementIndex = -1;"
+                type="button"
+                class="flex-1 py-2 px-2 bg-primary dark:bg-secondary text-white dark:text-black font-bold rounded-lg hover:opacity-90 transition-opacity text-xs flex items-center justify-center gap-1"
+                title="添加贴纸"
+              >
+                <Smile class="w-4 h-4" />
+                <span>贴纸</span>
+              </button>
+              <!-- AI Agent Button - only enabled when a text element is selected -->
+              <button
+                type="button"
+                @click.prevent="handleAiAgentClick"
+                class="flex-1 py-2 px-2 font-bold rounded-lg text-xs flex items-center justify-center gap-1 transition-opacity"
+                :class="hasSelectedTextElement
+                  ? 'bg-primary dark:bg-secondary text-white dark:text-black hover:opacity-90 cursor-pointer'
+                  : 'bg-black/20 dark:bg-white/20 text-black/40 dark:text-white/40 cursor-not-allowed'"
+                title="AI智能体"
+              >
+                <Sparkles class="w-4 h-4" />
+                <span>AI智能体</span>
+              </button>
+
+            </div>
+          </div>
+
+          <!-- Sticker Picker Panel -->
+          <div v-if="showStickerPicker" class="rounded-2xl border border-black/10 dark:border-white/10 shadow-sm">
+            <div class="flex items-center justify-between px-4 py-3 bg-primary/5 dark:bg-white/5 border-b border-black/10 dark:border-white/10 rounded-t-2xl">
+              <h3 class="text-sm font-bold text-primary dark:text-white tracking-wide">选择贴纸</h3>
+              <button @click="showStickerPicker = false" class="w-6 h-6 rounded-full flex items-center justify-center text-black/30 dark:text-white/30 hover:text-black dark:hover:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-sm">✕</button>
+            </div>
+            <!-- Series Tabs -->
+            <div class="flex gap-1 px-3 pt-2 pb-1 bg-white dark:bg-neutral border-b border-black/5 dark:border-white/5">
+                      <button
+                v-for="series in stickerSeries"
+                :key="series.value"
+                @click="selectedStickerSeries = series.value"
+                class="px-3 py-1 rounded-lg text-xs font-semibold transition-colors"
+                :class="selectedStickerSeries === series.value ? 'bg-secondary text-white dark:text-neutral' : 'bg-black/5 dark:bg-white/5 text-black/50 dark:text-white/50 hover:bg-black/10 dark:hover:bg-white/10'"
+              >{{ series.label }}</button>
+                    </div>
+            <!-- Grid: 3 cols, max 3 rows (9 items visible), rest scrollable -->
+            <div class="p-3 bg-white dark:bg-neutral rounded-b-2xl">
+              <div class="grid grid-cols-3 gap-2 overflow-y-auto" style="max-height: 210px;">
+                      <button
+                  v-for="(sticker, idx) in stickerOptions"
+                  :key="idx"
+                  @click.prevent="addStickerElement(sticker); showStickerPicker = false"
+                  type="button"
+                  class="group relative rounded-xl bg-black/5 dark:bg-white/5 hover:bg-secondary/10 border-2 border-transparent hover:border-secondary transition-all duration-200 flex items-center justify-center" style="height: 64px;"
+                >
+                  <img :src="sticker" :alt="`贴纸${idx + 1}`" class="w-full h-full object-contain p-1.5 group-hover:scale-110 transition-transform duration-200" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+          <!-- AI Agent Panel -->
+          <div v-if="selectedElementIndex !== -1 && interactiveElements[selectedElementIndex]?.type === 'text' && showAiAgent" class="space-y-3 p-4 bg-white dark:bg-neutral rounded-2xl border-2 border-secondary">
+            <!-- Panel Header -->
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-bold text-secondary tracking-wide flex items-center gap-2">
+                <Sparkles class="w-4 h-4" />
+                AI 智能助手
+                <span class="text-xs font-normal text-tertiary">{{ isVipUser ? '（会员免费使用 AI 功能）' : '（润色/自定义 5 邮分，图片分析 10 邮分）' }}</span>
+
+              </h3>
+              <button @click="showAiAgent = false" class="w-6 h-6 rounded-full flex items-center justify-center text-black/30 dark:text-white/30 hover:text-black dark:hover:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-sm">✕</button>
+            </div>
+
+            <!-- AI Functions -->
+            <div class="space-y-2">
+              <!-- 一键润色 -->
+              <button
+                @click="handlePolishText"
+                :disabled="aiLoading"
+                class="w-full flex items-center gap-3 px-4 py-3 bg-primary/5 hover:bg-primary/10 rounded-xl transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Wand2 class="w-5 h-5 text-primary" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary">一键润色文字</div>
+                  <div class="text-xs text-tertiary truncate">智能优化当前文本，让文字更优美（消耗 5 邮分）</div>
+                </div>
+                <div v-if="aiLoading" class="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                <Sparkles v-else class="w-4 h-4 text-secondary" />
+              </button>
+
+              <!-- 分析图片生成文案 -->
+              <button
+                @click="handleGenerateFromImage"
+                :disabled="aiLoading || !selectedImage"
+                class="w-full flex items-center gap-3 px-4 py-3 bg-primary/5 hover:bg-primary/10 rounded-xl transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div class="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center shrink-0">
+                  <ImageIcon class="w-5 h-5 text-secondary" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-primary">分析图片生成文案（10 邮分）</div>
+                  <div class="text-xs text-tertiary truncate">
+                    {{ selectedImage ? '根据明信片正面图片生成诗意文案（消耗 10 邮分）' : '请先上传明信片正面图片' }}
+                  </div>
+                </div>
+                <div v-if="aiLoading" class="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                <Sparkles v-else class="w-4 h-4 text-secondary" />
+              </button>
+
+              <!-- 自定义要求 -->
+              <div class="space-y-2">
+                <button
+                  @click="showAiCustomInput = !showAiCustomInput"
+                  :disabled="aiLoading"
+                  class="w-full flex items-center gap-3 px-4 py-3 bg-primary/5 hover:bg-primary/10 rounded-xl transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <div class="w-10 h-10 rounded-lg bg-tertiary/10 flex items-center justify-center shrink-0">
+                    <MessageSquare class="w-5 h-5 text-tertiary" />
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-sm font-semibold text-primary">自定义要求</div>
+                    <div class="text-xs text-tertiary truncate">输入具体需求，AI 按需求修改文字（消耗 5 邮分）</div>
+                  </div>
+                  <ChevronRight class="w-4 h-4 text-tertiary transition-transform" :class="showAiCustomInput ? 'rotate-90' : ''" />
+                </button>
+
+                <!-- 自定义输入框 -->
+                <Transition
+                  enter-active-class="transition-all duration-200 ease-out"
+                  enter-from-class="opacity-0 -translate-y-2"
+                  enter-to-class="opacity-100 translate-y-0"
+                  leave-active-class="transition-all duration-150 ease-in"
+                  leave-from-class="opacity-100 translate-y-0"
+                  leave-to-class="opacity-0 -translate-y-2"
+                >
+                  <div v-if="showAiCustomInput" class="space-y-2 px-2">
+                    <textarea
+                      v-model="aiCustomPrompt"
+                      placeholder="例如：改成更浪漫的语气 / 翻译成英文 / 写得简洁一些..."
+                      class="w-full px-3 py-2 text-sm border border-black/10 dark:border-white/10 rounded-lg bg-black/5 dark:bg-white/5 text-primary resize-none focus:outline-none focus:ring-2 focus:ring-secondary/50"
+                      rows="2"
+                    ></textarea>
+                    <button
+                      @click="handleCustomModify"
+                      :disabled="aiLoading || !aiCustomPrompt.trim()"
+                      class="w-full py-2 bg-secondary text-white dark:text-neutral text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      <div v-if="aiLoading" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span>{{ aiLoading ? '处理中...' : '提交需求（5 邮分）' }}</span>
+                    </button>
+                  </div>
+                </Transition>
+              </div>
+            </div>
+
+            <!-- Tips -->
+            <div class="text-xs text-tertiary bg-black/5 dark:bg-white/5 rounded-lg px-3 py-2">
+              💡 提示：AI 会直接修改当前选中的文字内容，建议先保存好原文备份。
+            </div>
+          </div>
+
+          <!-- Combined Style & Picker Panel -->
+          <div v-if="selectedElementIndex !== -1" class="rounded-2xl border border-black/10 dark:border-white/10 shadow-sm">
+            <!-- Panel Header -->
+            <div class="flex items-center justify-between px-4 py-3 bg-primary/5 dark:bg-white/5 border-b border-black/10 dark:border-white/10 rounded-t-2xl">
+              <h3 class="text-sm font-bold text-primary dark:text-white tracking-wide">
+                {{ interactiveElements[selectedElementIndex]?.type === 'text' ? '文字样式' : '贴纸样式' }}
+              </h3>
+              <button @click="selectedElementIndex = -1" class="w-6 h-6 rounded-full flex items-center justify-center text-black/30 dark:text-white/30 hover:text-black dark:hover:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-sm">✕</button>
+            </div>
+            <div class="p-4 bg-white dark:bg-neutral space-y-4">
+            <!-- Text Style Editor - Show when text element is selected -->
+            <div v-if="interactiveElements[selectedElementIndex]?.type === 'text'" class="space-y-3">
+
+              <!-- Row 1: Toolbar Buttons with tooltips -->
+              <div class="flex items-center gap-0.5 p-1 bg-black/5 dark:bg-white/5 rounded-xl border border-secondary/20">
+                <!-- Bold -->
+                <div class="relative" @mouseenter="toolbarTooltip = 'bold'" @mouseleave="toolbarTooltip = null">
+                <button
+                  @click="interactiveElements[selectedElementIndex].fontWeight = interactiveElements[selectedElementIndex].fontWeight === 'bold' ? 'normal' : 'bold'"
+                    :class="interactiveElements[selectedElementIndex].fontWeight === 'bold' ? 'bg-secondary/20 text-secondary' : 'text-black/60 dark:text-white/60 hover:bg-secondary/10'"
+                    class="w-8 h-8 rounded-md flex items-center justify-center transition-colors font-bold text-sm"
+                  ><Bold class="w-4 h-4" /></button>
+                  <div v-if="toolbarTooltip === 'bold'" class="absolute bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-800 text-white text-xs rounded px-2 py-1 z-50 pointer-events-none">加粗</div>
+                </div>
+
+                <!-- Italic -->
+                <div class="relative" @mouseenter="toolbarTooltip = 'italic'" @mouseleave="toolbarTooltip = null">
+                <button
+                  @click="interactiveElements[selectedElementIndex].fontStyle = interactiveElements[selectedElementIndex].fontStyle === 'italic' ? 'normal' : 'italic'"
+                    :class="interactiveElements[selectedElementIndex].fontStyle === 'italic' ? 'bg-secondary/20 text-secondary' : 'text-black/60 dark:text-white/60 hover:bg-secondary/10'"
+                    class="w-8 h-8 rounded-md flex items-center justify-center transition-colors italic text-sm"
+                  ><Italic class="w-4 h-4" /></button>
+                  <div v-if="toolbarTooltip === 'italic'" class="absolute bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-800 text-white text-xs rounded px-2 py-1 z-50 pointer-events-none">斜体</div>
+                </div>
+
+                <!-- Underline -->
+                <div class="relative" @mouseenter="toolbarTooltip = 'underline'" @mouseleave="toolbarTooltip = null">
+                <button
+                    @click="interactiveElements[selectedElementIndex].textDecoration = interactiveElements[selectedElementIndex].textDecoration === 'underline' ? 'none' : 'underline'"
+                    :class="interactiveElements[selectedElementIndex].textDecoration === 'underline' ? 'bg-secondary/20 text-secondary' : 'text-black/60 dark:text-white/60 hover:bg-secondary/10'"
+                    class="w-8 h-8 rounded-md flex items-center justify-center transition-colors"
+                  ><Underline class="w-4 h-4" /></button>
+                  <div v-if="toolbarTooltip === 'underline'" class="absolute bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-800 text-white text-xs rounded px-2 py-1 z-50 pointer-events-none">下划线</div>
+                </div>
+
+                <!-- Strikethrough -->
+                <div class="relative" @mouseenter="toolbarTooltip = 'strike'" @mouseleave="toolbarTooltip = null">
+                  <button
+                    @click="interactiveElements[selectedElementIndex].textDecoration = interactiveElements[selectedElementIndex].textDecoration === 'line-through' ? 'none' : 'line-through'"
+                    :class="interactiveElements[selectedElementIndex].textDecoration === 'line-through' ? 'bg-secondary/20 text-secondary' : 'text-black/60 dark:text-white/60 hover:bg-secondary/10'"
+                    class="w-8 h-8 rounded-md flex items-center justify-center transition-colors"
+                  ><Strikethrough class="w-4 h-4" /></button>
+                  <div v-if="toolbarTooltip === 'strike'" class="absolute bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-800 text-white text-xs rounded px-2 py-1 z-50 pointer-events-none">删除线</div>
+                </div>
+
+                <!-- Divider -->
+                <div class="w-px h-6 bg-black/20 dark:bg-white/20 mx-1"></div>
+
+                <!-- Align Left -->
+                <div class="relative" @mouseenter="toolbarTooltip = 'alignLeft'" @mouseleave="toolbarTooltip = null">
+                  <button
+                    @click="interactiveElements[selectedElementIndex].textAlign = 'left'"
+                    :class="(interactiveElements[selectedElementIndex].textAlign || 'left') === 'left' ? 'bg-secondary/20 text-secondary' : 'text-black/60 dark:text-white/60 hover:bg-secondary/10'"
+                    class="w-8 h-8 rounded-md flex items-center justify-center transition-colors"
+                  ><AlignLeft class="w-4 h-4" /></button>
+                  <div v-if="toolbarTooltip === 'alignLeft'" class="absolute bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-800 text-white text-xs rounded px-2 py-1 z-50 pointer-events-none">左对齐</div>
+                </div>
+
+                <!-- Align Center -->
+                <div class="relative" @mouseenter="toolbarTooltip = 'alignCenter'" @mouseleave="toolbarTooltip = null">
+                  <button
+                    @click="interactiveElements[selectedElementIndex].textAlign = 'center'"
+                    :class="interactiveElements[selectedElementIndex].textAlign === 'center' ? 'bg-secondary/20 text-secondary' : 'text-black/60 dark:text-white/60 hover:bg-secondary/10'"
+                    class="w-8 h-8 rounded-md flex items-center justify-center transition-colors"
+                  ><AlignCenter class="w-4 h-4" /></button>
+                  <div v-if="toolbarTooltip === 'alignCenter'" class="absolute bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-800 text-white text-xs rounded px-2 py-1 z-50 pointer-events-none">居中</div>
+                </div>
+
+                <!-- Align Right -->
+                <div class="relative" @mouseenter="toolbarTooltip = 'alignRight'" @mouseleave="toolbarTooltip = null">
+                  <button
+                    @click="interactiveElements[selectedElementIndex].textAlign = 'right'"
+                    :class="interactiveElements[selectedElementIndex].textAlign === 'right' ? 'bg-secondary/20 text-secondary' : 'text-black/60 dark:text-white/60 hover:bg-secondary/10'"
+                    class="w-8 h-8 rounded-md flex items-center justify-center transition-colors"
+                  ><AlignRight class="w-4 h-4" /></button>
+                  <div v-if="toolbarTooltip === 'alignRight'" class="absolute bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-800 text-white text-xs rounded px-2 py-1 z-50 pointer-events-none">右对齐</div>
+                </div>
+              </div>
+
+              <!-- Row 2: Font Family + Font Size Buttons -->
+              <div class="flex items-center gap-2 flex-wrap">
+                <!-- Font Family Dropdown -->
+                <div id="font-dropdown-wrapper" class="relative flex-1">
+                  <button
+                    @click.stop="showFontDropdown = !showFontDropdown"
+                    class="w-full px-3 py-1.5 text-xs border border-black/15 dark:border-white/15 rounded-lg bg-black/5 dark:bg-white/5 text-black dark:text-white font-medium hover:bg-black/10 dark:hover:bg-white/10 transition-colors flex items-center justify-between gap-1.5"
+                  >
+                    <span>{{ fontDisplayName }}</span>
+                    <svg :class="showFontDropdown ? 'rotate-180' : ''" class="w-3 h-3 opacity-50 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+                  <div v-if="showFontDropdown" class="absolute left-0 top-full mt-1 w-48 bg-white dark:bg-neutral border border-black/10 dark:border-white/10 rounded-xl shadow-lg z-50 max-h-64 overflow-y-auto">
+                    <div class="px-3 py-2 border-b border-black/10 dark:border-white/10">
+                      <p class="text-xs font-bold text-secondary mb-2">中文字体</p>
+                      <button v-for="font in chineseFonts" :key="font.value"
+                        @click="interactiveElements[selectedElementIndex].fontFamily = font.value; showFontDropdown = false"
+                        :class="interactiveElements[selectedElementIndex].fontFamily === font.value ? 'bg-secondary text-white dark:text-neutral' : 'text-black dark:text-white hover:bg-secondary/10'"
+                        class="w-full text-left px-3 py-1.5 rounded-lg text-xs transition-colors mb-0.5"
+                        :style="{ fontFamily: font.value }"
+                      >{{ font.label }}</button>
+                    </div>
+                    <div class="px-3 py-2">
+                      <p class="text-xs font-bold text-secondary mb-2">英文字体</p>
+                      <button v-for="font in englishFonts" :key="font.value"
+                        @click="interactiveElements[selectedElementIndex].fontFamily = font.value; showFontDropdown = false"
+                        :class="interactiveElements[selectedElementIndex].fontFamily === font.value ? 'bg-secondary text-white dark:text-neutral' : 'text-black dark:text-white hover:bg-secondary/10'"
+                        class="w-full text-left px-3 py-1.5 rounded-lg text-xs transition-colors mb-0.5"
+                        :style="{ fontFamily: font.value }"
+                      >{{ font.label }}</button>
+                    </div>
+                  </div>
+              </div>
+
+                <!-- Font Size A- / display / A+ -->
+                <div class="flex items-center gap-1">
+                <button
+                    @click="interactiveElements[selectedElementIndex].fontSize = Math.max(8, (interactiveElements[selectedElementIndex].fontSize || 16) - 2)"
+                    class="w-8 h-8 rounded-lg bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-xs font-bold text-black/60 dark:text-white/60"
+                    title="缩小文字"
+                  ><span class="text-xs">A-</span></button>
+                  <span class="text-xs font-semibold text-black/50 dark:text-white/50 w-6 text-center">{{ interactiveElements[selectedElementIndex].fontSize || 16 }}</span>
+                <button
+                    @click="interactiveElements[selectedElementIndex].fontSize = Math.min(72, (interactiveElements[selectedElementIndex].fontSize || 16) + 2)"
+                    class="w-8 h-8 rounded-lg bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-xs font-bold text-black/60 dark:text-white/60"
+                    title="放大文字"
+                  ><span class="text-xs">A+</span></button>
+                </div>
+              </div>
+
+              <!-- Row 3: Color Palette -->
+              <div class="space-y-1.5">
+                  <span class="text-xs font-semibold text-secondary">文字颜色</span>
+                <div class="flex gap-2 flex-wrap p-2 border-2 border-dashed border-secondary/40 rounded-xl bg-white dark:bg-neutral">
+                  <button
+                    v-for="color in ['#000000', '#FF0000', '#00B050', '#0070C0', '#FFC000', '#7030A0', '#FF6B6B', '#4ECDC4']"
+                    :key="color"
+                    @click="interactiveElements[selectedElementIndex].color = color"
+                    :class="interactiveElements[selectedElementIndex].color === color ? 'ring-2 ring-offset-2 ring-secondary scale-110' : ''"
+                    class="w-7 h-7 rounded-lg border-2 border-white/50 shadow transition-all hover:scale-110"
+                    :style="{ backgroundColor: color }"
+                  ></button>
+                  <!-- Custom color picker with floating preview -->
+                  <div class="relative">
+                    <label class="w-7 h-7 rounded-lg border-2 border-secondary cursor-pointer hover:scale-110 transition-all flex items-center justify-center bg-white dark:bg-neutral">
+                    <input
+                      type="color"
+                      :value="interactiveElements[selectedElementIndex].color || '#000000'"
+                        @input="interactiveElements[selectedElementIndex].color = ($event.target as HTMLInputElement).value"
+                        class="absolute opacity-0 w-0 h-0"
+                        @focus="showColorPicker = true"
+                        @blur="showColorPicker = false"
+                        ref="colorPickerInput"
+                      />
+                      <span class="text-base leading-none select-none" @click="($refs.colorPickerInput as HTMLInputElement)?.click()">+</span>
+                  </label>
+                    <!-- Floating color indicator -->
+                    <div
+                      v-if="interactiveElements[selectedElementIndex].color && !['#000000','#FF0000','#00B050','#0070C0','#FFC000','#7030A0','#FF6B6B','#4ECDC4'].includes(interactiveElements[selectedElementIndex].color)"
+                      class="absolute -top-9 left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5 pointer-events-none"
+                    >
+                      <div
+                        class="w-6 h-6 rounded-md shadow-md border-2 border-white"
+                        :style="{ backgroundColor: interactiveElements[selectedElementIndex].color }"
+                      ></div>
+                      <div class="w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-white"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sticker Picker - Show when sticker element is selected -->
+            <div v-else-if="interactiveElements[selectedElementIndex]?.type === 'sticker'" class="space-y-2">
+              <!-- Series Tabs -->
+              <div class="flex gap-1">
+                <button
+                  v-for="series in stickerSeries"
+                  :key="series.value"
+                  @click="selectedStickerSeries = series.value"
+                  class="px-3 py-1 rounded-lg text-xs font-semibold transition-colors"
+                  :class="selectedStickerSeries === series.value ? 'bg-secondary text-white dark:text-neutral' : 'bg-black/5 dark:bg-white/5 text-black/50 dark:text-white/50 hover:bg-black/10 dark:hover:bg-white/10'"
+                >{{ series.label }}</button>
+              </div>
+              <div class="grid grid-cols-3 gap-2 overflow-y-auto" style="max-height: 210px;">
+                <button
+                  v-for="(sticker, index) in stickerOptions"
+                  :key="index"
+                  @click="interactiveElements[selectedElementIndex].content = sticker"
+                  class="group relative rounded-xl bg-black/5 dark:bg-white/5 border-2 transition-all duration-200 flex items-center justify-center" style="height: 64px;"
+                  :class="interactiveElements[selectedElementIndex].content === sticker ? 'border-secondary bg-secondary/10' : 'border-transparent hover:border-secondary/50'"
+                >
+                  <img :src="sticker" :alt="`Sticker ${index + 1}`" class="w-full h-full object-contain p-1.5 group-hover:scale-110 transition-transform duration-200" />
+                  <div v-if="interactiveElements[selectedElementIndex].content === sticker" class="absolute top-1 right-1 w-4 h-4 bg-secondary rounded-full flex items-center justify-center">
+                    <Check class="w-2.5 h-2.5 text-white" />
+                  </div>
+                </button>
+              </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stamp Selector -->
+          <div v-if="showStampSelector" ref="stampSelectorRef" class="rounded-2xl border border-black/10 dark:border-white/10 shadow-sm">
+            <div class="flex items-center justify-between px-4 py-3 bg-primary/5 dark:bg-white/5 border-b border-black/10 dark:border-white/10 rounded-t-2xl">
+              <h3 class="text-sm font-bold text-primary dark:text-white tracking-wide">选择邮票</h3>
+              <button @click="showStampSelector = false" class="w-6 h-6 rounded-full flex items-center justify-center text-black/30 dark:text-white/30 hover:text-black dark:hover:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-sm">✕</button>
+            </div>
+            <div class="p-3 bg-white dark:bg-neutral">
+              <p v-if="myStamps.length === 0" class="text-xs text-black/40 dark:text-white/40 text-center py-8">暂无可用邮票，请先去商店补充</p>
+              <template v-else>
+                <div class="grid grid-cols-3 gap-2 max-h-72 overflow-y-auto">
+                  <button
+                    v-for="stamp in myStamps"
+                    :key="stamp.id"
+                    @click="selectStamp(stamp)"
+                    class="group relative rounded-xl border-2 transition-all duration-200 flex items-center justify-center bg-black/5 dark:bg-white/5 aspect-square"
+                    :class="selectedStamp?.id === stamp.id ? 'border-secondary shadow-md' : 'border-transparent hover:border-secondary/50'"
+                  >
+                    <img :src="stamp.image" :alt="stamp.title" class="w-full h-full object-contain p-1.5 group-hover:scale-105 transition-transform duration-200" />
+                    <div class="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-white/80 dark:bg-black/60 text-primary backdrop-blur-sm">
+                      剩余 {{ stamp.quantity ?? 0 }}
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 px-1 py-1">
+                      <p class="text-xs font-semibold truncate text-black/70 dark:text-white/70 text-center bg-white/50 dark:bg-black/50 backdrop-blur-sm rounded">{{ stamp.title }}</p>
+                    </div>
+                    <div v-if="selectedStamp?.id === stamp.id" class="absolute top-1.5 right-1.5 w-5 h-5 bg-secondary rounded-full flex items-center justify-center shadow">
+                      <Check class="w-3 h-3 text-white" />
+                    </div>
+                  </button>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Postcard Info Section -->
+          <div class="space-y-4 p-4 bg-white dark:bg-neutral rounded-2xl border border-black/10 dark:border-white/10">
+            <!-- Title Input -->
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-primary dark:text-white">邮件标题：</label>
+              <input
+                v-model="postcardTitle"
+                type="text"
+                placeholder="输入明信片标题"
+                class="w-full px-3 py-2 border border-black/10 dark:border-white/10 rounded-lg bg-black/5 dark:bg-white/5 text-black dark:text-white placeholder-black/40 dark:placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-secondary"
+              />
+            </div>
+
+            <!-- Recipient Input -->
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-primary dark:text-white">收件人：</label>
+              <div class="flex gap-2">
+                <input
+                  v-model="recipientInput"
+                  type="text"
+                  placeholder="输入uid/邮箱"
+                  class="flex-1 px-3 py-2 border border-black/10 dark:border-white/10 rounded-lg bg-black/5 dark:bg-white/5 text-black dark:text-white placeholder-black/40 dark:placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-secondary"
+                />
+                <button
+                  type="button"
+                  @click="selectSelfRecipient"
+                  :disabled="!currentUserRecipient || postcardType === 'drifting'"
+                  class="px-3 py-2 rounded-lg border font-bold text-sm transition-colors disabled:cursor-not-allowed"
+                  :class="currentUserRecipient && postcardType !== 'drifting'
+                    ? 'border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-primary dark:text-white hover:bg-black/10 dark:hover:bg-white/10'
+                    : 'border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 text-black/40 dark:text-white/40'"
+                  :title="postcardType === 'drifting' ? '漂流传递不支持传递给自己' : '快速填写自己的 UID 或邮箱'"
+                >
+                  自己
+                </button>
+                <button
+                  type="button"
+                  @click="showFriendSelector = !showFriendSelector"
+                  class="px-3 py-2 bg-primary dark:bg-secondary text-white dark:text-black font-bold rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center"
+                  title="快速选择好友"
+                >
+                  <Users class="w-5 h-5" />
+                </button>
+              </div>
+
+
+              <div v-if="showFriendSelector" class="rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 p-2 space-y-2">
+                <input
+                  v-model.trim="friendSearchKeyword"
+                  type="text"
+                  placeholder="搜索好友昵称/UID"
+                  class="w-full px-3 py-2 text-sm border border-black/10 dark:border-white/10 rounded-lg bg-white/80 dark:bg-neutral/70 text-black dark:text-white placeholder-black/40 dark:placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-secondary"
+                />
+
+                <div v-if="filteredFriendOptions.length > 0" class="max-h-44 overflow-y-auto space-y-1">
+                  <button
+                    v-for="friend in filteredFriendOptions"
+                    :key="friend.id"
+                    @click="selectFriendRecipient(friend)"
+                    class="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-left"
+                  >
+                    <img :src="friend.avatar" :alt="friend.username" class="w-7 h-7 rounded-full object-cover" />
+                    <div class="min-w-0">
+                      <p class="text-xs font-semibold text-primary dark:text-white truncate">{{ friend.username }}</p>
+                      <p class="text-[11px] text-black/50 dark:text-white/50 truncate">UID: {{ friend.uid }}</p>
+                    </div>
+                  </button>
+                </div>
+                <p v-else class="text-xs text-black/45 dark:text-white/45 text-center py-2">没有匹配的好友</p>
+              </div>
+            </div>
+
+            <div v-if="postcardType === 'normal'" class="space-y-3 rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 p-3">
+              <div class="flex items-start justify-between gap-3">
+                <div class="space-y-1">
+                  <p class="text-sm font-bold text-primary dark:text-white">定时发送</p>
+                  <p class="text-xs text-black/50 dark:text-white/50">仅当收件人是你的好友或你自己时可用</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input
+                    v-model="scheduledSendEnabled"
+                    type="checkbox"
+                    class="sr-only peer"
+                    :disabled="!canUseScheduledSend"
+                  />
+                  <div class="w-11 h-6 rounded-full transition-colors peer-disabled:opacity-50 peer-disabled:cursor-not-allowed" :class="scheduledSendEnabled ? 'bg-primary dark:bg-secondary' : 'bg-black/15 dark:bg-white/15'">
+                    <div class="w-5 h-5 bg-white rounded-full shadow mt-0.5 ml-0.5 transition-transform" :class="scheduledSendEnabled ? 'translate-x-5' : ''"></div>
+                  </div>
+                </label>
+              </div>
+              <p v-if="!canUseScheduledSend" class="text-xs text-amber-600 dark:text-amber-400">请先选择好友或自己作为收件人，才可以开启定时发送。</p>
+              <input
+                v-if="scheduledSendEnabled"
+                v-model="scheduledAt"
+                type="datetime-local"
+                :min="scheduledMinTime"
+                class="w-full px-3 py-2 text-sm border border-black/10 dark:border-white/10 rounded-lg bg-white/80 dark:bg-neutral/70 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-secondary"
+              />
+            </div>
+
+            <!-- Public to Square Checkbox (Only for Normal Postcards) -->
+
+            <div v-if="postcardType === 'normal'" class="flex items-center gap-2">
+
+              <label for="publicCheckbox" class="text-sm font-medium text-black/70 dark:text-white/70 cursor-pointer">
+                公开到广场
+              </label>
+              <input
+                v-model="isPublicToSquare"
+                type="checkbox"
+                id="publicCheckbox"
+                class="w-4 h-4 rounded border-2 border-primary dark:border-secondary cursor-pointer accent-primary dark:accent-secondary"
+              />
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex gap-3">
+            <button
+              @click="showResetDialog = true"
+              class="flex-1 py-3 px-4 bg-black/5 dark:bg-white/5 text-primary font-bold rounded-xl hover:bg-black/10 dark:hover:bg-white/10 transition-colors border-2 border-primary"
+            >
+              删除
+            </button>
+            <button
+              @click="publishPostcard"
+              :disabled="!selectedImage"
+              class="flex-1 py-3 px-4 bg-primary dark:bg-secondary text-white dark:text-black font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              确认发送
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Drift Help Dialog -->
+    <transition name="fade">
+      <div v-if="showDriftHelpDialog" class="fixed inset-0 z-[100] flex items-center justify-center p-4" @click.self="showDriftHelpDialog = false">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <!-- Dialog -->
+        <div class="relative bg-white dark:bg-neutral rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-auto overflow-hidden">
+          <div class="flex items-center justify-between mb-4 border-b border-black/5 dark:border-white/5 pb-3">
+            <h3 class="font-headline text-lg font-bold text-primary dark:text-white flex items-center gap-2">
+              <Sparkles class="w-5 h-5 text-secondary" />
+              漂流传递明信片
+            </h3>
+            <button @click="showDriftHelpDialog = false" class="w-8 h-8 rounded-full flex items-center justify-center text-black/40 dark:text-white/40 hover:bg-black/10 dark:hover:bg-white/10 transition-colors">✕</button>
+          </div>
+          <div class="space-y-4 text-sm text-black/70 dark:text-white/70">
+            <p><strong>发布规则：</strong> 只能插入一个文本框和一张贴纸。</p>
+            <p><strong>传递规则：</strong> 发布后明信片会出现在首页的漂流传递中。</p>
+            <p><strong>接力规则：</strong> 其它用户可以点击并继续插入一个文本框和一张贴纸。</p>
+            <p><strong>管理权限：</strong> 明信片右边会显示每个人添加的元素。发布人可以任意删除对应的用户操作。</p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-black/5 dark:border-white/5">
+            <button
+              @click="showDriftHelpDialog = false"
+              class="w-full py-3 rounded-xl bg-primary dark:bg-secondary text-white dark:text-black font-bold hover:opacity-90 transition-opacity"
+            >我知道了</button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Reset Confirm Dialog -->
+    <transition name="fade">
+      <div v-if="showResetDialog" class="fixed inset-0 z-[100] flex items-center justify-center p-4" @click.self="showResetDialog = false">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <!-- Dialog -->
+        <div class="relative bg-white dark:bg-neutral rounded-2xl shadow-2xl p-6 w-full max-w-xs mx-auto">
+          <div class="flex flex-col items-center gap-3 mb-5">
+            <div class="w-12 h-12 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+              <Trash2 class="w-6 h-6 text-red-500" />
+            </div>
+            <h3 class="text-base font-bold text-primary dark:text-white">确认清空？</h3>
+            <p class="text-xs text-black/50 dark:text-white/50 text-center">所有内容将被清除，包括图片、文字和贴纸，此操作不可撤销。</p>
+          </div>
+          <div class="flex gap-3">
+            <button
+              @click="showResetDialog = false"
+              class="flex-1 py-2.5 rounded-xl border-2 border-black/10 dark:border-white/10 text-sm font-semibold text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            >取消</button>
+            <button
+              @click="resetUpload(); showResetDialog = false"
+              class="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold transition-colors"
+            >确认清空</button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Publish Preview Dialog -->
+    <transition name="fade">
+      <div v-if="showPublishDialog" class="fixed inset-0 z-[100] flex items-center justify-center p-4" @click.self="showPublishDialog = false">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+        <div class="relative bg-white dark:bg-neutral rounded-2xl shadow-2xl w-full max-w-lg mx-auto overflow-hidden">
+          <!-- Header -->
+          <div class="flex items-center justify-between px-6 py-4 border-b border-black/10 dark:border-white/10">
+            <h3 class="font-headline text-lg font-bold text-primary dark:text-white">预览明信片</h3>
+            <button @click="showPublishDialog = false" class="w-8 h-8 rounded-full flex items-center justify-center text-black/30 dark:text-white/30 hover:bg-black/10 dark:hover:bg-white/10 transition-colors">✕</button>
+          </div>
+
+          <!-- Postcard Preview -->
+          <div class="px-6 py-6 flex justify-center">
+            <div class="relative cursor-pointer" :style="{ width: '100%', maxWidth: '300px', aspectRatio: postcardAspectRatio }" @click="publishFlipped = !publishFlipped">
+              <!-- Back (text side) -->
+              <div
+                :class="[
+                  'absolute inset-0 bg-white border border-black/10 transition-all duration-500 shadow-inner overflow-hidden',
+                  publishFlipped ? 'translate-x-3 translate-y-3 rotate-1 shadow-md z-0' : '-translate-x-3 -translate-y-3 -rotate-1 shadow-xl z-10'
+                ]"
+                ref="publishBackRef"
+              >
+                <!-- Scale wrapper -->
+                <div
+                  class="absolute top-0 left-0 origin-top-left"
+                  :style="getPublishBackScaleStyle()"
+                >
+                  <div
+                    class="flex p-5 bg-white"
+                    :style="{ width: publishBackRefWidth + 'px', height: publishBackRefHeight + 'px' }"
+                  >
+                    <!-- Left Side -->
+                    <div class="flex-1 flex flex-col pr-5 border-r border-black/20 overflow-hidden relative">
+                      <h4 class="font-headline text-xl tracking-widest text-black/60 mb-2">POSTCARD</h4>
+                      <div class="relative flex-1">
+                        <div class="flex flex-col gap-8 h-full pt-6 pb-2">
+                          <div class="w-full h-[1px] bg-black/10"></div>
+                          <div class="w-full h-[1px] bg-black/10"></div>
+                          <div class="w-full h-[1px] bg-black/10"></div>
+                          <div class="w-full h-[1px] bg-black/10"></div>
+                          <div class="w-full h-[1px] bg-black/10"></div>
+                          <div class="w-full h-[1px] bg-black/10"></div>
+                          <div class="w-full h-[1px] bg-black/10"></div>
+                          <div class="w-full h-[1px] bg-black/10"></div>
+                          <div class="w-full h-[1px] bg-black/10"></div>
+                          <div class="w-full h-[1px] bg-black/10"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Right Side -->
+                    <div class="flex-1 flex flex-col pl-5 relative">
+                      <div class="flex justify-end relative mb-4">
+                        <div v-if="selectedStamp" class="absolute -top-4 -right-4 w-32 h-32 flex items-center justify-center" style="filter: drop-shadow(2px 4px 6px rgba(230, 220, 200, 0.8));">
+                          <img :src="selectedStamp.image" class="w-full h-full object-cover" />
+                        </div>
+                        <div v-else class="w-20 h-24 border-[2px] border-dashed border-black/30 flex items-center justify-center bg-black/5">
+                          <span class="text-xs font-bold text-black/40">邮票</span>
+                        </div>
+                      </div>
+                      <div class="flex-1 flex flex-col justify-end gap-4 pb-2">
+                        <div class="flex items-end gap-3"><span class="text-xs text-black/60 font-body">to:</span><div class="flex-1 h-[1px] bg-black/20"></div></div>
+                        <div class="w-full h-[1px] bg-black/20 mt-3"></div>
+                        <div class="flex items-end gap-3"><span class="text-xs text-black/60 font-body">from:</span><div class="flex-1 h-[1px] bg-black/20"></div></div>
+                        <div class="w-full h-[1px] bg-black/20"></div>
+                      </div>
+                    </div>
+                    <!-- Interactive elements -->
+                    <div
+                      v-for="(el, idx) in interactiveElements"
+                      :key="idx"
+                      class="absolute pointer-events-none"
+                      :style="{
+                        left: el.x + 'px', top: el.y + 'px',
+                        transform: `rotate(${el.rotation}deg) scale(${el.scale || 1})`,
+                        transformOrigin: 'top left',
+                        width: el.type === 'text' ? 'auto' : el.width + 'px',
+                        height: el.type === 'text' ? 'auto' : el.height + 'px',
+                        zIndex: idx + 10
+                      }"
+                    >
+                      <span v-if="el.type === 'text'" :style="{ fontFamily: el.fontFamily, fontSize: el.fontSize + 'px', color: el.color, fontWeight: el.fontWeight, fontStyle: el.fontStyle, whiteSpace: 'pre-wrap', wordBreak: 'break-word', display: 'inline-block' }">{{ el.content }}</span>
+                      <img v-else-if="el.type === 'sticker'" :src="el.content" class="w-full h-full object-contain" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Front (image side) -->
+              <div
+                :class="[
+                  'absolute inset-0 bg-white p-2 transition-all duration-500',
+                  publishFlipped ? '-translate-x-3 -translate-y-3 -rotate-1 shadow-xl z-10' : 'translate-x-3 translate-y-3 rotate-1 shadow-md z-0'
+                ]"
+              >
+                <div class="w-full h-full relative overflow-hidden border border-black/5">
+                  <img v-if="selectedImage" :src="selectedImage" class="w-full h-full object-cover"
+                    :style="{ transform: `translate(${imageOffset.x}px, ${imageOffset.y}px) scale(${imageScale}) rotate(${imageRotation}deg)` }"
+                  />
+                </div>
+              </div>
+            </div>
+            <!-- <p class="text-center text-xs text-black/40 dark:text-white/40 mt-3">点击明信片可翻转查看</p> -->
+          </div>
+
+          <div class="px-6 pb-4">
+            <div class="rounded-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 px-4 py-3 space-y-1">
+              <div class="flex items-center justify-between gap-3 text-sm">
+                <span class="text-black/60 dark:text-white/60">发送方式</span>
+                <span class="font-semibold text-primary dark:text-white">{{ scheduledSendEnabled ? '定时发送' : '立即发送' }}</span>
+              </div>
+              <div v-if="scheduledSendEnabled && scheduledAt" class="flex items-center justify-between gap-3 text-sm">
+                <span class="text-black/60 dark:text-white/60">发送时间</span>
+                <span class="font-semibold text-primary dark:text-white">{{ formatScheduledDisplay(scheduledAt) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="px-6 pb-6 flex gap-3">
+            <button
+              @click="showPublishDialog = false"
+              class="flex-1 py-3 rounded-xl border-2 border-black/10 dark:border-white/10 text-sm font-semibold text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            >再改改</button>
+            <button
+              @click="confirmPublish"
+              :disabled="isPublishing"
+              class="flex-1 py-3 rounded-xl bg-primary dark:bg-secondary text-white dark:text-black text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
+            >{{ isPublishing ? '发布中...' : (scheduledSendEnabled ? '确认定时发送' : '确认发布') }}</button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Hidden file inputs -->
+    <input
+      ref="cameraInput"
+      type="file"
+      accept="image/*"
+      capture="environment"
+      @change="handleImageUpload"
+      class="hidden"
+    />
+    <input
+      ref="galleryInput"
+      type="file"
+      accept="image/*"
+      @change="handleImageUpload"
+      class="hidden"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import { ElMessage } from "element-plus";
+import { ChevronLeft, Camera, Image as ImageIcon, Check, Type, Smile, Bold, Italic, Palette, Trash2, ArrowUp, ArrowDown, RotateCw, Sparkles, Underline, Strikethrough, AlignLeft, AlignCenter, AlignRight, Users, HelpCircle, Wand2, MessageSquare, ChevronRight } from "lucide-vue-next";
+import { assetBaseURL } from "../utils/request.js";
+import { getMyStamps } from "../api/stamp.js";
+import { createPostcard, uploadPostcardImage } from "../api/postcard.js";
+import { getFriends } from "../api/friend.js";
+import { polishText, generateFromImage, customModify } from "../api/ai.js";
+import { useUser } from "../store/user";
+
+
+const showUploadOptions = ref(false);
+const postcardCanvasRef = ref<HTMLElement | null>(null);
+const frontImageContainerRef = ref<HTMLElement | null>(null);
+const editBackContainerRef = ref<HTMLElement | null>(null);
+const publishBackRef = ref<HTMLElement | null>(null);
+const postcardTitle = ref('');
+const recipientInput = ref('');
+const isPublicToSquare = ref(false);
+const showFriendSelector = ref(false);
+const friendSearchKeyword = ref('');
+const friendOptions = ref<any[]>([]);
+const postcardType = ref('normal'); // 'normal' | 'drifting'
+const showDriftHelpDialog = ref(false);
+const scheduledSendEnabled = ref(false);
+const scheduledAt = ref('');
+
+
+const filteredFriendOptions = computed(() => {
+  const keyword = friendSearchKeyword.value.trim().toLowerCase();
+  if (!keyword) return friendOptions.value;
+
+  return friendOptions.value.filter((friend) => {
+    const content = [friend.username, friend.uid]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+
+    return content.includes(keyword);
+  });
+});
+
+const containerSize = ref({ width: 0, height: 0 });
+const publishContainerSize = ref({ width: 0, height: 0 });
+let resizeObserver: ResizeObserver | null = null;
+let publishResizeObserver: ResizeObserver | null = null;
+
+  onMounted(() => {
+  loadMyStamps();
+  loadFriends();
+  restoreDraftFromCache();
+
+  // ResizeObserver for edit back container
+  if (editBackContainerRef.value) {
+    containerSize.value = {
+      width: editBackContainerRef.value.offsetWidth,
+      height: editBackContainerRef.value.offsetHeight
+    };
+    resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        containerSize.value = {
+          width: entry.contentRect.width,
+          height: entry.contentRect.height
+        };
+      }
+    });
+    resizeObserver.observe(editBackContainerRef.value);
+  }
+
+  // ResizeObserver for publish back container (can be set later when the dialog opens)
+  watch(showPublishDialog, async (newVal) => {
+    if (newVal) {
+      await nextTick();
+      if (publishBackRef.value) {
+        publishContainerSize.value = {
+          width: publishBackRef.value.offsetWidth,
+          height: publishBackRef.value.offsetHeight
+        };
+        if (!publishResizeObserver) {
+          publishResizeObserver = new ResizeObserver((entries) => {
+            for (let entry of entries) {
+              publishContainerSize.value = {
+                width: entry.contentRect.width,
+                height: entry.contentRect.height
+              };
+            }
+          });
+        }
+        publishResizeObserver.observe(publishBackRef.value);
+      }
+    } else {
+        if (publishResizeObserver && publishBackRef.value) {
+            publishResizeObserver.unobserve(publishBackRef.value);
+        }
+    }
+  });
+
+  // Close font dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    const target = e.target as Node;
+    const fontDropdownEl = document.getElementById('font-dropdown-wrapper');
+    if (fontDropdownEl && !fontDropdownEl.contains(target)) {
+      showFontDropdown.value = false;
+    }
+  });
+});
+
+onUnmounted(() => {
+  if (draftSaveTimer) {
+    clearTimeout(draftSaveTimer);
+    draftSaveTimer = null;
+  }
+  saveDraftNow();
+  if (resizeObserver) resizeObserver.disconnect();
+  if (publishResizeObserver) publishResizeObserver.disconnect();
+});
+
+// Fixed reference sizes for consistent back rendering across screen sizes
+const backRefWidth = computed(() => postcardAspectRatio.value === '3/2' ? 600 : 400);
+const backRefHeight = computed(() => postcardAspectRatio.value === '3/2' ? 400 : 600);
+
+const getEditBackScaleStyle = () => {
+  const srcW = backRefWidth.value;
+  const srcH = backRefHeight.value;
+  const dstW = containerSize.value.width || srcW;
+  const dstH = containerSize.value.height || srcH;
+  const scale = Math.min(dstW / srcW, dstH / srcH);
+  return {
+    width: srcW + 'px',
+    height: srcH + 'px',
+    transform: `scale(${scale})`,
+    transformOrigin: 'top left',
+  };
+};
+
+// 发布预览相关的处理
+const publishBackRefWidth = computed(() => postcardAspectRatio.value === '3/2' ? 600 : 400);
+const publishBackRefHeight = computed(() => postcardAspectRatio.value === '3/2' ? 400 : 600);
+
+const getPublishBackScaleStyle = () => {
+  const srcW = publishBackRefWidth.value;
+  const srcH = publishBackRefHeight.value;
+  const dstW = publishContainerSize.value.width || srcW;
+  const dstH = publishContainerSize.value.height || srcH;
+  const scale = Math.min(dstW / srcW, dstH / srcH);
+  return {
+    width: srcW + 'px',
+    height: srcH + 'px',
+    transform: `scale(${scale})`,
+    transformOrigin: 'top left',
+  };
+};
+const showStampSelector = ref(false);
+const stampSelectorRef = ref<HTMLElement | null>(null);
+const showStickerPicker = ref(false);
+const showAiAgent = ref(false);
+const aiLoading = ref(false);
+const aiCustomPrompt = ref('');
+const showAiCustomInput = ref(false);
+const showResetDialog = ref(false);
+const showPublishDialog = ref(false);
+const isPublishing = ref(false);
+const publishFlipped = ref(false);
+const router = useRouter();
+const route = useRoute();
+const { userInfo } = useUser();
+const showColorPicker = ref(false);
+
+
+const showFontDropdown = ref(false);
+const toolbarTooltip = ref<string | null>(null);
+const showFront = ref(true); // true=正面, false=反面
+const postcardAspectRatio = ref('3/2'); // 明信片比例
+const textEditRefs = ref<Record<number, HTMLElement>>({});
+const selectedImage = ref<string | null>(null);
+const selectedImageFile = ref<File | null>(null);
+const cameraInput = ref<HTMLInputElement>();
+
+const galleryInput = ref<HTMLInputElement>();
+const imageOffset = ref({ x: 0, y: 0 });
+const imageScale = ref(1);
+const imageRotation = ref(0);
+const showImageControls = ref(false);
+const isDragging = ref(false);
+const dragStart = ref({ x: 0, y: 0 });
+const selectedStamp = ref<any>(null);
+const myStamps = ref<any[]>([]);
+const interactiveElements = ref<any[]>([]);
+const selectedElementIndex = ref(-1);
+const hasSelectedTextElement = computed(() => selectedElementIndex.value !== -1 && interactiveElements.value[selectedElementIndex.value]?.type === 'text');
+const isVipUser = computed(() => String(userInfo.value?.vipLevel || 'VIP 0') !== 'VIP 0');
+const normalizeRecipientValue = (value?: string | null) => String(value || '').trim().toLowerCase();
+
+
+const currentUserRecipient = computed(() => {
+  const uid = userInfo.value?.uid?.trim();
+  const email = userInfo.value?.email?.trim();
+  return uid || email || '';
+});
+const normalizedCurrentUid = computed(() => normalizeRecipientValue(userInfo.value?.uid));
+const normalizedCurrentEmail = computed(() => normalizeRecipientValue(userInfo.value?.email));
+const isSelfRecipientSelected = computed(() => {
+  const input = normalizeRecipientValue(recipientInput.value);
+  if (!input) return false;
+  return input === normalizedCurrentUid.value || input === normalizedCurrentEmail.value;
+});
+const isFriendRecipientSelected = computed(() => {
+  const input = normalizeRecipientValue(recipientInput.value);
+  if (!input) return false;
+  return friendOptions.value.some((friend) => normalizeRecipientValue(friend.uid) === input);
+});
+const canUseScheduledSend = computed(() => (
+  postcardType.value === 'normal' && (isSelfRecipientSelected.value || isFriendRecipientSelected.value)
+));
+const formatDatetimeLocal = (value: Date | string) => {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+const scheduledMinTime = computed(() => formatDatetimeLocal(new Date(Date.now() + 60 * 1000)));
+const formatScheduledDisplay = (value?: string) => {
+  if (!value) return '--';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString();
+};
+const selectedStickerSeries = ref('arrow');
+
+
+const CREATE_DRAFT_CACHE_KEY = 'create_postcard_draft_v1';
+const isRestoringDraft = ref(false);
+let draftSaveTimer: ReturnType<typeof setTimeout> | null = null;
+
+const dataUrlToFile = (dataUrl: string, fileName: string, mimeType?: string) => {
+  const parts = dataUrl.split(',');
+  if (parts.length < 2) return null;
+  const mimeMatch = parts[0].match(/data:(.*?);base64/);
+  const mime = mimeType || mimeMatch?.[1] || 'image/png';
+  const binary = atob(parts[1]);
+  const len = binary.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new File([bytes], fileName, { type: mime });
+};
+
+const saveDraftNow = () => {
+  if (isRestoringDraft.value) return;
+  try {
+    const draft = {
+      postcardTitle: postcardTitle.value,
+      recipientInput: recipientInput.value,
+      isPublicToSquare: isPublicToSquare.value,
+      friendSearchKeyword: friendSearchKeyword.value,
+      postcardType: postcardType.value,
+      scheduledSendEnabled: scheduledSendEnabled.value,
+      scheduledAt: scheduledAt.value,
+      showFront: showFront.value,
+
+      postcardAspectRatio: postcardAspectRatio.value,
+      selectedImage: selectedImage.value,
+      selectedImageFileName: selectedImageFile.value?.name || 'postcard-image.png',
+      selectedImageFileType: selectedImageFile.value?.type || 'image/png',
+      imageOffset: imageOffset.value,
+      imageScale: imageScale.value,
+      imageRotation: imageRotation.value,
+      selectedStamp: selectedStamp.value,
+      interactiveElements: interactiveElements.value,
+      selectedStickerSeries: selectedStickerSeries.value,
+      updatedAt: Date.now(),
+    };
+    if (!hasDraftContent(draft)) {
+      sessionStorage.removeItem(CREATE_DRAFT_CACHE_KEY);
+      return;
+    }
+    sessionStorage.setItem(CREATE_DRAFT_CACHE_KEY, JSON.stringify(draft));
+  } catch (error) {
+    console.warn('保存创建明信片草稿失败', error);
+  }
+};
+
+const scheduleSaveDraft = () => {
+  if (isRestoringDraft.value) return;
+  if (draftSaveTimer) {
+    clearTimeout(draftSaveTimer);
+  }
+  draftSaveTimer = setTimeout(() => {
+    saveDraftNow();
+  }, 250);
+};
+
+const clearDraftCache = () => {
+  try {
+    sessionStorage.removeItem(CREATE_DRAFT_CACHE_KEY);
+  } catch (error) {
+    console.warn('清理创建明信片草稿失败', error);
+  }
+};
+
+const hasDraftContent = (draft: any) => {
+  if (!draft) return false;
+  return Boolean(
+    draft.postcardTitle ||
+      draft.recipientInput ||
+      draft.selectedImage ||
+      draft.scheduledAt ||
+      (Array.isArray(draft.interactiveElements) && draft.interactiveElements.length > 0) ||
+      draft.selectedStamp?.id
+  );
+};
+
+const restoreDraftFromCache = () => {
+  try {
+    const raw = sessionStorage.getItem(CREATE_DRAFT_CACHE_KEY);
+    if (!raw) return;
+    const draft = JSON.parse(raw);
+    if (!draft || typeof draft !== 'object') return;
+
+    isRestoringDraft.value = true;
+
+    postcardTitle.value = typeof draft.postcardTitle === 'string' ? draft.postcardTitle : '';
+    recipientInput.value = typeof draft.recipientInput === 'string' ? draft.recipientInput : '';
+    isPublicToSquare.value = Boolean(draft.isPublicToSquare);
+    friendSearchKeyword.value = typeof draft.friendSearchKeyword === 'string' ? draft.friendSearchKeyword : '';
+    postcardType.value = draft.postcardType === 'drifting' ? 'drifting' : 'normal';
+    scheduledSendEnabled.value = Boolean(draft.scheduledSendEnabled);
+    scheduledAt.value = typeof draft.scheduledAt === 'string' ? draft.scheduledAt : '';
+    showFront.value = typeof draft.showFront === 'boolean' ? draft.showFront : true;
+
+    postcardAspectRatio.value = draft.postcardAspectRatio === '2/3' ? '2/3' : '3/2';
+
+    selectedImage.value = typeof draft.selectedImage === 'string' ? draft.selectedImage : null;
+    if (selectedImage.value?.startsWith('data:')) {
+      selectedImageFile.value = dataUrlToFile(
+        selectedImage.value,
+        typeof draft.selectedImageFileName === 'string' ? draft.selectedImageFileName : 'postcard-image.png',
+        typeof draft.selectedImageFileType === 'string' ? draft.selectedImageFileType : undefined
+      );
+    } else {
+      selectedImageFile.value = null;
+    }
+
+    imageOffset.value = draft.imageOffset && typeof draft.imageOffset === 'object'
+      ? {
+          x: Number(draft.imageOffset.x) || 0,
+          y: Number(draft.imageOffset.y) || 0,
+        }
+      : { x: 0, y: 0 };
+    imageScale.value = Number(draft.imageScale) || 1;
+    imageRotation.value = Number(draft.imageRotation) || 0;
+    selectedStamp.value = draft.selectedStamp || null;
+    interactiveElements.value = Array.isArray(draft.interactiveElements) ? draft.interactiveElements : [];
+    selectedStickerSeries.value = typeof draft.selectedStickerSeries === 'string' ? draft.selectedStickerSeries : 'arrow';
+    selectedElementIndex.value = -1;
+
+    const routeRecipient = Array.isArray(route.query.recipientUid)
+      ? route.query.recipientUid[0]
+      : route.query.recipientUid;
+    if (typeof routeRecipient === 'string' && routeRecipient.trim()) {
+      recipientInput.value = routeRecipient.trim();
+    }
+
+    if (hasDraftContent(draft)) {
+      ElMessage.success('已恢复上次未完成的明信片草稿');
+    }
+  } catch (error) {
+    console.warn('恢复创建明信片草稿失败', error);
+  } finally {
+    isRestoringDraft.value = false;
+  }
+};
+
+watch(
+  () => ({
+    postcardTitle: postcardTitle.value,
+    recipientInput: recipientInput.value,
+    isPublicToSquare: isPublicToSquare.value,
+    postcardType: postcardType.value,
+    scheduledSendEnabled: scheduledSendEnabled.value,
+    scheduledAt: scheduledAt.value,
+    showFront: showFront.value,
+
+    postcardAspectRatio: postcardAspectRatio.value,
+    selectedImage: selectedImage.value,
+    selectedImageFileName: selectedImageFile.value?.name || '',
+    selectedImageFileType: selectedImageFile.value?.type || '',
+    imageOffset: imageOffset.value,
+    imageScale: imageScale.value,
+    imageRotation: imageRotation.value,
+    selectedStamp: selectedStamp.value,
+    interactiveElements: interactiveElements.value,
+    selectedStickerSeries: selectedStickerSeries.value,
+  }),
+  () => {
+    scheduleSaveDraft();
+  },
+  { deep: true }
+);
+
+const stickerSeries = [
+  { label: '箭头', value: 'arrow' },
+  { label: '动物', value: 'animal' },
+  { label: '狗狗剪影', value: 'dog_silhouette' },
+  { label: '涂鸦', value: 'graffiti' },
+  { label: '表情', value: 'expression' },
+];
+const stickerSeriesOptions: Record<string, string[]> = {
+  arrow: [
+    '/stickers/arrow/1.png',
+    '/stickers/arrow/2.png',
+    '/stickers/arrow/3.png',
+    '/stickers/arrow/4.png',
+    '/stickers/arrow/5.png',
+    '/stickers/arrow/6.png',
+    '/stickers/arrow/7.png',
+    '/stickers/arrow/8.png',
+    '/stickers/arrow/9.png',
+    '/stickers/arrow/10.png',
+    '/stickers/arrow/11.png',
+    '/stickers/arrow/12.png',
+    '/stickers/arrow/13.png',
+    '/stickers/arrow/14.png',
+    '/stickers/arrow/15.png',
+    '/stickers/arrow/16.png',
+    '/stickers/arrow/17.png',
+    '/stickers/arrow/18.png',
+    '/stickers/arrow/19.png',
+    '/stickers/arrow/20.png',
+    '/stickers/arrow/21.png',
+    '/stickers/arrow/22.png',
+    '/stickers/arrow/23.png',
+    '/stickers/arrow/24.png',
+    '/stickers/arrow/25.png',
+    '/stickers/arrow/26.png',
+    '/stickers/arrow/27.png',
+    '/stickers/arrow/28.png',
+    '/stickers/arrow/29.png',
+    '/stickers/arrow/30.png',
+  ],
+  animal: [
+    '/stickers/animal/企鹅.png',
+    '/stickers/animal/刺猬.png',
+    '/stickers/animal/小兔.png',
+    '/stickers/animal/小熊.png',
+    '/stickers/animal/小牛.png',
+    '/stickers/animal/小狗.png',
+    '/stickers/animal/小猪.png',
+    '/stickers/animal/小猫.png',
+    '/stickers/animal/小猴.png',
+    '/stickers/animal/小羊.png',
+    '/stickers/animal/小虎.png',
+    '/stickers/animal/小蛇.png',
+    '/stickers/animal/小马.png',
+    '/stickers/animal/小鸡.png',
+    '/stickers/animal/小鹿.png',
+    '/stickers/animal/小鼠.png',
+    '/stickers/animal/小龙.png',
+    '/stickers/animal/松鼠.png',
+    '/stickers/animal/树懒.png',
+    '/stickers/animal/狐狸.png',
+    '/stickers/animal/独角兽.png',
+    '/stickers/animal/考拉.png',
+    '/stickers/animal/鹦鹉.png',
+    '/stickers/animal/小象.png',
+  ],
+  dog_silhouette: [
+    '/stickers/dog_silhouette/1.png',
+    '/stickers/dog_silhouette/2.png',
+    '/stickers/dog_silhouette/3.png',
+    '/stickers/dog_silhouette/4.png',
+    '/stickers/dog_silhouette/5.png',
+    '/stickers/dog_silhouette/6.png',
+    '/stickers/dog_silhouette/7.png',
+    '/stickers/dog_silhouette/8.png',
+    '/stickers/dog_silhouette/9.png',
+  ],
+  graffiti: [
+    '/stickers/graffiti/涂鸦1.png',
+    '/stickers/graffiti/涂鸦2.png',
+    '/stickers/graffiti/涂鸦3.png',
+    '/stickers/graffiti/涂鸦4.png',
+    '/stickers/graffiti/涂鸦5.png',
+    '/stickers/graffiti/涂鸦6.png',
+    '/stickers/graffiti/涂鸦7.png',
+    '/stickers/graffiti/涂鸦8.png',
+    '/stickers/graffiti/涂鸦9.png',
+    '/stickers/graffiti/涂鸦10.png',
+    '/stickers/graffiti/涂鸦11.png',
+    '/stickers/graffiti/涂鸦12.png',
+    '/stickers/graffiti/涂鸦13.png',
+  ],
+  expression: [
+    '/stickers/expression/1.png',
+    '/stickers/expression/2.png',
+    '/stickers/expression/3.png',
+    '/stickers/expression/4.png',
+    '/stickers/expression/5.png',
+    '/stickers/expression/6.png',
+    '/stickers/expression/7.png',
+    '/stickers/expression/8.png',
+    '/stickers/expression/9.png',
+    '/stickers/expression/10.png',
+    '/stickers/expression/11.png',
+    '/stickers/expression/12.png',
+    '/stickers/expression/13.png',
+    '/stickers/expression/14.png',
+    '/stickers/expression/15.png',
+    '/stickers/expression/16.png',
+    '/stickers/expression/17.png',
+    '/stickers/expression/18.png',
+    '/stickers/expression/19.png',
+    '/stickers/expression/20.png',
+    '/stickers/expression/21.png',
+    '/stickers/expression/22.png',
+    '/stickers/expression/23.png',
+    '/stickers/expression/24.png',
+  ],
+};
+const stickerOptions = computed(() => stickerSeriesOptions[selectedStickerSeries.value] || []);
+
+// Font options
+const englishFonts = [
+  { label: 'Arial', value: 'Arial' },
+  { label: 'Georgia', value: 'Georgia' },
+  { label: 'Times New Roman', value: 'Times New Roman' },
+  { label: 'Courier New', value: 'Courier New' },
+  { label: 'Verdana', value: 'Verdana' },
+  { label: 'Comic Sans MS', value: 'Comic Sans MS' },
+];
+
+const chineseFonts = [
+  { label: '思源黑体', value: "'Noto Sans SC', sans-serif" },
+  { label: '思源宋体', value: "'Noto Serif SC', serif" },
+  { label: '黑体', value: 'SimHei' },
+  { label: '宋体', value: 'SimSun' },
+  { label: '微软雅黑', value: 'Microsoft YaHei' },
+  { label: '楷体', value: 'KaiTi' },
+  // 自定义字体
+  { label: '三极速线简体', value: 'SanJiSuXianJianTi' },
+  { label: '沐瑶软笔手写体', value: 'MuyaoSoftbrush' },
+  { label: '思源黑体CN', value: 'SourceHanSansCN' },
+  { label: '得意黑', value: 'SmileySans' },
+  { label: '钉铃珠海字体', value: 'DingliZhuhaiFont' },
+  { label: '黄楷华律师字体', value: 'HuangkaihuaLawyer' },
+  { label: 'Yomogi', value: 'Yomogi' },
+  { label: '今年也要加油鸭', value: 'JinNianYeYaoJiaYouYa' },
+  { label: '博塔', value: 'BoTa' },
+  { label: '铅图笔锋手写体', value: 'QianTuBiFengShouXieTi' },
+  { label: '晴松手写体', value: 'QingSongShouXieTi' },
+  { label: '仓迹高德国妙黑', value: 'CangJiGaoDeGuoMiaoHei' },
+];
+
+const fontDisplayName = computed(() => {
+  if (selectedElementIndex.value === -1) return '字体';
+  const currentFont = interactiveElements.value[selectedElementIndex.value]?.fontFamily || 'Arial';
+  const found = [...englishFonts, ...chineseFonts].find(f => f.value === currentFont);
+  return found?.label || '字体';
+});
+
+let currentElementIndex = -1;
+let resizeStartData = { width: 0, height: 0, startX: 0, startY: 0, x: 0, y: 0 };
+let rotateStartData = { rotation: 0, startX: 0, startY: 0 };
+
+const placeCaretAtEnd = (el: HTMLElement) => {
+  const range = document.createRange();
+  const sel = window.getSelection();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  sel?.removeAllRanges();
+  sel?.addRange(range);
+};
+
+const setTextEditRef = (el: any, index: number, content: string) => {
+  const textEl = ((el && '$el' in el) ? el.$el : el) as HTMLElement | null;
+  if (!textEl) {
+    delete textEditRefs.value[index];
+    return;
+  }
+
+  textEditRefs.value[index] = textEl;
+
+  if (document.activeElement !== textEl && textEl.innerText !== content) {
+    textEl.innerText = content || '';
+  }
+};
+
+const handleTextInput = (event: Event, index: number) => {
+  const target = event.target as HTMLElement;
+  const currentElement = interactiveElements.value[index];
+  if (!currentElement || currentElement.type !== 'text') return;
+  currentElement.content = target.innerText;
+};
+
+// 监听选中元素变化，初始化文字内容和光标
+watch(selectedElementIndex, async (newIndex) => {
+  if (newIndex === -1) return;
+  const el = interactiveElements.value[newIndex];
+  if (!el || el.type !== 'text') return;
+
+  await nextTick();
+  const div = textEditRefs.value[newIndex];
+  if (!div) return;
+
+  if (div.innerText !== el.content) {
+    div.innerText = el.content || '';
+  }
+
+  div.focus();
+  placeCaretAtEnd(div);
+});
+
+onMounted(() => {
+  loadMyStamps();
+  
+  // Close font dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    const target = e.target as Node;
+    const fontDropdownEl = document.getElementById('font-dropdown-wrapper');
+    if (fontDropdownEl && !fontDropdownEl.contains(target)) {
+      showFontDropdown.value = false;
+    }
+  });
+});
+
+const resolveAssetUrl = (url?: string | null) => {
+  if (!url) return "";
+  if (/^(https?:)?\/\//.test(url) || url.startsWith('data:')) return url;
+  return `${assetBaseURL}${url.startsWith('/') ? url : `/${url}`}`;
+};
+
+const loadMyStamps = async () => {
+  try {
+    const res = await getMyStamps();
+    const nextStamps = (res.data || [])
+      .filter((item: any) => Number(item.quantity || 0) > 0)
+      .map((item: any) => ({
+        ...item,
+        image: resolveAssetUrl(item.image),
+      }));
+
+    myStamps.value = nextStamps;
+
+    if (selectedStamp.value) {
+      selectedStamp.value = nextStamps.find((item: any) => item.id === selectedStamp.value.id) || null;
+    }
+  } catch (err: any) {
+    ElMessage.error(err?.data?.message || err?.message || '加载我的邮票失败');
+  }
+};
+
+const loadFriends = async () => {
+  try {
+    const res = await getFriends();
+    friendOptions.value = (res.data || []).map((item: any) => ({
+      id: item.id,
+      uid: item.uid,
+      username: item.username,
+      avatar: resolveAssetUrl(item.avatar),
+    }));
+
+    if (scheduledSendEnabled.value && !canUseScheduledSend.value) {
+      scheduledSendEnabled.value = false;
+      scheduledAt.value = '';
+    }
+  } catch (err: any) {
+    friendOptions.value = [];
+    if (scheduledSendEnabled.value) {
+      scheduledSendEnabled.value = false;
+      scheduledAt.value = '';
+    }
+  }
+};
+
+const selectFriendRecipient = (friend: any) => {
+  recipientInput.value = friend.uid;
+  friendSearchKeyword.value = '';
+  showFriendSelector.value = false;
+};
+
+const getRecipientUidFromRoute = () => {
+  const value = route.query.recipientUid;
+  const parsed = Array.isArray(value) ? value[0] : value;
+  return typeof parsed === 'string' ? parsed.trim() : '';
+};
+
+watch(
+  () => route.query.recipientUid,
+  () => {
+    const recipientUid = getRecipientUidFromRoute();
+    if (!recipientUid) return;
+    recipientInput.value = recipientUid;
+    friendSearchKeyword.value = '';
+    showFriendSelector.value = false;
+  },
+  { immediate: true }
+);
+
+
+const selectSelfRecipient = () => {
+  if (postcardType.value === 'drifting') {
+    ElMessage.warning('漂流传递不支持传递给自己');
+    return;
+  }
+  if (!currentUserRecipient.value) {
+    ElMessage.warning('当前账号暂无可用的 UID 或邮箱');
+    return;
+  }
+  recipientInput.value = currentUserRecipient.value;
+  friendSearchKeyword.value = '';
+  showFriendSelector.value = false;
+};
+
+watch(postcardType, (nextType) => {
+  if (nextType === 'drifting' && isSelfRecipientSelected.value) {
+    recipientInput.value = '';
+    ElMessage.warning('已切换为漂流传递，不能传递给自己');
+  }
+});
+
+watch(canUseScheduledSend, (enabled) => {
+  if (isRestoringDraft.value) return;
+  if (!enabled && scheduledSendEnabled.value) {
+    scheduledSendEnabled.value = false;
+    scheduledAt.value = '';
+  }
+});
+
+watch(scheduledSendEnabled, (enabled) => {
+  if (isRestoringDraft.value) return;
+  if (!enabled) {
+
+    scheduledAt.value = '';
+    return;
+  }
+
+  if (!canUseScheduledSend.value) {
+    scheduledSendEnabled.value = false;
+    ElMessage.warning('定时发送仅支持发送给好友或自己');
+    return;
+  }
+
+  if (!scheduledAt.value) {
+    scheduledAt.value = formatDatetimeLocal(new Date(Date.now() + 30 * 60 * 1000));
+  }
+});
+
+const getValidatedScheduledAt = () => {
+  if (!scheduledSendEnabled.value) return '';
+  if (!canUseScheduledSend.value) {
+    ElMessage.warning('定时发送仅支持发送给好友或自己');
+    return null;
+  }
+  if (!scheduledAt.value) {
+    ElMessage.warning('请选择定时发送时间');
+    return null;
+  }
+  const date = new Date(scheduledAt.value);
+  if (Number.isNaN(date.getTime())) {
+    ElMessage.warning('请选择有效的定时发送时间');
+    return null;
+  }
+  if (date.getTime() <= Date.now()) {
+    ElMessage.warning('定时发送时间必须晚于当前时间');
+    return null;
+  }
+  return scheduledAt.value;
+};
+
+const handleAiAgentClick = () => {
+
+  if (!hasSelectedTextElement.value) {
+    showAiAgent.value = false;
+    ElMessage.warning('请先选中文字框');
+    return;
+  }
+  showAiAgent.value = !showAiAgent.value;
+  showStickerPicker.value = false;
+  showStampSelector.value = false;
+};
+
+
+const openCamera = () => {
+  cameraInput.value?.click();
+  showUploadOptions.value = false;
+};
+
+const openGallery = () => {
+  galleryInput.value?.click();
+  showUploadOptions.value = false;
+};
+
+const handleImageUpload = (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+
+  if (file) {
+    selectedImageFile.value = file;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      selectedImage.value = e.target?.result as string;
+      imageOffset.value = { x: 0, y: 0 };
+      imageScale.value = 1;
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+const startDrag = (e: MouseEvent | TouchEvent) => {
+  if (!selectedImage.value) return;
+  
+  preventIfCancelable(e);
+  
+  isDragging.value = true;
+  const clientX = e instanceof MouseEvent ? e.clientX : e.touches[0].clientX;
+  const clientY = e instanceof MouseEvent ? e.clientY : e.touches[0].clientY;
+  
+  dragStart.value = { x: clientX, y: clientY };
+  
+  const handleMove = (moveEvent: MouseEvent | TouchEvent) => {
+    if (!isDragging.value) return;
+    
+    preventIfCancelable(moveEvent);
+    
+    const moveClientX = moveEvent instanceof MouseEvent ? moveEvent.clientX : moveEvent.touches[0].clientX;
+    const moveClientY = moveEvent instanceof MouseEvent ? moveEvent.clientY : moveEvent.touches[0].clientY;
+    
+    const deltaX = moveClientX - dragStart.value.x;
+    const deltaY = moveClientY - dragStart.value.y;
+    
+    imageOffset.value.x += deltaX;
+    imageOffset.value.y += deltaY;
+    
+    dragStart.value = { x: moveClientX, y: moveClientY };
+  };
+  
+  const handleEnd = () => {
+    isDragging.value = false;
+    document.removeEventListener('mousemove', handleMove);
+    document.removeEventListener('touchmove', handleMove);
+    document.removeEventListener('mouseup', handleEnd);
+    document.removeEventListener('touchend', handleEnd);
+    document.removeEventListener('mouseleave', handleEnd);
+    window.removeEventListener('blur', handleEnd);
+  };
+  
+  document.addEventListener('mousemove', handleMove);
+  document.addEventListener('touchmove', handleMove, { passive: false });
+  document.addEventListener('mouseup', handleEnd);
+  document.addEventListener('touchend', handleEnd);
+  document.addEventListener('mouseleave', handleEnd);
+  window.addEventListener('blur', handleEnd);
+};
+
+const addTextElement = () => {
+  if (postcardType.value === 'drifting') {
+    const hasText = interactiveElements.value.some(el => el.type === 'text');
+    if (hasText) {
+      ElMessage.warning('漂流传递明信片只能添加一个文本框');
+      return;
+    }
+  }
+
+  showFront.value = false;
+  // 先取消当前选中，blur 旧文本框
+  if (selectedElementIndex.value !== -1 && textEditRefs.value[selectedElementIndex.value]) {
+    textEditRefs.value[selectedElementIndex.value].blur();
+  }
+  selectedElementIndex.value = -1;
+  const newIndex = interactiveElements.value.length;
+  interactiveElements.value.push({
+    type: 'text',
+    content: '输入文字',
+    x: 50,
+    y: 50,
+    width: 150,
+    height: 60,
+    rotation: 0,
+    scale: 1,
+    fontFamily: 'Arial',
+    fontSize: 16,
+    fontWeight: 'normal',
+    fontStyle: 'normal',
+    color: '#000000'
+  });
+  nextTick(() => {
+    selectedElementIndex.value = newIndex;
+  });
+};
+
+const addStickerElement = (stickerUrl: string) => {
+  if (postcardType.value === 'drifting') {
+    const hasSticker = interactiveElements.value.some(el => el.type === 'sticker');
+    if (hasSticker) {
+      ElMessage.warning('漂流传递明信片只能添加一张贴纸');
+      return;
+    }
+  }
+
+  showFront.value = false;
+  const newIndex = interactiveElements.value.length;
+  interactiveElements.value.push({
+    type: 'sticker',
+    content: stickerUrl,
+    x: 50,
+    y: 100,
+    width: 100,
+    height: 100,
+    rotation: 0,
+    scale: 1
+  });
+  nextTick(() => {
+    selectedElementIndex.value = newIndex;
+  });
+};
+
+const preventIfCancelable = (event: Event) => {
+  if (event.cancelable) {
+    event.preventDefault();
+  }
+};
+
+const startElementDrag = (e: MouseEvent | TouchEvent, index: number) => {
+  preventIfCancelable(e);
+  e.stopPropagation();
+
+  selectedElementIndex.value = index;
+  currentElementIndex = index;
+
+  const clientX = e instanceof MouseEvent ? e.clientX : e.touches[0].clientX;
+  const clientY = e instanceof MouseEvent ? e.clientY : e.touches[0].clientY;
+
+  dragStart.value = { x: clientX, y: clientY };
+  const element = interactiveElements.value[index];
+  const startX = element.x;
+  const startY = element.y;
+
+  // Compute the CSS scale so screen-pixel deltas map to reference-canvas coordinates
+  const srcW = backRefWidth.value;
+  const srcH = backRefHeight.value;
+  const dstW = containerSize.value.width || srcW;
+  const dstH = containerSize.value.height || srcH;
+  const scale = Math.min(dstW / srcW, dstH / srcH);
+
+  const handleMove = (moveEvent: MouseEvent | TouchEvent) => {
+    preventIfCancelable(moveEvent);
+
+    const moveClientX = moveEvent instanceof MouseEvent ? moveEvent.clientX : moveEvent.touches[0].clientX;
+    const moveClientY = moveEvent instanceof MouseEvent ? moveEvent.clientY : moveEvent.touches[0].clientY;
+
+    const dx = (moveClientX - dragStart.value.x) / scale;
+    const dy = (moveClientY - dragStart.value.y) / scale;
+
+    element.x = startX + dx;
+    element.y = startY + dy;
+  };
+  
+  const handleEnd = () => {
+    document.removeEventListener('mousemove', handleMove);
+    document.removeEventListener('touchmove', handleMove);
+    document.removeEventListener('mouseup', handleEnd);
+    document.removeEventListener('touchend', handleEnd);
+  };
+  
+  document.addEventListener('mousemove', handleMove);
+  document.addEventListener('touchmove', handleMove, { passive: false });
+  document.addEventListener('mouseup', handleEnd);
+  document.addEventListener('touchend', handleEnd);
+};
+
+const startElementResize = (e: MouseEvent | TouchEvent, index: number) => {
+  preventIfCancelable(e);
+  e.stopPropagation();
+  
+  const clientX = e instanceof MouseEvent ? e.clientX : e.touches[0].clientX;
+  
+  const element = interactiveElements.value[index];
+  const initialScale = element.scale || 1;
+  
+  const handleMove = (moveEvent: MouseEvent | TouchEvent) => {
+    preventIfCancelable(moveEvent);
+    
+    const moveClientX = moveEvent instanceof MouseEvent ? moveEvent.clientX : moveEvent.touches[0].clientX;
+    const dx = moveClientX - clientX;
+    
+    const scaleFactor = 1 + (dx / 100);
+    const newScale = Math.max(0.5, Math.min(5, initialScale * scaleFactor));
+    
+    element.scale = newScale;
+  };
+  
+  const handleEnd = () => {
+    document.removeEventListener('mousemove', handleMove);
+    document.removeEventListener('touchmove', handleMove);
+    document.removeEventListener('mouseup', handleEnd);
+    document.removeEventListener('touchend', handleEnd);
+  };
+  
+  document.addEventListener('mousemove', handleMove);
+  document.addEventListener('touchmove', handleMove, { passive: false });
+  document.addEventListener('mouseup', handleEnd);
+  document.addEventListener('touchend', handleEnd);
+};
+
+const startElementRotate = (e: MouseEvent | TouchEvent, index: number) => {
+  preventIfCancelable(e);
+  
+  currentElementIndex = index;
+  const clientX = e instanceof MouseEvent ? e.clientX : e.touches[0].clientX;
+  const clientY = e instanceof MouseEvent ? e.clientY : e.touches[0].clientY;
+  
+  const element = interactiveElements.value[index];
+  
+  // Get element center position
+  const target = e.target as HTMLElement;
+  const elementContainer = target.closest('.absolute.cursor-move') as HTMLElement;
+  let centerX = 0;
+  let centerY = 0;
+  
+  if (elementContainer) {
+    const rect = elementContainer.getBoundingClientRect();
+    centerX = rect.left + rect.width / 2;
+    centerY = rect.top + rect.height / 2;
+  }
+  
+  const startAngle = Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
+  
+  rotateStartData = {
+    rotation: element.rotation || 0,
+    startX: startAngle,
+    startY: 0
+  };
+  
+  const handleMove = (moveEvent: MouseEvent | TouchEvent) => {
+    preventIfCancelable(moveEvent);
+    
+    const moveClientX = moveEvent instanceof MouseEvent ? moveEvent.clientX : moveEvent.touches[0].clientX;
+    const moveClientY = moveEvent instanceof MouseEvent ? moveEvent.clientY : moveEvent.touches[0].clientY;
+    
+    const currentAngle = Math.atan2(moveClientY - centerY, moveClientX - centerX) * (180 / Math.PI);
+    const angleDiff = currentAngle - rotateStartData.startX;
+    
+    element.rotation = rotateStartData.rotation + angleDiff;
+  };
+  
+  const handleEnd = () => {
+    selectedElementIndex.value = -1;
+    document.removeEventListener('mousemove', handleMove);
+    document.removeEventListener('touchmove', handleMove);
+    document.removeEventListener('mouseup', handleEnd);
+    document.removeEventListener('touchend', handleEnd);
+  };
+  
+  document.addEventListener('mousemove', handleMove);
+  document.addEventListener('touchmove', handleMove, { passive: false });
+  document.addEventListener('mouseup', handleEnd);
+  document.addEventListener('touchend', handleEnd);
+};
+
+const toggleStampSelector = async () => {
+  showStampSelector.value = !showStampSelector.value;
+  showStickerPicker.value = false;
+  selectedElementIndex.value = -1;
+  
+  // 在手机端，如果打开了邮票选择器，滚动到该位置
+  if (showStampSelector.value) {
+    await nextTick();
+    if (stampSelectorRef.value) {
+      // 检查是否是手机端（屏幕宽度小于768px）
+      const isMobile = window.innerWidth < 768;
+      if (isMobile) {
+        // 使用setTimeout确保DOM完全渲染后再滚动
+        setTimeout(() => {
+          stampSelectorRef.value?.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start'
+          });
+        }, 100);
+      }
+    }
+  }
+};
+
+const selectStamp = (stamp: any) => {
+  if ((stamp.quantity ?? 0) <= 0) {
+    ElMessage.warning('这张邮票已经没有剩余了');
+    return;
+  }
+
+  selectedStamp.value = stamp;
+  showStampSelector.value = false;
+};
+
+// Vertical scale slider drag
+const startScaleDragV = (e: MouseEvent) => {
+  e.preventDefault();
+  const track = e.currentTarget as HTMLElement;
+  const rect = track.getBoundingClientRect();
+  const SNAP_ZONE = 0.04;
+
+  const update = (clientY: number) => {
+    // top = max (3x), bottom = min (0.5x)
+    const ratio = 1 - Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+    let val = 0.5 + ratio * 2.5;
+    if (Math.abs(val - 1) < SNAP_ZONE) val = 1;
+    imageScale.value = Math.round(val * 1000) / 1000;
+  };
+
+  update(e.clientY);
+  const onMove = (me: MouseEvent) => update(me.clientY);
+  const onUp = () => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  };
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+};
+
+// Vertical rotation slider drag (-180 ~ 180, snap at 0°/±90°/±180°)
+const startRotateDragV = (e: MouseEvent) => {
+  e.preventDefault();
+  const track = e.currentTarget as HTMLElement;
+  const rect = track.getBoundingClientRect();
+  const SNAP_ZONE = 5;
+  const SNAP_ANGLES = [-180, -90, 0, 90, 180];
+
+  const update = (clientY: number) => {
+    // top = -180°, center = 0°, bottom = +180°
+    const ratio = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+    let val = (ratio - 0.5) * 360;
+    val = Math.max(-180, Math.min(180, val));
+    for (const snap of SNAP_ANGLES) {
+      if (Math.abs(val - snap) < SNAP_ZONE) { val = snap; break; }
+    }
+    imageRotation.value = Math.round(val * 10) / 10;
+  };
+
+  update(e.clientY);
+  const onMove = (me: MouseEvent) => update(me.clientY);
+  const onUp = () => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  };
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+};
+
+// Image scale slider drag (0.5x ~ 3x, snap at 1x)
+const startScaleDrag = (e: MouseEvent) => {
+  e.preventDefault();
+  const track = (e.currentTarget as HTMLElement);
+  const rect = track.getBoundingClientRect();
+  const SNAP_ZONE = 0.04;
+
+  const updateScale = (clientX: number) => {
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    let val = 0.5 + ratio * 2.5;
+    if (Math.abs(val - 1) < SNAP_ZONE) val = 1;
+    imageScale.value = Math.round(val * 1000) / 1000;
+  };
+
+  updateScale(e.clientX);
+
+  const onMove = (me: MouseEvent) => updateScale(me.clientX);
+  const onUp = () => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  };
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+};
+
+// Image rotation slider drag (-180 ~ 180, snap at 0°, ±90°, ±180°)
+const startRotateDrag = (e: MouseEvent) => {
+  e.preventDefault();
+  const track = (e.currentTarget as HTMLElement);
+  const rect = track.getBoundingClientRect();
+  const SNAP_ZONE = 5;
+  const SNAP_ANGLES = [-180, -90, 0, 90, 180];
+
+  const updateRotation = (clientX: number) => {
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    let val = (ratio - 0.5) * 360;
+    val = Math.max(-180, Math.min(180, val));
+    for (const snap of SNAP_ANGLES) {
+      if (Math.abs(val - snap) < SNAP_ZONE) { val = snap; break; }
+    }
+    imageRotation.value = Math.round(val * 10) / 10;
+  };
+
+  updateRotation(e.clientX);
+
+  const onMove = (me: MouseEvent) => updateRotation(me.clientX);
+  const onUp = () => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  };
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+};
+
+const deleteElement = () => {
+  if (selectedElementIndex.value !== -1) {
+    interactiveElements.value.splice(selectedElementIndex.value, 1);
+    selectedElementIndex.value = -1;
+  }
+};
+
+const toggleAspectRatio = () => {
+  postcardAspectRatio.value = postcardAspectRatio.value === '3/2' ? '2/3' : '3/2';
+};
+
+const moveElementUp = () => {
+  if (selectedElementIndex.value !== -1 && selectedElementIndex.value < interactiveElements.value.length - 1) {
+    const temp = interactiveElements.value[selectedElementIndex.value];
+    interactiveElements.value[selectedElementIndex.value] = interactiveElements.value[selectedElementIndex.value + 1];
+    interactiveElements.value[selectedElementIndex.value + 1] = temp;
+    selectedElementIndex.value += 1;
+    // 强制更新以立即显示变化
+    interactiveElements.value = [...interactiveElements.value];
+  }
+};
+
+const moveElementDown = () => {
+  if (selectedElementIndex.value !== -1 && selectedElementIndex.value > 0) {
+    const temp = interactiveElements.value[selectedElementIndex.value];
+    interactiveElements.value[selectedElementIndex.value] = interactiveElements.value[selectedElementIndex.value - 1];
+    interactiveElements.value[selectedElementIndex.value - 1] = temp;
+    selectedElementIndex.value -= 1;
+    // 强制更新以立即显示变化
+    interactiveElements.value = [...interactiveElements.value];
+  }
+};
+
+const resetUpload = () => {
+  selectedImage.value = null;
+  selectedImageFile.value = null;
+  imageOffset.value = { x: 0, y: 0 };
+  imageScale.value = 1;
+  imageRotation.value = 0;
+  showImageControls.value = false;
+  selectedStamp.value = null;
+  interactiveElements.value = [];
+  showStickerPicker.value = false;
+  showAiAgent.value = false;
+  showStampSelector.value = false;
+  selectedElementIndex.value = -1;
+  postcardTitle.value = '';
+  recipientInput.value = '';
+  friendSearchKeyword.value = '';
+  showFriendSelector.value = false;
+  isPublicToSquare.value = false;
+  scheduledSendEnabled.value = false;
+  scheduledAt.value = '';
+
+  clearDraftCache();
+};
+
+const publishPostcard = () => {
+  if (!selectedImage.value) {
+    ElMessage.warning("请先选择图片");
+    return;
+  }
+  if (!selectedStamp.value) {
+    ElMessage.warning("请先选择邮票");
+    return;
+  }
+  if ((selectedStamp.value.quantity ?? 0) <= 0) {
+    ElMessage.warning("当前选中的邮票已经没有剩余了");
+    return;
+  }
+  if (postcardType.value === 'normal' && !recipientInput.value.trim()) {
+    ElMessage.warning('普通明信片请填写收件人UID或邮箱');
+    return;
+  }
+  if (postcardType.value === 'drifting' && isSelfRecipientSelected.value) {
+    ElMessage.warning('漂流传递不支持传递给自己');
+    return;
+  }
+  const nextScheduledAt = getValidatedScheduledAt();
+  if (nextScheduledAt === null) {
+    return;
+  }
+  showPublishDialog.value = true;
+  publishFlipped.value = false;
+};
+
+const goToOutbox = () => {
+  router.push('/outbox');
+};
+
+const confirmPublish = async () => {
+  if (isPublishing.value) return;
+
+  if (!selectedImageFile.value) {
+    ElMessage.warning('请先上传图片');
+    return;
+  }
+
+  if (postcardType.value === 'normal' && !recipientInput.value.trim()) {
+    ElMessage.warning('普通明信片请填写收件人UID或邮箱');
+    return;
+  }
+  if (postcardType.value === 'drifting' && isSelfRecipientSelected.value) {
+    ElMessage.warning('漂流传递不支持传递给自己');
+    return;
+  }
+
+  const nextScheduledAt = getValidatedScheduledAt();
+  if (nextScheduledAt === null) {
+    return;
+  }
+
+  const canvasWidth = backRefWidth.value;
+  const canvasHeight = backRefHeight.value;
+
+  isPublishing.value = true;
+
+  try {
+    const uploadRes = await uploadPostcardImage(selectedImageFile.value);
+    const imageUrl = uploadRes.data?.imageUrl;
+    if (!imageUrl) {
+      throw new Error('图片上传失败');
+    }
+
+    const res: any = await createPostcard({
+      title: postcardTitle.value || '无标题明信片',
+      recipientInput: postcardType.value === 'drifting' ? '' : recipientInput.value,
+      isPublic: postcardType.value === 'drifting' ? true : isPublicToSquare.value,
+      postcardType: postcardType.value,
+      scheduledAt: nextScheduledAt || undefined,
+      imageUrl,
+      imageOffsetX: imageOffset.value.x,
+      imageOffsetY: imageOffset.value.y,
+      imageScale: imageScale.value,
+      imageRotation: imageRotation.value,
+      elements: interactiveElements.value.map((el) => ({
+        ...el,
+        creatorId: userInfo.value?.id,
+        creatorName: userInfo.value?.username || '我',
+      })),
+      stampId: selectedStamp.value?.id,
+      canvasWidth,
+      canvasHeight,
+      aspectRatio: postcardAspectRatio.value,
+    });
+
+    ElMessage.success(res.message || (nextScheduledAt ? '明信片已预约发送' : '明信片发送成功，正在审核中'));
+    showPublishDialog.value = false;
+    isPublishing.value = false;
+    await loadMyStamps();
+    resetUpload();
+    router.push('/mail');
+  } catch (err: any) {
+    isPublishing.value = false;
+    ElMessage.error(err?.data?.message || err?.message || '发布失败');
+  }
+};
+
+// ==================== AI 智能体功能 ====================
+
+const getAiErrorMessage = (err: any, fallback: string) => {
+  const raw = String(err?.data?.message || err?.message || '').trim();
+  if (!raw) return fallback;
+
+  if (raw.includes('邮分不足')) return '邮分不足，请先去签到或商店获取邮分';
+  if (raw.includes('AI服务鉴权失败')) return 'AI服务配置异常，请联系管理员';
+  if (raw.includes('AI服务当前繁忙')) return 'AI服务当前繁忙，请稍后重试';
+  if (raw.includes('AI模型配置错误')) return 'AI模型配置错误，请联系管理员';
+  if (raw.includes('图片格式不支持')) return '图片格式不支持，请重新上传后再试';
+  if (raw.includes('图片无法被AI读取')) return '图片无法被AI读取，请更换图片或重新上传后再试';
+
+  return raw;
+};
+
+/**
+ * 一键润色文字
+ */
+const handlePolishText = async () => {
+  if (selectedElementIndex.value === -1) return;
+  const element = interactiveElements.value[selectedElementIndex.value];
+  if (!element || element.type !== 'text') {
+    ElMessage.warning('请先选择一个文字元素');
+    return;
+  }
+  if (!element.content || element.content.trim().length === 0) {
+    ElMessage.warning('请先输入一些文字');
+    return;
+  }
+
+  aiLoading.value = true;
+  try {
+    const res: any = await polishText(element.content);
+    element.content = res.data?.result || element.content;
+    ElMessage.success(res.data?.isVipFree ? '润色成功，会员本次免费' : `润色成功，已消耗 ${res.data?.cost || 5} 邮分`);
+
+    // 更新文本编辑框的内容
+    const textEditRef = textEditRefs.value[selectedElementIndex.value];
+    if (textEditRef) {
+      textEditRef.innerText = element.content;
+    }
+  } catch (err: any) {
+    ElMessage.error(getAiErrorMessage(err, '润色失败，请稍后重试'));
+  } finally {
+    aiLoading.value = false;
+  }
+};
+
+/**
+ * 分析图片生成文案
+ */
+const handleGenerateFromImage = async () => {
+  if (!selectedImage.value) {
+    ElMessage.warning('请先上传明信片正面图片');
+    return;
+  }
+  if (selectedElementIndex.value === -1) {
+    ElMessage.warning('请先选择一个文字元素');
+    return;
+  }
+  const element = interactiveElements.value[selectedElementIndex.value];
+  if (!element || element.type !== 'text') {
+    ElMessage.warning('请先选择一个文字元素');
+    return;
+  }
+
+  aiLoading.value = true;
+  try {
+    const res: any = await generateFromImage(selectedImage.value);
+    element.content = res.data?.result || '';
+    ElMessage.success(res.data?.isVipFree ? '生成成功，会员本次免费' : `生成成功，已消耗 ${res.data?.cost || 10} 邮分`);
+
+
+    // 更新文本编辑框的内容
+    const textEditRef = textEditRefs.value[selectedElementIndex.value];
+    if (textEditRef) {
+      textEditRef.innerText = element.content;
+    }
+  } catch (err: any) {
+    ElMessage.error(getAiErrorMessage(err, '生成失败，请稍后重试'));
+  } finally {
+    aiLoading.value = false;
+  }
+};
+
+/**
+ * 自定义要求修改文字
+ */
+const handleCustomModify = async () => {
+  if (!aiCustomPrompt.value.trim()) {
+    ElMessage.warning('请输入修改要求');
+    return;
+  }
+  if (selectedElementIndex.value === -1) {
+    ElMessage.warning('请先选择一个文字元素');
+    return;
+  }
+  const element = interactiveElements.value[selectedElementIndex.value];
+  if (!element || element.type !== 'text') {
+    ElMessage.warning('请先选择一个文字元素');
+    return;
+  }
+  if (!element.content || element.content.trim().length === 0) {
+    ElMessage.warning('请先输入一些文字');
+    return;
+  }
+
+  aiLoading.value = true;
+  try {
+    const res: any = await customModify(element.content, aiCustomPrompt.value);
+    element.content = res.data?.result || element.content;
+    ElMessage.success(res.data?.isVipFree ? '修改成功，会员本次免费' : `修改成功，已消耗 ${res.data?.cost || 5} 邮分`);
+
+
+    // 更新文本编辑框的内容
+    const textEditRef = textEditRefs.value[selectedElementIndex.value];
+    if (textEditRef) {
+      textEditRef.innerText = element.content;
+    }
+    aiCustomPrompt.value = '';
+    showAiCustomInput.value = false;
+  } catch (err: any) {
+    ElMessage.error(getAiErrorMessage(err, '修改失败，请稍后重试'));
+  } finally {
+    aiLoading.value = false;
+  }
+};
+</script>
+
+<style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Noto+Serif+SC:wght@400;700&display=swap');
+
+/* 自定义字体声明 */
+@font-face {
+  font-family: 'SanJiSuXianJianTi';
+  src: url('/font/SanJiSuXianJianTi-2.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'MuyaoSoftbrush';
+  src: url('/font/Muyao-Softbrush-2.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'SourceHanSansCN';
+  src: url('/font/SourceHanSansCN-VF-2.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'SmileySans';
+  src: url('/font/SmileySans-Oblique-3.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'DingliZhuhaiFont';
+  src: url('/font/dingliezhuhaifont-20240831GengXinBan%29-2.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'HuangkaihuaLawyer';
+  src: url('/font/huangkaihuaLawyerfont-2.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Yomogi';
+  src: url('/font/Yomogi-Regular-2.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'JinNianYeYaoJiaYouYa';
+  src: url('/font/JinNianYeYaoJiaYouYa-2.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'BoTa';
+  src: url('/font/BoTa-2.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'QianTuBiFengShouXieTi';
+  src: url('/font/QianTuBiFengShouXieTi-2.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'QingSongShouXieTi';
+  src: url('/font/QingSongShouXieTi2-2.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'CangJiGaoDeGuoMiaoHei';
+  src: url('/font/【MianFei】CangJiGaoDeGuoMiaoHei-CJgaodeguomh-2.ttf') format('truetype');
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>
