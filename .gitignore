@@ -22,8 +22,9 @@ Thumbs.db
 dist/
 build/
 
-# 分工的md文档
+# other folders
 分工的md文档/
+比赛视频脚本和台词/
 
 # Logs
 *.log
